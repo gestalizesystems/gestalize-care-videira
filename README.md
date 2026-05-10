@@ -6,6 +6,23 @@ Sistema SaaS para aluguel de salas odontológicas. Dentistas buscam horários di
 
 ---
 
+## Índice
+
+- [Funcionalidades](#funcionalidades)
+- [Stack](#stack)
+- [Rodando localmente](#rodando-localmente)
+- [Configurando o Google OAuth 2.0](#configurando-o-google-oauth-20)
+- [Configurando o MercadoPago Sandbox](#configurando-o-mercadopago-sandbox)
+- [Testes](#testes)
+- [CI — GitHub Actions](#ci--github-actions)
+- [Configurando o servidor VPS do zero](#configurando-o-servidor-vps-do-zero)
+- [Deploy em produção](#deploy-em-produção)
+- [Arquitetura resumida](#arquitetura-resumida)
+- [Troubleshooting](#troubleshooting)
+- [Variáveis de ambiente completas](#variáveis-de-ambiente-completas)
+
+---
+
 ## Funcionalidades
 
 - **Agendamento** — listagem de serviços e horários, carrinho por sessão, checkout com cálculo de desconto automático por volume
@@ -238,12 +255,6 @@ O projeto já vem com um workflow em `.github/workflows/ci.yml` que roda automat
 
 O CI não precisa de nenhuma configuração manual de secrets para rodar — ele usa credenciais mock para Google e MercadoPago, e sobe PostgreSQL e Redis como services do próprio GitHub Actions.
 
-Se quiser adicionar o **badge de status** do CI no topo do README, substitua `SEU_USUARIO` pelo seu usuário do GitHub:
-
-```markdown
-[![CI](https://github.com/SEU_USUARIO/videira-dental/actions/workflows/ci.yml/badge.svg)](https://github.com/SEU_USUARIO/videira-dental/actions/workflows/ci.yml)
-```
-
 ### Adicionando secrets para deploy automático (opcional)
 
 Para configurar o Kamal dentro do CI (deploy automático no merge para `main`), adicione os secrets em **Settings → Secrets and variables → Actions** no repositório:
@@ -261,37 +272,6 @@ Para configurar o Kamal dentro do CI (deploy automático no merge para `main`), 
 | `OWNER_PASSWORD` | Senha do owner (seed) |
 
 Depois adicione um job `deploy` ao workflow que rode `kamal deploy` após o job `test` passar.
-
----
-
-## Arquitetura resumida
-
-```
-app/
-├── controllers/
-│   ├── scheduling/        # Carrinho e reservas (paciente/dentista)
-│   ├── payments/          # Pagamento Pix e webhook MercadoPago
-│   └── admin/             # Painel administrativo
-├── services/
-│   ├── booking_group_creator.rb   # Cria reserva + pagamento em transação atômica
-│   ├── booking_canceller.rb       # Valida regra de 48h e libera o slot
-│   ├── payment_confirmer.rb       # Confirma pagamento e faz broadcast Turbo
-│   └── mercado_pago/              # PixCreator, PaymentFinder, WebhookValidator
-├── jobs/
-│   └── expire_payments_job.rb     # Expira pagamentos pendentes a cada 5 min
-└── models/
-    ├── booking_group.rb   # Agrupa N bookings sob 1 pagamento
-    ├── availability.rb    # Slot de horário do dentista
-    └── payment.rb         # Registro de pagamento Pix
-```
-
-**Fluxo de pagamento:**
-
-1. Dentista adiciona horários ao carrinho (`session[:cart_ids]`)
-2. Checkout cria `BookingGroup` + `Booking`s + `Payment` em uma única transação com `FOR UPDATE` (evita double-booking)
-3. MercadoPago retorna QR Code Pix exibido via Turbo Stream
-4. Webhook valida assinatura HMAC-SHA256 e chama `PaymentConfirmer`
-5. Turbo Stream atualiza a tela do dentista em tempo real
 
 ---
 
@@ -373,7 +353,7 @@ ssh deploy@SEU_IP
 # se conectar sem pedir senha, está pronto
 ```
 
-Com isso o servidor está preparado. Volte para a seção de **Deploy em produção** e rode `kamal setup`.
+Com isso o servidor está preparado. Siga para a próxima seção.
 
 ---
 
@@ -384,11 +364,9 @@ O projeto inclui um `Dockerfile` otimizado para produção. O método recomendad
 ### Pré-requisitos
 
 **Servidor (VPS):**
-- Ubuntu 22.04+ (DigitalOcean, Hetzner, AWS EC2, etc.)
-- Mínimo 1 vCPU / 1 GB RAM
+- Ubuntu 22.04+ configurado conforme a seção anterior
 - Portas 80 e 443 abertas no firewall
 - Domínio apontando para o IP do servidor
-- Acesso SSH com sua chave pública já no servidor (`~/.ssh/authorized_keys`)
 
 **Máquina local:**
 - Docker instalado e rodando
@@ -463,7 +441,7 @@ proxy:
 
 ### 3. Configurar os secrets
 
-Crie um arquivo `.kamal/secrets` (nunca commite esse arquivo):
+Crie o arquivo `.kamal/secrets` (nunca commite esse arquivo — ele já está no `.gitignore`):
 
 ```bash
 KAMAL_REGISTRY_PASSWORD=sua-senha-dockerhub
@@ -479,22 +457,7 @@ MERCADOPAGO_WEBHOOK_SECRET=seu-webhook-secret
 OWNER_PASSWORD=SenhaForteOwner2024!
 ```
 
-### 4. Preparar o servidor
-
-O Kamal instala o Docker e configura tudo automaticamente no servidor. Basta rodar uma vez:
-
-```bash
-kamal server bootstrap
-```
-
-Isso instala o Docker no servidor via SSH. Se o seu usuário não for root, garanta que ele esteja no grupo `docker`:
-
-```bash
-# No servidor (via SSH)
-sudo usermod -aG docker $USER
-```
-
-### 5. Primeiro deploy
+### 4. Primeiro deploy
 
 ```bash
 kamal setup
@@ -509,7 +472,7 @@ Esse comando executa tudo de uma vez:
 
 Ao final, a aplicação estará disponível em `https://seudominio.com.br`.
 
-### 6. Deploys subsequentes
+### 5. Deploys subsequentes
 
 A cada nova versão:
 
@@ -535,8 +498,8 @@ kamal app details                       # status dos containers
 ### Verificando o deploy
 
 ```bash
-kamal app details   # deve mostrar containers rodando
-curl https://seudominio.com.br/up  # endpoint de health check do Rails
+kamal app details                    # deve mostrar containers rodando
+curl https://seudominio.com.br/up    # endpoint de health check do Rails
 ```
 
 ---
@@ -584,6 +547,95 @@ server {
 ```bash
 sudo apt install certbot python3-certbot-nginx -y
 sudo certbot --nginx -d seudominio.com.br
+```
+
+---
+
+## Arquitetura resumida
+
+```
+app/
+├── controllers/
+│   ├── scheduling/        # Carrinho e reservas (paciente/dentista)
+│   ├── payments/          # Pagamento Pix e webhook MercadoPago
+│   └── admin/             # Painel administrativo
+├── services/
+│   ├── booking_group_creator.rb   # Cria reserva + pagamento em transação atômica
+│   ├── booking_canceller.rb       # Valida regra de 48h e libera o slot
+│   ├── payment_confirmer.rb       # Confirma pagamento e faz broadcast Turbo
+│   └── mercado_pago/              # PixCreator, PaymentFinder, WebhookValidator
+├── jobs/
+│   └── expire_payments_job.rb     # Expira pagamentos pendentes a cada 5 min
+└── models/
+    ├── booking_group.rb   # Agrupa N bookings sob 1 pagamento
+    ├── availability.rb    # Slot de horário do dentista
+    └── payment.rb         # Registro de pagamento Pix
+```
+
+**Fluxo de pagamento:**
+
+1. Dentista adiciona horários ao carrinho (`session[:cart_ids]`)
+2. Checkout cria `BookingGroup` + `Booking`s + `Payment` em uma única transação com `FOR UPDATE` (evita double-booking)
+3. MercadoPago retorna QR Code Pix exibido via Turbo Stream
+4. Webhook valida assinatura HMAC-SHA256 e chama `PaymentConfirmer`
+5. Turbo Stream atualiza a tela do dentista em tempo real
+
+---
+
+## Troubleshooting
+
+### `PG::ConnectionBad: FATAL: role "usuario" does not exist`
+
+Seu usuário do sistema não tem permissão no PostgreSQL. Execute:
+
+```bash
+sudo -u postgres createuser $USER --superuser
+```
+
+### `Redis::CannotConnectError: Error connecting to Redis`
+
+O Redis não está rodando. Inicie-o:
+
+```bash
+redis-server
+# ou como serviço:
+sudo systemctl start redis
+```
+
+### `ActionController::InvalidAuthenticityToken` no webhook
+
+O webhook do MercadoPago não envia token CSRF. Isso já está tratado no `WebhooksController` com `protect_from_forgery with: :null_session`. Se aparecer esse erro, verifique se está acessando a rota correta (`POST /webhooks/mercadopago`).
+
+### Webhook não chega em desenvolvimento
+
+O MercadoPago precisa de uma URL HTTPS pública. Use ngrok:
+
+```bash
+ngrok http 3000
+```
+
+Atualize a URL no painel do MercadoPago cada vez que o ngrok reiniciar (a URL muda a cada sessão na versão gratuita).
+
+### `HMAC inválido` — webhook retorna 401
+
+O `MERCADOPAGO_WEBHOOK_SECRET` no `.env` não bate com o configurado no painel do MP. Verifique e copie novamente. Em desenvolvimento com o secret começando com `mock`, a validação é ignorada automaticamente.
+
+### Login com Google redireciona para erro
+
+- Verifique se `GOOGLE_CLIENT_ID` e `GOOGLE_CLIENT_SECRET` estão corretos no `.env`
+- Confirme que `http://localhost:3000/auth/google_oauth2/callback` está na lista de **Authorized redirect URIs** no Google Cloud Console
+- Reinicie o servidor após alterar o `.env`
+
+### Assets não compilam / Tailwind não atualiza
+
+Certifique-se de subir o servidor com `bin/dev` (não `bin/rails server`). O `bin/dev` inicia o compilador do Tailwind em paralelo.
+
+### `bin/rails db:seed` falha com e-mail duplicado
+
+O seed já foi rodado antes. Limpe o banco e rode novamente:
+
+```bash
+bin/rails db:drop db:create db:migrate db:seed
 ```
 
 ---
