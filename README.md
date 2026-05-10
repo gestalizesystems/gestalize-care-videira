@@ -154,6 +154,61 @@ E altere o **Publishing status** da consent screen de **Testing** para **In prod
 
 ---
 
+## Configurando o MercadoPago Sandbox
+
+### 1. Criar a aplicação no painel de desenvolvedores
+
+1. Acesse [mercadopago.com.br/developers](https://www.mercadopago.com.br/developers)
+2. Faça login com sua conta MercadoPago (ou crie uma)
+3. Vá em **Suas integrações → Criar aplicação**
+4. Preencha:
+   - Nome: `Videira Dental`
+   - Modelo de pagamento: **Pagamentos online**
+   - Produto: **Checkout API**
+5. Clique em **Criar aplicação**
+
+### 2. Obter as credenciais Sandbox
+
+Na sua aplicação, vá em **Credenciais → Credenciais de teste**:
+
+- `MERCADOPAGO_ACCESS_TOKEN` → campo **Access Token** (começa com `TEST-`)
+- `MERCADOPAGO_PUBLIC_KEY` → campo **Public Key** (começa com `TEST-`)
+
+### 3. Configurar o Webhook
+
+O MercadoPago exige uma URL HTTPS pública para enviar notificações. Em desenvolvimento, use o [ngrok](https://ngrok.com/download) para expor o localhost:
+
+```bash
+ngrok http 3000
+# Exemplo de saída: https://abc123.ngrok.io
+```
+
+No painel do MercadoPago, vá em **Webhooks → Configurar notificações**:
+
+- URL: `https://abc123.ngrok.io/webhooks/mercadopago`
+- Eventos: marque **Pagamentos**
+- Salve — o `MERCADOPAGO_WEBHOOK_SECRET` é exibido nessa tela
+
+### 4. Atualizar o `.env`
+
+```bash
+MERCADOPAGO_ACCESS_TOKEN=TEST-xxxx-seu-access-token
+MERCADOPAGO_PUBLIC_KEY=TEST-xxxx-sua-public-key
+MERCADOPAGO_WEBHOOK_SECRET=seu-webhook-secret
+```
+
+> O token começando com `TEST-` é detectado automaticamente pelo sistema como sandbox. Nesse modo, o QR Code Pix gerado é fictício e nenhuma cobrança real é realizada.
+
+### Simulando um pagamento aprovado
+
+Após gerar um Pix na aplicação, você pode simular a aprovação pelo painel do MercadoPago em **Atividade → pagamento em teste → Aprovar**. O webhook será disparado e a tela do dentista atualizará em tempo real via Turbo Stream.
+
+### Para produção
+
+Substitua pelas **Credenciais de produção** (sem o prefixo `TEST-`) e configure o webhook com o domínio real da aplicação.
+
+---
+
 ## Testes
 
 ```bash
