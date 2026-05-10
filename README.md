@@ -219,6 +219,49 @@ A suíte cobre modelos, serviços e requests (89 exemplos).
 
 ---
 
+## CI — GitHub Actions
+
+O projeto já vem com um workflow em `.github/workflows/ci.yml` que roda automaticamente em todo push para `main` e em pull requests.
+
+### Jobs executados
+
+| Job | O que faz |
+|---|---|
+| `scan_ruby` | Análise estática de segurança Rails com Brakeman |
+| `scan_js` | Auditoria de dependências JavaScript via importmap |
+| `lint` | Verificação de estilo com RuboCop |
+| `test` | Roda a suíte RSpec completa com PostgreSQL e Redis reais |
+
+### Configuração necessária
+
+O CI não precisa de nenhuma configuração manual de secrets para rodar — ele usa credenciais mock para Google e MercadoPago, e sobe PostgreSQL e Redis como services do próprio GitHub Actions.
+
+Se quiser adicionar o **badge de status** do CI no topo do README, substitua `SEU_USUARIO` pelo seu usuário do GitHub:
+
+```markdown
+[![CI](https://github.com/SEU_USUARIO/videira-dental/actions/workflows/ci.yml/badge.svg)](https://github.com/SEU_USUARIO/videira-dental/actions/workflows/ci.yml)
+```
+
+### Adicionando secrets para deploy automático (opcional)
+
+Para configurar o Kamal dentro do CI (deploy automático no merge para `main`), adicione os secrets em **Settings → Secrets and variables → Actions** no repositório:
+
+| Secret | Valor |
+|---|---|
+| `KAMAL_REGISTRY_PASSWORD` | Senha do Docker Hub |
+| `RAILS_MASTER_KEY` | Conteúdo de `config/master.key` |
+| `DATABASE_URL` | URL do banco de produção |
+| `SECRET_KEY_BASE` | Gerado com `bin/rails secret` |
+| `GOOGLE_CLIENT_ID` | Credencial OAuth produção |
+| `GOOGLE_CLIENT_SECRET` | Credencial OAuth produção |
+| `MERCADOPAGO_ACCESS_TOKEN` | Token de produção MP |
+| `MERCADOPAGO_WEBHOOK_SECRET` | Secret do webhook MP |
+| `OWNER_PASSWORD` | Senha do owner (seed) |
+
+Depois adicione um job `deploy` ao workflow que rode `kamal deploy` após o job `test` passar.
+
+---
+
 ## Arquitetura resumida
 
 ```
