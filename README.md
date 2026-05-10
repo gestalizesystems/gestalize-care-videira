@@ -295,6 +295,88 @@ app/
 
 ---
 
+## Configurando o servidor VPS do zero
+
+Antes de rodar o `kamal setup`, o servidor precisa estar acessível via SSH. Siga os passos abaixo.
+
+### 1. Criar o servidor
+
+Escolha um provedor e crie uma instância Ubuntu 22.04 LTS:
+
+| Provedor | Plano recomendado | Custo |
+|---|---|---|
+| [Hetzner](https://hetzner.com/cloud) | CX22 (2 vCPU / 4 GB) | ~€4/mês |
+| [DigitalOcean](https://digitalocean.com) | Droplet 2 vCPU / 2 GB | ~$18/mês |
+| [AWS EC2](https://aws.amazon.com/ec2) | t3.small | ~$15/mês |
+
+Na criação, selecione **autenticação por SSH Key** e adicione sua chave pública local (`~/.ssh/id_rsa.pub`).
+
+### 2. Acessar o servidor
+
+```bash
+ssh root@SEU_IP
+```
+
+### 3. Criar usuário de deploy
+
+Não use `root` para o Kamal. Crie um usuário dedicado:
+
+```bash
+adduser deploy
+usermod -aG sudo deploy
+
+# Copiar as chaves SSH do root para o novo usuário
+rsync --archive --chown=deploy:deploy ~/.ssh /home/deploy
+```
+
+### 4. Configurar o firewall
+
+```bash
+ufw allow OpenSSH
+ufw allow 80
+ufw allow 443
+ufw enable
+ufw status   # deve mostrar as 3 regras ativas
+```
+
+### 5. Instalar o Docker
+
+```bash
+curl -fsSL https://get.docker.com | sh
+usermod -aG docker deploy
+```
+
+### 6. Configurar o domínio (DNS)
+
+No painel do seu registrador de domínio (Registro.br, Cloudflare, etc.), crie um registro **A**:
+
+```
+Tipo:  A
+Nome:  @  (raiz) ou subdomínio (ex: app)
+Valor: SEU_IP_DO_SERVIDOR
+TTL:   300
+```
+
+Aguarde a propagação (5 min a 24h) e verifique:
+
+```bash
+dig seudominio.com.br +short
+# deve retornar o IP do servidor
+```
+
+### 7. Testar conexão com o usuário de deploy
+
+Da sua máquina local:
+
+```bash
+ssh deploy@SEU_IP
+# se conectar sem pedir senha, está pronto
+```
+
+Com isso o servidor está preparado. Volte para a seção de **Deploy em produção** e rode `kamal setup`.
+
+---
+
 ## Deploy em produção
 
 O projeto inclui um `Dockerfile` otimizado para produção. O método recomendado é o **Kamal**, ferramenta de deploy da própria equipe do Rails. Abaixo está o passo a passo completo do zero ao ar.
