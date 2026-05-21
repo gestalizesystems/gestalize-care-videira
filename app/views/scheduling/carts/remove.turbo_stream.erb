@@ -1,11 +1,19 @@
 <% av = Availability.find_by(id: params[:availability_id]) %>
+<% updated_cart = Availability.where(id: Array(session[:cart_ids])).includes(:service, :dentist).order(:date, :starts_at) %>
 
+<%# Na home/servicos: restaura o slot card para o estado "disponível para adicionar" %>
 <% if av %>
   <%= turbo_stream.replace "slot-#{av.id}" do %>
     <%= render "shared/slot_card", availability: av %>
   <% end %>
 <% end %>
 
+<%# Na página do carrinho: atualiza a lista inteira (inclusive estado vazio) %>
+<%= turbo_stream.update "cart-items" do %>
+  <%= render "scheduling/carts/items", cart_availabilities: updated_cart %>
+<% end %>
+
+<%# Footer em todas as páginas %>
 <%= turbo_stream.update "cart-summary" do %>
   <%= render "shared/cart_summary" %>
 <% end %>

@@ -1,0 +1,50 @@
+<% if cart_availabilities.empty? %>
+  <div class="empty-state">
+    <p class="mb-4">Seu carrinho está vazio.</p>
+    <%= link_to "Ver horários disponíveis", root_path, class: "btn-sm-primary px-5 py-3" %>
+  </div>
+<% else %>
+  <div class="flex flex-col gap-3 mb-6">
+    <% cart_availabilities.each do |av| %>
+      <div id="cart-item-<%= av.id %>" class="card-sm flex items-center justify-between">
+        <div>
+          <p class="font-medium text-sm text-vdc-foreground"><%= av.label %></p>
+          <p class="text-xs mt-1 text-vdc-secondary">
+            <%= l(av.date, format: :default) %> · <%= av.starts_at.strftime("%H:%M") %>–<%= av.ends_at.strftime("%H:%M") %>
+          </p>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="text-sm font-semibold text-vdc-primary">
+            R$ <%= money(av.price_cents) %>
+          </span>
+          <%= button_to remove_from_carrinho_path(availability_id: av.id),
+                method: :delete, data: { turbo_stream: true },
+                class: "btn-xs-danger" do %>
+            ✕
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+  <% subtotal_cents = cart_availabilities.sum(&:price_cents) %>
+  <div class="card mb-6">
+    <div class="flex justify-between text-sm mb-3 text-vdc-secondary">
+      <span><%= pluralize(cart_availabilities.size, "horário", "horários") %></span>
+      <span>R$ <%= money(subtotal_cents) %></span>
+    </div>
+    <div class="border-t pt-3 flex justify-between" style="border-color: #E0E0E0">
+      <span class="font-semibold text-vdc-foreground">Total</span>
+      <span class="text-xl font-bold text-vdc-primary">
+        R$ <%= money(subtotal_cents) %>
+      </span>
+    </div>
+  </div>
+
+  <div class="flex flex-col gap-3">
+    <%= link_to "Confirmar e pagar com Pix →", confirmar_reservas_path,
+          class: "btn-primary w-full text-center" %>
+    <%= button_to "Esvaziar carrinho", carrinho_path, method: :delete,
+          class: "btn-outline w-full" %>
+  </div>
+<% end %>
