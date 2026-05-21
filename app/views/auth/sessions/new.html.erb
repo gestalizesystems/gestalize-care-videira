@@ -1,60 +1,67 @@
 <% content_for :title, "Entrar" %>
 
-<div class="mb-6">
-  <%= render "shared/back_button", path: root_path %>
-</div>
+<%= render "shared/back_button", path: root_path %>
 
-<div class="flex border-b mb-8" style="border-color: #E0E0E0">
-  <span class="pb-3 px-4 border-b-2 text-sm font-semibold"
-        style="border-color: #5D4037; color: #5D4037">
-    Entrar
-  </span>
-  <%= link_to new_user_registration_path,
-        class: "pb-3 px-4 text-sm font-medium",
-        style: "color: #BDBDBD" do %>
-    Criar conta
-  <% end %>
-</div>
+<h1 class="text-2xl font-bold mb-6" style="color: #3E2723">Entrar</h1>
 
-<%= form_for(resource, as: resource_name, url: session_path(resource_name),
-      html: { class: "flex flex-col gap-4" }) do |f| %>
-  <%= f.email_field :email, autofocus: true, autocomplete: "email",
-        placeholder: "E-mail*", class: "input-field" %>
-
-  <div class="relative" data-controller="password-toggle">
-    <%= f.password_field :password, autocomplete: "current-password",
-          placeholder: "Senha*",
-          class: "input-field pr-12",
-          data: { "password-toggle-target": "input" } %>
-    <button type="button"
-            class="absolute right-4 top-1/2 -translate-y-1/2"
-            data-action="click->password-toggle#toggle"
-            aria-label="Mostrar senha">
-      <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24"
-           stroke="currentColor" stroke-width="2" style="color: #8D6E63">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-        <path stroke-linecap="round" stroke-linejoin="round"
-              d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-      </svg>
-    </button>
+<div class="card">
+  <%# ── Tabs ──────────────────────────────────────────────────────────────── %>
+  <div class="flex border-b mb-6" style="border-color: #E0E0E0">
+    <span class="pb-3 px-4 border-b-2 text-sm font-semibold"
+          style="border-color: #5D4037; color: #5D4037">
+      Entrar
+    </span>
+    <%= link_to new_user_registration_path,
+          class: "pb-3 px-4 text-sm font-medium",
+          style: "color: #BDBDBD" do %>
+      Criar conta
+    <% end %>
   </div>
 
-  <% if devise_mapping.rememberable? %>
-    <div class="flex items-center justify-between text-sm">
-      <label class="flex items-center gap-2" style="color: #5D4037">
-        <%= f.check_box :remember_me, class: "w-4 h-4 rounded accent-[#5D4037]" %>
-        Lembrar de mim
-      </label>
-      <%= link_to "Esqueci a senha", new_password_path(resource_name),
-            class: "text-xs underline",
-            style: "color: #8D6E63" %>
+  <%# ── Erros ─────────────────────────────────────────────────────────────── %>
+  <%= render "shared/form_errors", object: resource if resource.errors.any? %>
+
+  <%# ── Formulário ─────────────────────────────────────────────────────────── %>
+  <%= form_for(resource, as: resource_name, url: session_path(resource_name),
+        html: { class: "flex flex-col gap-4" }) do |f| %>
+    <%= f.email_field :email, autofocus: true, autocomplete: "email",
+          placeholder: "E-mail*", class: "input-field" %>
+
+    <div class="relative" data-controller="password-toggle">
+      <%= f.password_field :password, autocomplete: "current-password",
+            placeholder: "Senha*",
+            class: "input-field pr-12",
+            data: { "password-toggle-target": "input" } %>
+      <button type="button"
+              class="absolute right-4 top-1/2 -translate-y-1/2"
+              data-action="click->password-toggle#toggle"
+              aria-label="Mostrar senha">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24"
+             stroke="currentColor" stroke-width="2" style="color: #8D6E63">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+          <path stroke-linecap="round" stroke-linejoin="round"
+                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+        </svg>
+      </button>
     </div>
+
+    <% if devise_mapping.rememberable? %>
+      <div class="flex items-center justify-between text-sm">
+        <label class="flex items-center gap-2 cursor-pointer" style="color: #5D4037">
+          <%= f.check_box :remember_me, class: "w-4 h-4 rounded accent-[#5D4037]" %>
+          Lembrar de mim
+        </label>
+        <%= link_to "Esqueci a senha", new_password_path(resource_name),
+              class: "text-xs underline",
+              style: "color: #8D6E63" %>
+      </div>
+    <% end %>
+
+    <%= f.submit "Entrar", class: "btn-primary w-full cursor-pointer mt-2" %>
   <% end %>
 
-  <%= f.submit "Entrar", class: "btn-primary w-full cursor-pointer" %>
-<% end %>
-
-<p class="mt-8 text-center text-xs" style="color: #BDBDBD">
-  Ao continuar, você concorda com nossos
-  <a href="#" class="underline" style="color: #8D6E63">Termos e política de privacidade</a>.
-</p>
+  <p class="mt-6 text-center text-xs" style="color: #BDBDBD">
+    Ao continuar, você concorda com nossos
+    <a href="#" class="underline" style="color: #8D6E63">Termos e política de privacidade</a>.
+  </p>
+</div>

@@ -1,71 +1,82 @@
 <% content_for :title, "Criar conta" %>
 
-<div class="mb-6">
-  <%= render "shared/back_button", path: root_path %>
-</div>
+<%= render "shared/back_button", path: root_path %>
 
-<div class="flex border-b mb-8" style="border-color: #E0E0E0">
-  <%= link_to new_user_session_path,
-        class: "pb-3 px-4 text-sm font-medium",
-        style: "color: #BDBDBD" do %>
-    Entrar
-  <% end %>
-  <span class="pb-3 px-4 border-b-2 text-sm font-semibold"
-        style="border-color: #5D4037; color: #5D4037">
-    Criar conta
-  </span>
-</div>
+<h1 class="text-2xl font-bold mb-6" style="color: #3E2723">Criar conta</h1>
 
-<%= form_for(resource, as: resource_name, url: registration_path(resource_name),
-      html: { class: "flex flex-col gap-4" }) do |f| %>
-  <%= f.text_field :name, autofocus: true, autocomplete: "name",
-        placeholder: "Nome completo*", class: "input-field" %>
-
-  <%= f.email_field :email, autocomplete: "email",
-        placeholder: "E-mail*", class: "input-field" %>
-
-  <div class="relative" data-controller="password-toggle">
-    <%= f.password_field :password, autocomplete: "new-password",
-          placeholder: "Senha*",
-          class: "input-field pr-12",
-          data: { "password-toggle-target": "input" } %>
-    <button type="button" class="absolute right-4 top-1/2 -translate-y-1/2"
-            data-action="click->password-toggle#toggle" aria-label="Mostrar senha">
-      <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color: #8D6E63">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-        <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-      </svg>
-    </button>
-  </div>
-
-  <div class="relative" data-controller="password-toggle">
-    <%= f.password_field :password_confirmation, autocomplete: "new-password",
-          placeholder: "Confirmar senha*",
-          class: "input-field pr-12",
-          data: { "password-toggle-target": "input" } %>
-    <button type="button" class="absolute right-4 top-1/2 -translate-y-1/2"
-            data-action="click->password-toggle#toggle" aria-label="Mostrar confirmação">
-      <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color: #8D6E63">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-        <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-      </svg>
-    </button>
-  </div>
-
-  <%= f.telephone_field :phone, autocomplete: "tel",
-        placeholder: "Número de telefone*", class: "input-field" %>
-
-  <%= f.text_field :cro, placeholder: "Registro CRO*", class: "input-field" %>
-
-  <%= f.text_field :specialty, placeholder: "Área de atuação*", class: "input-field" %>
-
-  <label class="flex items-start gap-3 text-xs cursor-pointer" style="color: #8D6E63">
-    <input type="checkbox" required class="mt-0.5 w-4 h-4 rounded shrink-0 accent-[#5D4037]">
-    <span>
-      Li e aceito os
-      <a href="#" class="underline" style="color: #5D4037">Termos de Uso e Política de Privacidade</a>
+<div class="card">
+  <%# ── Tabs ──────────────────────────────────────────────────────────────── %>
+  <div class="flex border-b mb-6" style="border-color: #E0E0E0">
+    <%= link_to new_user_session_path,
+          class: "pb-3 px-4 text-sm font-medium",
+          style: "color: #BDBDBD" do %>
+      Entrar
+    <% end %>
+    <span class="pb-3 px-4 border-b-2 text-sm font-semibold"
+          style="border-color: #5D4037; color: #5D4037">
+      Criar conta
     </span>
-  </label>
+  </div>
 
-  <%= f.submit "Criar conta", class: "btn-primary w-full cursor-pointer" %>
-<% end %>
+  <%# ── Erros ─────────────────────────────────────────────────────────────── %>
+  <%= render "shared/form_errors", object: resource if resource.errors.any? %>
+
+  <%# ── Formulário ─────────────────────────────────────────────────────────── %>
+  <%= form_for(resource, as: resource_name, url: registration_path(resource_name),
+        html: { class: "flex flex-col gap-4" }) do |f| %>
+    <%= f.text_field :name, autofocus: true, autocomplete: "name",
+          placeholder: "Nome completo*", class: "input-field" %>
+
+    <%= f.email_field :email, autocomplete: "email",
+          placeholder: "E-mail*", class: "input-field" %>
+
+    <div class="relative" data-controller="password-toggle">
+      <%= f.password_field :password, autocomplete: "new-password",
+            placeholder: "Senha*",
+            class: "input-field pr-12",
+            data: { "password-toggle-target": "input" } %>
+      <button type="button" class="absolute right-4 top-1/2 -translate-y-1/2"
+              data-action="click->password-toggle#toggle" aria-label="Mostrar senha">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24"
+             stroke="currentColor" stroke-width="2" style="color: #8D6E63">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+          <path stroke-linecap="round" stroke-linejoin="round"
+                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="relative" data-controller="password-toggle">
+      <%= f.password_field :password_confirmation, autocomplete: "new-password",
+            placeholder: "Confirmar senha*",
+            class: "input-field pr-12",
+            data: { "password-toggle-target": "input" } %>
+      <button type="button" class="absolute right-4 top-1/2 -translate-y-1/2"
+              data-action="click->password-toggle#toggle" aria-label="Mostrar confirmação">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24"
+             stroke="currentColor" stroke-width="2" style="color: #8D6E63">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+          <path stroke-linecap="round" stroke-linejoin="round"
+                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+        </svg>
+      </button>
+    </div>
+
+    <%= f.telephone_field :phone, autocomplete: "tel",
+          placeholder: "Número de telefone*", class: "input-field" %>
+
+    <%= f.text_field :cro, placeholder: "Registro CRO*", class: "input-field" %>
+
+    <%= f.text_field :specialty, placeholder: "Área de atuação*", class: "input-field" %>
+
+    <label class="flex items-start gap-3 text-xs cursor-pointer" style="color: #8D6E63">
+      <input type="checkbox" required class="mt-0.5 w-4 h-4 rounded shrink-0 accent-[#5D4037]">
+      <span>
+        Li e aceito os
+        <a href="#" class="underline" style="color: #5D4037">Termos de Uso e Política de Privacidade</a>
+      </span>
+    </label>
+
+    <%= f.submit "Criar conta", class: "btn-primary w-full cursor-pointer" %>
+  <% end %>
+</div>
