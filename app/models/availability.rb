@@ -42,7 +42,7 @@ class Availability < ApplicationRecord
   end
 
   def cancellable?
-    return false unless available?
+    return false if cancelled?
     slot_start = Time.zone.local(date.year, date.month, date.day,
                                  starts_at.hour, starts_at.min)
     lead_hours = ENV.fetch("CANCELLATION_LEAD_HOURS", 48).to_i

@@ -33,16 +33,16 @@ RSpec.describe User, type: :model do
   end
 
   describe "enums" do
-    it { is_expected.to define_enum_for(:role).backed_by_column_of_type(:string).with_values(owner: "owner", dentist: "dentist", patient: "patient") }
+    it { is_expected.to define_enum_for(:role).backed_by_column_of_type(:string).with_values(owner: "owner", dentist: "dentist") }
   end
 
   describe "scopes" do
     let!(:dentist) { create(:user, :dentist) }
-    let!(:patient) { create(:user) }
+    let!(:owner)   { create(:user, :owner) }
 
     it ".dentists returns only dentists" do
       expect(User.dentists).to include(dentist)
-      expect(User.dentists).not_to include(patient)
+      expect(User.dentists).not_to include(owner)
     end
   end
 

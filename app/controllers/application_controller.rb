@@ -24,6 +24,6 @@ class ApplicationController < ActionController::Base
   end
 
   def after_sign_in_path_for(resource)
-    resource.owner? || resource.dentist? ? admin_root_path : root_path
+    resource.owner? ? admin_root_path : root_path
   end
 end

@@ -1,7 +1,7 @@
 FactoryBot.define do
   factory :booking_group do
     association :clinic
-    association :patient, factory: [:user, :dentist]
+    association :dentist, factory: [:user, :dentist]
 
     subtotal_cents { 30_000 }
     discount_cents { 0 }
@@ -30,7 +30,7 @@ FactoryBot.define do
       after(:create) do |group|
         availability = create(:availability, clinic: group.clinic, status: "booked")
         create(:booking, clinic: group.clinic, booking_group: group,
-               availability: availability, patient: group.patient)
+               availability: availability, dentist: group.dentist)
       end
     end
   end

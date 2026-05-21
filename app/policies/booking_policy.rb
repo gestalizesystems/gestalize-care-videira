@@ -4,7 +4,7 @@ class BookingPolicy < ApplicationPolicy
 
   class Scope < ApplicationPolicy::Scope
     def resolve
-      if user.owner? || user.dentist?
+      if user.owner?
         scope.joins(:booking_group).where(booking_groups: { clinic_id: user.clinic_id })
       else
         scope.where(patient_id: user.id)

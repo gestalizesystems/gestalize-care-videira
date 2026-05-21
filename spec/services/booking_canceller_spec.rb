@@ -2,11 +2,11 @@ require "rails_helper"
 
 RSpec.describe BookingCanceller, type: :service do
   let(:clinic)       { create(:clinic) }
-  let(:dentist)      { create(:user, :dentist, clinic: clinic) }
-  let(:patient)      { create(:user, :dentist, clinic: clinic) }
-  let(:group)        { create(:booking_group, clinic: clinic, patient: patient) }
-  let(:availability) { create(:availability, clinic: clinic, dentist: dentist) }
-  let(:booking)      { create(:booking, clinic: clinic, booking_group: group, availability: availability, patient: patient) }
+  let(:slot_dentist) { create(:user, :dentist, clinic: clinic) }
+  let(:booker)       { create(:user, :dentist, clinic: clinic) }
+  let(:group)        { create(:booking_group, clinic: clinic, dentist: booker) }
+  let(:availability) { create(:availability, clinic: clinic, dentist: slot_dentist) }
+  let(:booking)      { create(:booking, clinic: clinic, booking_group: group, availability: availability, dentist: booker) }
 
   describe ".call" do
     context "when booking is already cancelled" do
@@ -50,8 +50,8 @@ RSpec.describe BookingCanceller, type: :service do
       end
 
       it "does not cancel group when other bookings remain active" do
-        other_av = create(:availability, clinic: clinic, dentist: dentist, date: 3.days.from_now.to_date, starts_at: "10:00", ends_at: "10:30")
-        create(:booking, clinic: clinic, booking_group: group, availability: other_av, patient: patient)
+        other_av = create(:availability, clinic: clinic, dentist: slot_dentist, date: 3.days.from_now.to_date, starts_at: "10:00", ends_at: "11:00")
+        create(:booking, clinic: clinic, booking_group: group, availability: other_av, dentist: booker)
 
         BookingCanceller.call(booking: booking)
         expect(group.reload.status).to eq("pending")

@@ -60,3 +60,14 @@ pt-BR:
       locked: "Sua conta está bloqueada."
       invalid: "E-mail ou senha inválidos."
       not_found_in_database: "E-mail ou senha inválidos."
+  booking_group:
+    status:
+      pending: "Aguardando pagamento"
+      confirmed: "Confirmado"
+      cancelled: "Cancelado"
+      expired: "Expirado"
+  booking:
+    status:
+      pending: "Pendente"
+      confirmed: "Confirmado"
+      cancelled: "Cancelado"

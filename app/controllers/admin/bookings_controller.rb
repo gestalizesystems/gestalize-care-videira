@@ -19,13 +19,14 @@ class Admin::BookingsController < Admin::BaseController
   end
 
   def cancel
-    result = BookingCanceller.call(booking: @booking_group.bookings.confirmed.first)
-
-    if result.success?
-      redirect_to admin_booking_path(@booking_group), notice: "Reserva cancelada."
-    else
-      redirect_to admin_booking_path(@booking_group), alert: result.error
+    if @booking_group.cancelled?
+      return redirect_to admin_booking_path(@booking_group), alert: "Reserva já cancelada."
     end
+
+    @booking_group.cancel!
+    redirect_to admin_booking_path(@booking_group), notice: "Reserva cancelada."
+  rescue => e
+    redirect_to admin_booking_path(@booking_group), alert: "Erro ao cancelar: #{e.message}"
   end
 
   private

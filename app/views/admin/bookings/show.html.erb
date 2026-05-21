@@ -7,7 +7,7 @@
     <h1 class="text-xl font-semibold text-vdc-primary">Reserva</h1>
     <span class="<%= booking_group_status_class(@booking_group.status) %>"
           style="<%= booking_group_status_style(@booking_group.status) %>">
-      <%= @booking_group.status %>
+      <%= t("booking_group.status.#{@booking_group.status}", default: @booking_group.status.humanize) %>
     </span>
   </div>
 
@@ -66,7 +66,7 @@
   </div>
 <% end %>
 
-<% if @booking_group.confirmed? %>
+<% if @booking_group.pending? || @booking_group.confirmed? %>
   <%= button_to cancelar_admin_booking_path(@booking_group), method: :patch,
         class: "btn-danger w-full",
         data: { turbo_confirm: "Cancelar esta reserva e liberar os horários?" } do %>

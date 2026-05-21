@@ -25,7 +25,7 @@
               <%= link_to perfil_path, class: "block" do %>
                 <%= render "shared/avatar", user: current_user, size: "sm" %>
               <% end %>
-              <% if current_user.owner? || current_user.dentist? %>
+              <% if current_user.owner? %>
                 <%= link_to "Admin", admin_root_path,
                       class: "text-xs px-3 py-1.5 rounded-full border",
                       style: "border-color: #5D4037; color: #5D4037" %>

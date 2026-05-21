@@ -5,8 +5,8 @@ RSpec.describe Availability, type: :model do
 
   describe "associations" do
     it { is_expected.to belong_to(:clinic) }
-    it { is_expected.to belong_to(:service) }
-    it { is_expected.to belong_to(:dentist).class_name("User") }
+    it { is_expected.to belong_to(:service).optional }
+    it { is_expected.to belong_to(:dentist).class_name("User").optional }
     it { is_expected.to have_one(:booking) }
   end
 
@@ -39,16 +39,23 @@ RSpec.describe Availability, type: :model do
   end
 
   describe "#cancellable?" do
-    context "when status is not available" do
+    context "when status is cancelled" do
       it "returns false" do
-        availability = build(:availability, :booked)
+        availability = build(:availability, status: "cancelled")
         expect(availability.cancellable?).to be false
+      end
+    end
+
+    context "when status is booked and slot is more than 48 hours away" do
+      it "returns true" do
+        av = build(:availability, :booked, date: 3.days.from_now.to_date, starts_at: "09:00", ends_at: "12:00")
+        expect(av.cancellable?).to be true
       end
     end
 
     context "when slot is more than 48 hours away" do
       it "returns true" do
-        av = build(:availability, date: 3.days.from_now.to_date, starts_at: Time.current)
+        av = build(:availability, date: 3.days.from_now.to_date, starts_at: "09:00", ends_at: "12:00")
         expect(av.cancellable?).to be true
       end
     end

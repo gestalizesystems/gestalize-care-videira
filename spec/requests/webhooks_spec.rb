@@ -3,7 +3,7 @@ require "rails_helper"
 RSpec.describe "Webhooks", type: :request do
   let(:clinic)  { create(:clinic) }
   let(:patient) { create(:user, :dentist, clinic: clinic) }
-  let(:group)   { create(:booking_group, clinic: clinic, patient: patient) }
+  let(:group)   { create(:booking_group, clinic: clinic, dentist: patient) }
   let!(:payment) { create(:payment, clinic: clinic, booking_group: group) }
 
   before do

@@ -3,7 +3,7 @@ FactoryBot.define do
     association :clinic
     association :booking_group
     association :availability
-    association :patient, factory: [:user, :dentist]
+    association :dentist, factory: [:user, :dentist]
 
     price_cents { 15_000 }
     status      { "pending" }

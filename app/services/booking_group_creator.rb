@@ -9,16 +9,15 @@ class BookingGroupCreator < ApplicationService
   end
 
   def call
+    return failure("Sua conta não está associada a uma clínica.") unless @clinic
     return failure("Selecione ao menos um horário.") if @availability_ids.empty?
 
     calc = DiscountCalculator.call(availability_ids: @availability_ids, clinic: @clinic)
     return failure("Erro ao calcular preços.") unless calc.success?
 
     pricing = calc.value
-    return failure("Nenhum horário válido encontrado.") if pricing[:availabilities].empty?
-
     if pricing[:availabilities].size != @availability_ids.size
-      return failure("Um ou mais horários não estão disponíveis.")
+      return failure("Um ou mais horários não estão mais disponíveis. Atualize seu carrinho.")
     end
 
     group   = nil

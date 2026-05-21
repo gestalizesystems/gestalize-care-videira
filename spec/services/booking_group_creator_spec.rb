@@ -56,14 +56,14 @@ RSpec.describe BookingGroupCreator, type: :service do
       end
     end
 
-    context "when a slot is no longer available (race condition)" do
+    context "when a slot is no longer available" do
       before { av1.update!(status: "booked") }
 
       it "returns failure and rolls back" do
         expect {
           result = BookingGroupCreator.call(user: patient, availability_ids: [av1.id])
           expect(result.success?).to be false
-          expect(result.error).to include("reservados por outra pessoa")
+          expect(result.error).to include("disponíveis")
         }.not_to change(BookingGroup, :count)
       end
     end

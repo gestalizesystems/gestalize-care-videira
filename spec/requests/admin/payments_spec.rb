@@ -4,7 +4,7 @@ RSpec.describe "Admin::Payments", type: :request do
   let(:clinic)  { create(:clinic) }
   let(:owner)   { create(:user, :owner, clinic: clinic) }
   let(:dentist) { create(:user, :dentist, clinic: clinic) }
-  let(:group)   { create(:booking_group, clinic: clinic, patient: dentist) }
+  let(:group)   { create(:booking_group, clinic: clinic, dentist: dentist) }
   let(:payment) { create(:payment, clinic: clinic, booking_group: group) }
 
   describe "GET /admin/payments" do

@@ -5,7 +5,9 @@ class DiscountCalculator < ApplicationService
   end
 
   def call
-    availabilities = Availability.where(id: @availability_ids, clinic: @clinic)
+    return failure("Conta não associada a uma clínica.") unless @clinic
+
+    availabilities = Availability.where(id: @availability_ids, clinic: @clinic, status: "available")
     subtotal_cents  = availabilities.sum(&:price_cents)
     rule            = DiscountRule.best_for(@clinic.id, availabilities.size)
     discount_cents  = rule ? (subtotal_cents * rule.discount_percent / 100.0).floor : 0
