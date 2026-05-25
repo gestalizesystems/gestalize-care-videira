@@ -24,8 +24,6 @@ Rails.application.routes.draw do
 
   # ---- Agendamento ------------------------------------------
   scope module: "scheduling" do
-    resources :servicos, only: [:index, :show], path: "servicos"
-
     resource :carrinho, only: [:show, :destroy], path: "carrinho",
       controller: "carts" do
       post   "adicionar/:availability_id", to: "carts#add",    as: :add_to
@@ -61,7 +59,7 @@ Rails.application.routes.draw do
   namespace :admin do
     root to: "dashboard#index"
 
-    resources :clinics,        only: [:show, :edit, :update]
+    resources :clinics,        only: [:show, :update]
     resources :users,          only: [:index, :show, :edit, :update, :destroy]
     resources :services,       except: [:show]
     resources :availabilities, except: [:show] do

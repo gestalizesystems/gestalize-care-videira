@@ -9,10 +9,7 @@ class Scheduling::CartsController < ApplicationController
     av = Availability.available.find_by(id: params[:availability_id])
 
     if av.nil?
-      return respond_to do |format|
-        format.turbo_stream { render turbo_stream: turbo_stream.replace("cart-flash", partial: "shared/flash", locals: { type: :alert, msg: "Horário indisponível." }) }
-        format.html { redirect_back(fallback_location: root_path, alert: "Horário indisponível.") }
-      end
+      return redirect_back(fallback_location: root_path, alert: "Horário indisponível.")
     end
 
     cart_ids << av.id unless cart_ids.include?(av.id)

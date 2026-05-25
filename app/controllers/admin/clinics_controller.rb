@@ -3,10 +3,6 @@ class Admin::ClinicsController < Admin::BaseController
     @clinic = current_user.clinic
   end
 
-  def edit
-    @clinic = current_user.clinic
-  end
-
   def update
     @clinic = current_user.clinic
 

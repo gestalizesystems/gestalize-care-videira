@@ -14,38 +14,10 @@
 
 ## 1. Views faltando (app quebra ao navegar)
 
-### 1.1 🔴 Admin — Serviços (`/admin/services`)
-Rota `resources :services, except: [:show]` está definida, `Admin::ServicesController` existe, mas nenhuma view foi criada.
-
-Arquivos a criar:
-- `app/views/admin/services/index.html.erb`
-- `app/views/admin/services/new.html.erb`
-- `app/views/admin/services/edit.html.erb`
-- `app/views/admin/services/_form.html.erb`
-
-### 1.2 🔴 Admin — Clínica (`/admin/clinic`)
-`Admin::ClinicsController` tem `show`, `edit`, `update`, mas `app/views/admin/clinics/` está vazia.
-
-Arquivos a criar:
-- `app/views/admin/clinics/show.html.erb`
-- `app/views/admin/clinics/edit.html.erb`
-- `app/views/admin/clinics/_form.html.erb`
-
-### 1.3 🔴 Perfil do usuário (`/perfil`)
-Rota `resource :perfil, controller: "users/profiles"` está definida, mas o controller e as views não existem.
-
-Arquivos a criar:
-- `app/controllers/users/profiles_controller.rb` (show, edit, update — permitir: name, phone, birth_date, cpf, avatar)
-- `app/views/users/profiles/show.html.erb`
-- `app/views/users/profiles/edit.html.erb`
-
-### 1.4 🔴 Agendamento — Serviços públicos (`/servicos`)
-`Scheduling::ServicosController` (index/show) existe, mas `app/views/scheduling/servicos/` está vazia.
-A navegação por serviço (ver horários de uma especialidade) está inacessível.
-
-Arquivos a criar:
-- `app/views/scheduling/servicos/index.html.erb` — lista de serviços ativos da clínica
-- `app/views/scheduling/servicos/show.html.erb` — horários disponíveis da semana para aquele serviço
+> ✅ Itens 1.1, 1.2, 1.3 já foram implementados.
+> ✂️ Item 1.4 (`/servicos`) foi removido — o modelo do app é aluguel de sala (turnos),
+> não navegação por especialidade. Se voltar a ser necessário, recriar a rota
+> `scheduling/servicos`, o controller e as views.
 
 ---
 
@@ -169,11 +141,58 @@ O dashboard mostra 3 cards estáticos. Um gráfico de barras simples (últimos 6
 
 ---
 
+## 7. Achados da análise de 2026-05-25
+
+> Itens identificados durante a varredura de código morto e revisão geral.
+
+### 7.1 🟡 `Booking#dentist` usa coluna `patient_id`
+`app/models/booking.rb` declara `belongs_to :dentist, class_name: "User", foreign_key: :patient_id`.
+Mesma coisa em `BookingGroup`. A coluna foi herdada do modelo antigo (paciente) e renomear
+exige migration + ajustes em policies/services.
+
+- **Por quê:** modelo era para pacientes; virou aluguel de sala. Manter o nome `patient_id`
+  causa confusão para qualquer pessoa lendo o código pela primeira vez.
+- **Como aplicar:** criar migration `rename_column :bookings, :patient_id, :dentist_id`
+  (idem em `booking_groups`), ajustar foreign keys, índices, `User#has_many` e policies.
+
+### 7.2 🟢 Múltiplos `Clinic.first` ainda hardcoded
+- `app/controllers/pages_controller.rb` linha 11
+- (havia também em `scheduling/servicos_controller.rb`, agora removido)
+
+Item 4.1 cobre a decisão arquitetural (subdomínio vs slug vs deploy único).
+
+### 7.3 🟢 Locale `booking.status.*` provavelmente sem uso
+`config/locales/pt-BR.yml` define `booking.status.{pending,confirmed,cancelled}` mas
+as views só usam `booking_group.status.*`. Verificar e remover se realmente não há uso.
+
+### 7.4 🟢 CSS — variáveis e classes possivelmente sem uso
+`app/assets/tailwind/application.css` define `--color-vdc-pix`, `--font-vdc`,
+`--radius-vdc` que não aparecem em nenhum `text-vdc-pix`, `font-vdc`, etc.
+Também há classes utilitárias (`badge-danger`, `badge-neutral`, `btn-sm-outline`) com uso
+limitado — auditar antes de remover.
+
+### 7.5 🟡 Layouts de mailer existem mas nenhum mailer foi implementado
+`app/mailers/application_mailer.rb` tem `from "from@example.com"` (placeholder) e
+`app/views/layouts/mailer.{html,text}.erb` estão prontos. Coberto pelos itens 3.1–3.3.
+
+### 7.6 🟢 `ApplicationJob` tem só comentários
+`app/jobs/application_job.rb` contém apenas placeholders comentados (`retry_on`,
+`discard_on`). Decidir política global de retry para jobs (relevante quando
+`BookingMailer` e jobs de crédito forem adicionados).
+
+### 7.7 🟢 Dependências do Gemfile a revisar
+- `omniauth-rails_csrf_protection` — só faz sentido com OmniAuth. Confirmar que continua.
+- `selenium-webdriver` + `capybara` — não há specs de sistema (`spec/system` não existe).
+  Remover se não houver plano de adicionar testes E2E, ou criar pelo menos um spec base.
+
+---
+
 ## Ordem de implementação sugerida
 
-1. **1.1 + 1.2 + 1.3 + 1.4** — Views faltando (desbloqueiam navegação)
+1. **1.1 + 1.2 + 1.3** — Views faltando (desbloqueiam navegação) ✅ concluído
 2. **2.1 + 2.2** — Modelo e serviço de crédito (núcleo da feature)
 3. **2.3 + 2.4** — Aplicar crédito no checkout + exibição no perfil
 4. **3.1 + 3.2** — Mailers + integração nos serviços
 5. **5.1 + 5.2** — Cobertura de testes request specs
-6. Demais melhorias conforme prioridade
+6. **7.1** — Renomear `patient_id` para `dentist_id` (DX/clareza)
+7. Demais melhorias conforme prioridade
