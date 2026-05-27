@@ -24,6 +24,8 @@ class BookingGroupCreator < ApplicationService
     payment = nil
 
     ActiveRecord::Base.transaction do
+      # Load records with FOR UPDATE before calling .size to avoid
+      # PG::FeatureNotSupported: COUNT(*) FOR UPDATE is not allowed.
       availabilities = Availability
         .where(id: @availability_ids, clinic: @clinic, status: "available")
         .lock("FOR UPDATE")
@@ -55,14 +57,20 @@ class BookingGroupCreator < ApplicationService
         av.update!(status: "booked")
       end
 
-      credits_applied = apply_available_credits(group, pricing[:total_cents])
-      amount_due      = pricing[:total_cents] - credits_applied
+      pix = MercadoPago::PixCreator.call(group)
+      raise PaymentError, pix.error unless pix.success?
 
-      payment = if amount_due.zero?
-        confirm_fully_credit_paid(group, credits_applied)
-      else
-        create_pix_payment(group, amount_due)
-      end
+      payment = Payment.create!(
+        clinic:        @clinic,
+        booking_group: group,
+        gateway:       "mercadopago",
+        gateway_id:    pix.value[:gateway_id],
+        pix_qr_code:   pix.value[:pix_qr_code],
+        pix_qr_url:    pix.value[:pix_qr_url],
+        amount_cents:  group.total_cents,
+        expires_at:    pix.value[:expires_at],
+        status:        "pending"
+      )
     end
 
     success(group.reload)
@@ -72,57 +80,5 @@ class BookingGroupCreator < ApplicationService
     failure("Um ou mais horários já foram reservados. Por favor, atualize sua seleção.")
   rescue ActiveRecord::RecordInvalid => e
     failure(e.message)
-  end
-
-  private
-
-  def apply_available_credits(group, total_cents)
-    credits = Credit.available
-      .where(user: @user, clinic: @clinic)
-      .lock("FOR UPDATE")
-      .order(:created_at)
-      .to_a
-
-    return 0 if credits.empty?
-
-    applied = 0
-    credits.each do |credit|
-      break if applied >= total_cents
-      credit.update!(used_at: Time.current, used_on_booking_group: group)
-      applied += credit.amount_cents
-    end
-
-    [applied, total_cents].min
-  end
-
-  def confirm_fully_credit_paid(group, credits_applied)
-    group.update!(status: "confirmed")
-    group.bookings.update_all(status: "confirmed")
-
-    Payment.create!(
-      clinic:        @clinic,
-      booking_group: group,
-      gateway:       "credit",
-      amount_cents:  credits_applied,
-      status:        "paid",
-      paid_at:       Time.current
-    )
-  end
-
-  def create_pix_payment(group, amount_due)
-    pix = MercadoPago::PixCreator.call(group, amount_cents: amount_due)
-    raise PaymentError, pix.error unless pix.success?
-
-    Payment.create!(
-      clinic:        @clinic,
-      booking_group: group,
-      gateway:       "mercadopago",
-      gateway_id:    pix.value[:gateway_id],
-      pix_qr_code:   pix.value[:pix_qr_code],
-      pix_qr_url:    pix.value[:pix_qr_url],
-      amount_cents:  amount_due,
-      expires_at:    pix.value[:expires_at],
-      status:        "pending"
-    )
   end
 end

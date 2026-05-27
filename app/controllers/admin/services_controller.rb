@@ -41,7 +41,7 @@ class Admin::ServicesController < Admin::BaseController
 
   def service_params
     p = params.require(:service).permit(:name, :duration_minutes, :price, :active)
-    p[:price_cents] = (p.delete(:price).to_s.gsub(",", ".").to_f * 100).round if p[:price].present?
+    p[:price_cents] = (p.delete(:price).to_f * 100).round if p[:price].present?
     p
   end
 end

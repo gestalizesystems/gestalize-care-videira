@@ -6,8 +6,7 @@ RSpec.describe User, type: :model do
   describe "associations" do
     it { is_expected.to belong_to(:clinic).optional }
     it { is_expected.to have_many(:availabilities).with_foreign_key(:dentist_id) }
-    it { is_expected.to have_many(:booking_groups).with_foreign_key(:dentist_id) }
-    it { is_expected.to have_many(:bookings).with_foreign_key(:dentist_id) }
+    it { is_expected.to have_many(:booking_groups).with_foreign_key(:patient_id) }
 
     it "has an avatar attachment" do
       expect(User.new).to respond_to(:avatar)

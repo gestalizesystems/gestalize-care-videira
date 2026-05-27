@@ -7,7 +7,7 @@ class BookingPolicy < ApplicationPolicy
       if user.owner?
         scope.joins(:booking_group).where(booking_groups: { clinic_id: user.clinic_id })
       else
-        scope.where(dentist_id: user.id)
+        scope.where(patient_id: user.id)
       end
     end
   end
@@ -15,6 +15,6 @@ class BookingPolicy < ApplicationPolicy
   private
 
   def owner_or_dentist?
-    user.owner? || record.dentist_id == user.id
+    user.owner? || record.patient_id == user.id
   end
 end

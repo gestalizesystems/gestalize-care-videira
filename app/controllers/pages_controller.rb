@@ -9,7 +9,7 @@ class PagesController < ApplicationController
 
     @availabilities = Availability
       .available
-      .where(date: @date, clinic: Current.clinic)
+      .where(date: @date, clinic: Clinic.first)
       .includes(:service, :dentist)
       .order(:starts_at)
   rescue Date::Error

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_05_25_164324) do
+ActiveRecord::Schema[7.2].define(version: 2026_05_17_000101) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -63,7 +63,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_05_25_164324) do
 
   create_table "booking_groups", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.uuid "clinic_id", null: false
-    t.uuid "dentist_id", null: false
+    t.uuid "patient_id", null: false
     t.uuid "discount_rule_id"
     t.integer "subtotal_cents", null: false
     t.integer "discount_cents", default: 0, null: false
@@ -72,8 +72,8 @@ ActiveRecord::Schema[7.2].define(version: 2026_05_25_164324) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["clinic_id"], name: "index_booking_groups_on_clinic_id"
-    t.index ["dentist_id"], name: "index_booking_groups_on_dentist_id"
     t.index ["discount_rule_id"], name: "index_booking_groups_on_discount_rule_id"
+    t.index ["patient_id"], name: "index_booking_groups_on_patient_id"
     t.check_constraint "discount_cents >= 0", name: "booking_groups_discount_non_negative"
     t.check_constraint "status::text = ANY (ARRAY['pending'::character varying, 'confirmed'::character varying, 'cancelled'::character varying, 'expired'::character varying]::text[])", name: "booking_groups_status_check"
     t.check_constraint "total_cents > 0", name: "booking_groups_total_positive"
@@ -83,7 +83,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_05_25_164324) do
     t.uuid "clinic_id", null: false
     t.uuid "booking_group_id", null: false
     t.uuid "availability_id", null: false
-    t.uuid "dentist_id", null: false
+    t.uuid "patient_id", null: false
     t.integer "price_cents", null: false
     t.string "status", default: "pending", null: false
     t.datetime "created_at", null: false
@@ -92,7 +92,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_05_25_164324) do
     t.index ["availability_id"], name: "index_bookings_on_availability_id"
     t.index ["booking_group_id"], name: "index_bookings_on_booking_group_id"
     t.index ["clinic_id"], name: "index_bookings_on_clinic_id"
-    t.index ["dentist_id"], name: "index_bookings_on_dentist_id"
+    t.index ["patient_id"], name: "index_bookings_on_patient_id"
     t.check_constraint "price_cents >= 0", name: "bookings_price_non_negative"
     t.check_constraint "status::text = ANY (ARRAY['pending'::character varying, 'confirmed'::character varying, 'cancelled'::character varying]::text[])", name: "bookings_status_check"
   end
@@ -106,24 +106,6 @@ ActiveRecord::Schema[7.2].define(version: 2026_05_25_164324) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["cnpj"], name: "index_clinics_on_cnpj", unique: true
-  end
-
-  create_table "credits", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.uuid "user_id", null: false
-    t.uuid "clinic_id", null: false
-    t.uuid "source_booking_group_id"
-    t.uuid "used_on_booking_group_id"
-    t.integer "amount_cents", null: false
-    t.string "reason"
-    t.datetime "used_at"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["clinic_id"], name: "index_credits_on_clinic_id"
-    t.index ["source_booking_group_id"], name: "index_credits_on_source_booking_group_id"
-    t.index ["used_on_booking_group_id"], name: "index_credits_on_used_on_booking_group_id"
-    t.index ["user_id", "clinic_id", "used_at"], name: "index_credits_on_user_id_and_clinic_id_and_used_at"
-    t.index ["user_id"], name: "index_credits_on_user_id"
-    t.check_constraint "amount_cents > 0", name: "credits_amount_positive"
   end
 
   create_table "discount_rules", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -217,15 +199,11 @@ ActiveRecord::Schema[7.2].define(version: 2026_05_25_164324) do
   add_foreign_key "availabilities", "users", column: "dentist_id"
   add_foreign_key "booking_groups", "clinics"
   add_foreign_key "booking_groups", "discount_rules"
-  add_foreign_key "booking_groups", "users", column: "dentist_id"
+  add_foreign_key "booking_groups", "users", column: "patient_id"
   add_foreign_key "bookings", "availabilities"
   add_foreign_key "bookings", "booking_groups"
   add_foreign_key "bookings", "clinics"
-  add_foreign_key "bookings", "users", column: "dentist_id"
-  add_foreign_key "credits", "booking_groups", column: "source_booking_group_id"
-  add_foreign_key "credits", "booking_groups", column: "used_on_booking_group_id"
-  add_foreign_key "credits", "clinics"
-  add_foreign_key "credits", "users"
+  add_foreign_key "bookings", "users", column: "patient_id"
   add_foreign_key "discount_rules", "clinics"
   add_foreign_key "payments", "booking_groups"
   add_foreign_key "payments", "clinics"

@@ -50,7 +50,7 @@ RSpec.describe BookingCanceller, type: :service do
       end
 
       it "does not cancel group when other bookings remain active" do
-        other_av = create(:availability, clinic: clinic, dentist: slot_dentist, date: (availability.date + 1.day), starts_at: "10:00", ends_at: "11:00")
+        other_av = create(:availability, clinic: clinic, dentist: slot_dentist, date: 3.days.from_now.to_date, starts_at: "10:00", ends_at: "11:00")
         create(:booking, clinic: clinic, booking_group: group, availability: other_av, dentist: booker)
 
         BookingCanceller.call(booking: booking)
