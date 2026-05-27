@@ -30,14 +30,25 @@
     <div class="flex justify-between text-sm mb-3 px-3 py-2 rounded-xl"
          style="background-color: #E8F5E9; color: #388E3C">
       <span>Desconto (<%= @pricing[:discount_percent] %>%)</span>
-      <span>− R$ <%= number_with_precision(@pricing[:discount_cents] / 100.0, precision: 2, delimiter: ".", separator: ",") %></span>
+      <span>− R$ <%= money(@pricing[:discount_cents]) %></span>
     </div>
   <% end %>
 
+  <% credit_balance = Credit.balance_for(user: current_user, clinic: current_user.clinic) %>
+  <% credit_applied = [credit_balance, @pricing[:total_cents]].min %>
+  <% if credit_applied > 0 %>
+    <div class="flex justify-between text-sm mb-3 px-3 py-2 rounded-xl"
+         style="background-color: #E8F5E9; color: #388E3C">
+      <span>Crédito aplicado</span>
+      <span>− R$ <%= money(credit_applied) %></span>
+    </div>
+  <% end %>
+
+  <% amount_due = @pricing[:total_cents] - credit_applied %>
   <div class="flex justify-between font-semibold border-t pt-4" style="border-color: #E0E0E0">
-    <span style="color: #3E2723">Total</span>
+    <span style="color: #3E2723"><%= amount_due.zero? ? "Total" : "Total a pagar via Pix" %></span>
     <span class="text-xl font-bold" style="color: #5D4037">
-      R$ <%= number_with_precision(@pricing[:total_cents] / 100.0, precision: 2, delimiter: ".", separator: ",") %>
+      R$ <%= money(amount_due) %>
     </span>
   </div>
 </div>
@@ -45,7 +56,7 @@
 <%= button_to confirmar_reservas_path, method: :post,
       class: "w-full py-3 rounded-full text-white text-sm font-medium",
       style: "background-color: #5D4037" do %>
-  Confirmar e gerar Pix →
+  <%= amount_due.zero? ? "Confirmar reserva →" : "Confirmar e gerar Pix →" %>
 <% end %>
 
 <p class="mt-4 text-xs text-center" style="color: #8D6E63">

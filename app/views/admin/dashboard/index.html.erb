@@ -17,6 +17,24 @@
       R$ <%= number_with_precision(@monthly_revenue, precision: 2, delimiter: ".", separator: ",") %>
     </p>
   </div>
+
+  <%# ── Gráfico SVG: receita dos últimos 6 meses ───────────────────────────── %>
+  <div class="bg-white rounded-2xl shadow-sm p-4 col-span-2">
+    <p class="text-xs mb-3" style="color: #8D6E63">Receita — últimos 6 meses</p>
+    <% max_cents = [@monthly_series.map { |m| m[:cents] }.max || 0, 1].max %>
+    <% bar_w = 36; gap = 12; chart_h = 100 %>
+    <% width  = (@monthly_series.size * (bar_w + gap)) - gap %>
+    <svg viewBox="0 0 <%= width %> <%= chart_h + 24 %>" class="w-full h-32">
+      <% @monthly_series.each_with_index do |m, i| %>
+        <% h = ((m[:cents].to_f / max_cents) * chart_h).round %>
+        <% x = i * (bar_w + gap) %>
+        <% y = chart_h - h %>
+        <rect x="<%= x %>" y="<%= y %>" width="<%= bar_w %>" height="<%= h %>" rx="4" fill="#5D4037" />
+        <text x="<%= x + (bar_w / 2) %>" y="<%= chart_h + 16 %>" text-anchor="middle"
+              font-size="10" fill="#8D6E63"><%= l(m[:month], format: "%b").capitalize %></text>
+      <% end %>
+    </svg>
+  </div>
 </div>
 
 <div class="grid grid-cols-2 gap-3">

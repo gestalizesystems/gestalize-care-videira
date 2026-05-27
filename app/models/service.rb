@@ -9,6 +9,7 @@ class Service < ApplicationRecord
   scope :active, -> { where(active: true) }
 
   def price
+    return nil if price_cents.nil?
     price_cents / 100.0
   end
 end
