@@ -26,10 +26,10 @@
 
 <turbo-frame id="payment_status">
   <% if @payment.paid? %>
-    <%= render "payments/payments/paid", payment: @payment %>
+    <%= render "payments/paid", payment: @payment %>
   <% elsif @payment.expired? || @payment.cancelled? %>
-    <%= render "payments/payments/expired", payment: @payment %>
+    <%= render "payments/expired", payment: @payment %>
   <% else %>
-    <%= render "payments/payments/pending", payment: @payment %>
+    <%= render "payments/pending", payment: @payment %>
   <% end %>
 </turbo-frame>

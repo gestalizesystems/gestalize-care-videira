@@ -14,6 +14,10 @@
   --color-vdc-destructive:       #d4183d;
   --color-vdc-success:           #388E3C;
   --color-vdc-success-bg:        #E8F5E9;
+  --color-vdc-pix:               #32BCAD;
+
+  --radius-vdc:                  0.625rem;
+  --font-vdc:                    'Prompt', sans-serif;
 }
 
 :root {
@@ -31,6 +35,8 @@
   --destructive:       #d4183d;
   --success:           #388E3C;
   --success-bg:        #E8F5E9;
+  --pix-color:         #32BCAD;
+  --radius:            0.625rem;
 }
 
 * { box-sizing: border-box; }
@@ -145,6 +151,8 @@ html, body {
   /* Badges de status */
   .badge-success { @apply text-xs px-2 py-1 rounded-full; background-color: #E8F5E9; color: #388E3C; }
   .badge-warning { @apply text-xs px-2 py-1 rounded-full; background-color: #FFF9C4; color: #F57F17; }
+  .badge-danger  { @apply text-xs px-2 py-1 rounded-full; background-color: #FFEBEE; color: #d4183d; }
+  .badge-neutral { @apply text-xs px-2 py-1 rounded-full; background-color: #F5F5F5; color: #757575; }
 
   /* Erros de formulário */
   .form-errors {

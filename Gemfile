@@ -52,4 +52,5 @@ group :test do
   gem "shoulda-matchers"
   gem "webmock"
   gem "capybara"
+  gem "selenium-webdriver"
 end

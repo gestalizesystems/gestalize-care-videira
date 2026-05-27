@@ -66,3 +66,8 @@ pt-BR:
       confirmed: "Confirmado"
       cancelled: "Cancelado"
       expired: "Expirado"
+  booking:
+    status:
+      pending: "Pendente"
+      confirmed: "Confirmado"
+      cancelled: "Cancelado"

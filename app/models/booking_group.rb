@@ -2,7 +2,7 @@ class BookingGroup < ApplicationRecord
   has_paper_trail
 
   belongs_to :clinic
-  belongs_to :dentist, class_name: "User"
+  belongs_to :dentist, class_name: "User", foreign_key: :patient_id
   belongs_to :discount_rule, optional: true
   has_many   :bookings, dependent: :destroy
   has_one    :payment,  dependent: :destroy
