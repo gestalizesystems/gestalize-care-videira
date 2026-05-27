@@ -22,7 +22,7 @@ class ExpirePaymentsJob < ApplicationJob
     Turbo::StreamsChannel.broadcast_replace_to(
       "payment_#{payment.id}",
       target:  "payment_status",
-      partial: "payments/expired",
+      partial: "payments/payments/expired",
       locals:  { payment: payment }
     )
   rescue => e

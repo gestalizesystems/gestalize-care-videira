@@ -1,0 +1,11 @@
+Reserva cancelada
+
+Olá <%= @dentist.name %>,
+
+Sua reserva foi cancelada conforme solicitação.
+
+<% if @group.payment&.paid? %>
+Um crédito de R$ <%= "%.2f" % (@group.payment.amount_cents / 100.0) %> foi adicionado à sua conta para uso em uma próxima reserva.
+<% end %>
+
+Equipe Videira Dental
