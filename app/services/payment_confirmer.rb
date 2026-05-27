@@ -17,6 +17,7 @@ class PaymentConfirmer < ApplicationService
     end
 
     broadcast_confirmed(group.payment.reload)
+    BookingMailer.confirmation(group).deliver_later
     success(group)
   rescue ActiveRecord::RecordInvalid => e
     Rails.logger.error("[PaymentConfirmer] ref=#{@external_reference} error=#{e.message}")
@@ -29,7 +30,7 @@ class PaymentConfirmer < ApplicationService
     Turbo::StreamsChannel.broadcast_replace_to(
       "payment_#{payment.id}",
       target:  "payment_status",
-      partial: "payments/paid",
+      partial: "payments/payments/paid",
       locals:  { payment: payment }
     )
   rescue => e
