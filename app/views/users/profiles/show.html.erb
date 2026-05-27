@@ -36,6 +36,15 @@
   </div>
 </div>
 
+<% credit_cents = Credit.balance_for(user: current_user, clinic: current_user.clinic) if current_user.clinic %>
+<% if credit_cents && credit_cents > 0 %>
+  <div class="bg-white rounded-2xl shadow-sm p-5 mb-4 border-l-4" style="border-color: #388E3C">
+    <p class="text-xs mb-1" style="color: #8D6E63">Saldo de créditos</p>
+    <p class="text-2xl font-bold" style="color: #388E3C">R$ <%= money(credit_cents) %></p>
+    <p class="text-xs mt-2" style="color: #8D6E63">Será aplicado automaticamente na próxima reserva.</p>
+  </div>
+<% end %>
+
 <div class="bg-white rounded-2xl shadow-sm p-5">
   <h2 class="font-medium mb-4" style="color: #5D4037">Minhas reservas</h2>
   <% recent = current_user.booking_groups.order(created_at: :desc).limit(5) %>
