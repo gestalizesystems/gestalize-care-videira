@@ -71,3 +71,16 @@ pt-BR:
       pending: "Pendente"
       confirmed: "Confirmado"
       cancelled: "Cancelado"
+  payment:
+    status:
+      pending: "Aguardando pagamento"
+      paid: "Pago"
+      failed: "Falhou"
+      cancelled: "Cancelado"
+      expired: "Expirado"
+  availability:
+    status:
+      available: "Disponível"
+      booked: "Reservado"
+      cancelled: "Cancelado"
+      blocked: "Bloqueado"

@@ -5,7 +5,7 @@ class DiscountCalculator < ApplicationService
   end
 
   def call
-    return failure("Conta não associada a uma clínica.") unless @clinic
+    return failure("Horário inválido ou não encontrado.") unless @clinic
 
     availabilities = Availability.where(id: @availability_ids, clinic: @clinic, status: "available")
     subtotal_cents  = availabilities.sum(&:price_cents)

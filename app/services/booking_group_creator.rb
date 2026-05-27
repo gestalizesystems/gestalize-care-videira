@@ -5,11 +5,11 @@ class BookingGroupCreator < ApplicationService
   def initialize(user:, availability_ids:)
     @user             = user
     @availability_ids = Array(availability_ids)
-    @clinic           = user.clinic
+    @clinic           = Availability.find_by(id: @availability_ids.first)&.clinic
   end
 
   def call
-    return failure("Sua conta não está associada a uma clínica.") unless @clinic
+    return failure("Horário inválido ou não encontrado.") unless @clinic
     return failure("Selecione ao menos um horário.") if @availability_ids.empty?
 
     calc = DiscountCalculator.call(availability_ids: @availability_ids, clinic: @clinic)

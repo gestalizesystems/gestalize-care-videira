@@ -19,9 +19,11 @@ class Scheduling::BookingsController < ApplicationController
       return redirect_to root_path, alert: "Selecione ao menos um horário antes de continuar."
     end
 
+    clinic = Availability.find_by(id: cart_ids.first)&.clinic
+
     result = DiscountCalculator.call(
       availability_ids: cart_ids,
-      clinic:           current_user.clinic
+      clinic:           clinic
     )
 
     if result.failure?

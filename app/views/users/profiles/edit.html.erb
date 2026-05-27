@@ -2,46 +2,68 @@
 
 <%= render "shared/back_button", path: perfil_path %>
 
-<h1 class="text-2xl font-semibold mb-6 text-vdc-primary">Editar perfil</h1>
+<h1 class="text-2xl font-medium mb-6" style="color: #3E2723">Editar perfil</h1>
 
-<div class="card">
-  <%= form_with model: @user, url: perfil_path, method: :patch, multipart: true,
-        class: "flex flex-col gap-4" do |f| %>
+<%= render "shared/form_errors", object: @user if @user.errors.any? %>
 
-    <%= render "shared/form_errors", object: @user %>
+<%= form_with model: @user, url: perfil_path, method: :patch, multipart: true,
+      class: "flex flex-col gap-3" do |f| %>
 
-    <div class="flex justify-center mb-2">
-      <%= render "shared/avatar", user: @user, size: "lg" %>
+  <div class="flex justify-center mb-2">
+    <%= render "shared/avatar", user: @user, size: "lg" %>
+  </div>
+
+  <div>
+    <%= f.label :avatar, "Foto de perfil", class: "block text-xs font-medium mb-1 px-1", style: "color: #8D6E63" %>
+    <div class="bg-white rounded-2xl shadow-sm px-4 py-1">
+      <%= f.file_field :avatar, accept: "image/*",
+            class: "w-full bg-transparent border-none outline-none py-3 text-sm",
+            style: "color: #3E2723" %>
     </div>
+  </div>
 
-    <div>
-      <%= f.label :avatar, "Foto de perfil", class: "label" %>
-      <%= f.file_field :avatar, accept: "image/*", class: "w-full text-sm text-vdc-foreground" %>
+  <div>
+    <%= f.label :name, "Nome completo", class: "block text-xs font-medium mb-1 px-1", style: "color: #8D6E63" %>
+    <div class="bg-white rounded-2xl shadow-sm px-4 py-1">
+      <%= f.text_field :name,
+            placeholder: "Nome completo",
+            class: "w-full bg-transparent border-none outline-none py-3 text-sm",
+            style: "color: #3E2723" %>
     </div>
+  </div>
 
-    <div>
-      <%= f.label :name, "Nome completo", class: "label" %>
-      <%= f.text_field :name, class: "input-field" %>
+  <div>
+    <%= f.label :phone, "Telefone", class: "block text-xs font-medium mb-1 px-1", style: "color: #8D6E63" %>
+    <div class="bg-white rounded-2xl shadow-sm px-4 py-1">
+      <%= f.telephone_field :phone, autocomplete: "tel",
+            placeholder: "Número de telefone",
+            class: "w-full bg-transparent border-none outline-none py-3 text-sm",
+            style: "color: #3E2723" %>
     </div>
+  </div>
 
-    <div>
-      <%= f.label :phone, "Telefone", class: "label" %>
-      <%= f.text_field :phone, inputmode: "tel", class: "input-field" %>
+  <div>
+    <%= f.label :cpf, "CPF", class: "block text-xs font-medium mb-1 px-1", style: "color: #8D6E63" %>
+    <div class="bg-white rounded-2xl shadow-sm px-4 py-1">
+      <%= f.text_field :cpf, maxlength: 11, inputmode: "numeric",
+            placeholder: "Somente números",
+            class: "w-full bg-transparent border-none outline-none py-3 text-sm",
+            style: "color: #3E2723" %>
     </div>
+  </div>
 
-    <div>
-      <%= f.label :cpf, "CPF (11 dígitos)", class: "label" %>
-      <%= f.text_field :cpf, maxlength: 11, inputmode: "numeric", class: "input-field" %>
+  <div>
+    <%= f.label :birth_date, "Data de nascimento", class: "block text-xs font-medium mb-1 px-1", style: "color: #8D6E63" %>
+    <div class="bg-white rounded-2xl shadow-sm px-4 py-1">
+      <%= f.date_field :birth_date,
+            class: "w-full bg-transparent border-none outline-none py-3 text-sm",
+            style: "color: #3E2723" %>
     </div>
+  </div>
 
-    <div>
-      <%= f.label :birth_date, "Data de nascimento", class: "label" %>
-      <%= f.date_field :birth_date, class: "input-field" %>
-    </div>
+  <div class="flex gap-3 pt-2">
+    <%= link_to "Cancelar", perfil_path, class: "btn-outline flex-1 text-center" %>
+    <%= f.submit "Salvar alterações", class: "btn-primary flex-1 cursor-pointer" %>
+  </div>
 
-    <div class="flex gap-3 pt-2">
-      <%= f.submit "Salvar alterações", class: "btn-primary flex-1 cursor-pointer" %>
-      <%= link_to "Cancelar", perfil_path, class: "btn-outline flex-1" %>
-    </div>
-  <% end %>
-</div>
+<% end %>

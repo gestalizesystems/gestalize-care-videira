@@ -27,6 +27,7 @@
 | Documento | Descrição |
 |-----------|-----------|
 | [[DESIGN_SYSTEM]] | Tokens, componentes e padrões visuais (Tailwind) |
+| [[TEMPLATE_TELA_E_MODAL]] | Esqueletos prontos para criar telas e modais novos |
 | [[RESTYLING_TASKS]] | Checklist de aplicação do design system nas telas |
 
 ## 04 · Processo

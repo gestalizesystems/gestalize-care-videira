@@ -2,7 +2,7 @@
 
 <%= render "shared/back_button", path: reservas_path %>
 
-<h1 class="text-2xl font-semibold mb-2 text-vdc-primary">Pagamento via Pix</h1>
+<h1 class="text-2xl font-medium mb-2 text-vdc-primary">Pagamento via Pix</h1>
 
 <%= turbo_stream_from "payment_#{@payment.id}" %>
 

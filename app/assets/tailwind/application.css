@@ -41,6 +41,13 @@
 
 * { box-sizing: border-box; }
 
+/* Ocultar scrollbars (mantém scroll funcional) — padrão do Figma */
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+*::-webkit-scrollbar { display: none; }
+
 dialog {
   border: none;
   border-radius: 1.5rem;
@@ -72,9 +79,22 @@ html, body {
   color: var(--foreground);
   font-family: 'Prompt', sans-serif;
   font-size: 16px;
+  overflow-x: hidden;
 }
 
+/* Tipografia base — alinhada ao Figma */
+h1 { font-size: 1.5rem;   font-weight: 500; line-height: 1.5; }
+h2 { font-size: 1.25rem;  font-weight: 500; line-height: 1.5; }
+h3 { font-size: 1.125rem; font-weight: 500; line-height: 1.5; }
+h4 { font-size: 1rem;     font-weight: 500; line-height: 1.5; }
+button { font-size: 1rem; font-weight: 500; line-height: 1.5; }
+
 /* Anti-zoom em inputs no iOS */
+input, select, textarea {
+  font-size: 16px !important;
+  font-weight: 400;
+  line-height: 1.5;
+}
 @media screen and (max-width: 768px) {
   input, select, textarea { font-size: 16px !important; }
 }

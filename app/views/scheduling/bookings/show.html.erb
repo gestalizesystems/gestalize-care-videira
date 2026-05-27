@@ -2,61 +2,59 @@
 
 <%= render "shared/back_button", path: reservas_path %>
 
-<div class="card mb-4">
-  <div class="flex items-center justify-between mb-5">
-    <h1 class="text-xl font-semibold text-vdc-primary">Reserva</h1>
-    <span class="<%= booking_group_status_class(@booking_group.status) %>"
-          style="<%= booking_group_status_style(@booking_group.status) %>">
-      <%= t("booking_group.status.#{@booking_group.status}", default: @booking_group.status.humanize) %>
-    </span>
-  </div>
+<div class="flex items-center justify-between mb-4">
+  <h1 class="text-2xl font-medium" style="color: #5D4037">Reserva</h1>
+  <span class="<%= booking_group_status_class(@booking_group.status) %>"
+        style="<%= booking_group_status_style(@booking_group.status) %>">
+    <%= t("booking_group.status.#{@booking_group.status}", default: @booking_group.status.humanize) %>
+  </span>
+</div>
 
-  <div class="flex flex-col divide-y" style="divide-color: #E0E0E0">
-    <% @booking_group.bookings.includes(:availability).each do |b| %>
-      <div class="py-4 flex justify-between items-start">
-        <div>
-          <p class="font-medium text-sm text-vdc-foreground"><%= b.availability.label %></p>
-          <p class="text-xs mt-1 text-vdc-secondary">
-            <%= l(b.availability.date, format: :default) %> ·
-            <%= b.availability.starts_at.strftime("%H:%M") %>–<%= b.availability.ends_at.strftime("%H:%M") %>
-          </p>
-          <% if b.confirmed? && b.availability.cancellable? %>
-            <%= button_to cancelar_reserva_path(b), method: :patch,
-                  class: "mt-2 text-xs underline",
-                  style: "color: #d4183d",
-                  data: { turbo_confirm: "Cancelar esta reserva?" } do %>
-              Cancelar este horário
-            <% end %>
+<div class="flex flex-col gap-3 mb-4">
+  <% @booking_group.bookings.includes(:availability).each do |b| %>
+    <div class="bg-white rounded-2xl shadow-sm p-4 flex justify-between items-start">
+      <div>
+        <p class="font-medium text-sm" style="color: #3E2723"><%= b.availability.label %></p>
+        <p class="text-xs mt-1" style="color: #8D6E63">
+          <%= l(b.availability.date, format: :default) %> ·
+          <%= b.availability.starts_at.strftime("%H:%M") %>–<%= b.availability.ends_at.strftime("%H:%M") %>
+        </p>
+        <% if b.confirmed? && b.availability.cancellable? %>
+          <%= button_to cancelar_reserva_path(b), method: :patch,
+                class: "btn-xs-danger mt-2 cursor-pointer",
+                data: { turbo_confirm: "Cancelar esta reserva?" } do %>
+            Cancelar este horário
           <% end %>
-        </div>
-        <span class="text-sm font-semibold text-vdc-primary">
-          R$ <%= number_with_precision(b.price_cents / 100.0, precision: 2, delimiter: ".", separator: ",") %>
-        </span>
+        <% end %>
       </div>
-    <% end %>
-  </div>
-
-  <div class="border-t pt-4 mt-2" style="border-color: #E0E0E0">
-    <% if @booking_group.discount_cents > 0 %>
-      <div class="flex justify-between text-sm mb-2 text-vdc-secondary">
-        <span>Subtotal</span>
-        <span>R$ <%= number_with_precision(@booking_group.subtotal_cents / 100.0, precision: 2, delimiter: ".", separator: ",") %></span>
-      </div>
-      <div class="flex justify-between text-sm mb-2" style="color: #388E3C">
-        <span>Desconto</span>
-        <span>− R$ <%= number_with_precision(@booking_group.discount_cents / 100.0, precision: 2, delimiter: ".", separator: ",") %></span>
-      </div>
-    <% end %>
-    <div class="flex justify-between font-semibold mt-1">
-      <span class="text-vdc-foreground">Total</span>
-      <span class="text-xl font-bold text-vdc-primary">
-        R$ <%= number_with_precision(@booking_group.total_cents / 100.0, precision: 2, delimiter: ".", separator: ",") %>
+      <span class="text-sm font-medium" style="color: #5D4037">
+        R$ <%= money(b.price_cents) %>
       </span>
     </div>
+  <% end %>
+</div>
+
+<div class="bg-white rounded-3xl shadow-lg p-6 mb-4">
+  <% if @booking_group.discount_cents > 0 %>
+    <div class="flex justify-between text-sm mb-2" style="color: #8D6E63">
+      <span>Subtotal</span>
+      <span>R$ <%= money(@booking_group.subtotal_cents) %></span>
+    </div>
+    <div class="flex justify-between text-sm mb-2" style="color: #388E3C">
+      <span>Desconto</span>
+      <span>− R$ <%= money(@booking_group.discount_cents) %></span>
+    </div>
+  <% end %>
+  <div class="flex justify-between font-medium <%= 'border-t pt-3 mt-1' if @booking_group.discount_cents > 0 %>" style="border-color: #E0E0E0">
+    <span style="color: #3E2723">Total</span>
+    <span class="text-xl font-medium" style="color: #5D4037">
+      R$ <%= money(@booking_group.total_cents) %>
+    </span>
   </div>
 </div>
 
 <% if @booking_group.pending? && @booking_group.payment.present? %>
   <%= link_to "Ver QR Code Pix →", pagamento_path(@booking_group.payment),
-        class: "btn-primary w-full text-center block" %>
+        class: "block w-full py-3 rounded-full text-white text-sm font-medium text-center",
+        style: "background-color: #5D4037" %>
 <% end %>

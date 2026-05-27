@@ -1,6 +1,6 @@
 <% content_for :title, "Reservas" %>
 
-<h1 class="text-2xl font-semibold mb-4 text-vdc-primary">Reservas</h1>
+<h1 class="text-2xl font-medium mb-4 text-vdc-primary">Reservas</h1>
 
 <div class="card-sm mb-4">
   <%= form_with url: admin_bookings_path, method: :get, data: { turbo: false }, class: "flex flex-col gap-3" do |f| %>
@@ -24,18 +24,18 @@
   <div class="flex flex-col gap-3">
     <% @booking_groups.each do |group| %>
       <%= link_to admin_booking_path(group),
-            class: "block card-sm hover:shadow-md transition-all active:scale-[0.98]" do %>
+            class: "block bg-white rounded-2xl shadow-sm p-4 hover:shadow-md transition-all active:scale-[0.98]" do %>
         <div class="flex items-center justify-between mb-2">
           <span class="text-xs font-mono text-vdc-secondary">#<%= group.id.split("-").first %></span>
           <span class="<%= booking_group_status_class(group.status) %>"
                 style="<%= booking_group_status_style(group.status) %>">
-            <%= group.status %>
+            <%= t("booking_group.status.#{group.status}", default: group.status.humanize) %>
           </span>
         </div>
         <p class="text-sm font-medium mb-1 text-vdc-foreground"><%= group.dentist.name %></p>
         <div class="flex justify-between text-xs text-vdc-secondary">
           <span><%= pluralize(group.bookings.size, "horário", "horários") %> · <%= l(group.created_at, format: :default) %></span>
-          <span class="font-semibold text-vdc-primary">R$ <%= money(group.total_cents) %></span>
+          <span class="font-medium text-vdc-primary">R$ <%= money(group.total_cents) %></span>
         </div>
       <% end %>
     <% end %>

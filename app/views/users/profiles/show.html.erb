@@ -1,7 +1,7 @@
 <% content_for :title, "Meu perfil" %>
 
 <div class="flex items-center justify-between mb-4">
-  <h1 class="text-2xl font-semibold" style="color: #5D4037">Meu perfil</h1>
+  <h1 class="text-2xl font-medium" style="color: #5D4037">Meu perfil</h1>
   <%= link_to "Editar", edit_perfil_path,
         class: "text-xs px-4 py-2 rounded-full border",
         style: "border-color: #5D4037; color: #5D4037" %>
@@ -10,7 +10,7 @@
 <div class="bg-white rounded-3xl shadow-lg p-6 mb-4">
   <div class="flex flex-col items-center mb-6">
     <%= render "shared/avatar", user: current_user, size: "lg" %>
-    <h2 class="text-xl font-semibold mt-3" style="color: #5D4037"><%= current_user.name %></h2>
+    <h2 class="text-xl font-medium mt-3" style="color: #5D4037"><%= current_user.name %></h2>
     <span class="text-xs px-3 py-1 rounded-full mt-1" style="background-color: #fef8e1; color: #8D6E63">
       <%= current_user.role.capitalize %>
     </span>
@@ -37,7 +37,7 @@
 </div>
 
 <div class="bg-white rounded-2xl shadow-sm p-5">
-  <h2 class="font-semibold mb-4" style="color: #5D4037">Minhas reservas</h2>
+  <h2 class="font-medium mb-4" style="color: #5D4037">Minhas reservas</h2>
   <% recent = current_user.booking_groups.order(created_at: :desc).limit(5) %>
   <% if recent.empty? %>
     <p class="text-sm mb-3" style="color: #8D6E63">Nenhuma reserva ainda.</p>
@@ -51,7 +51,7 @@
           <div class="flex items-center gap-2">
             <span class="<%= booking_group_status_class(group.status) %>"
                   style="<%= booking_group_status_style(group.status) %>">
-              <%= group.status %>
+              <%= t("booking_group.status.#{group.status}", default: group.status.humanize) %>
             </span>
             <span class="text-xs" style="color: #8D6E63"><%= l(group.created_at, format: :default) %></span>
           </div>
@@ -67,4 +67,10 @@
             style: "color: #5D4037" %>
     </div>
   <% end %>
+</div>
+
+<div class="mt-4">
+  <%= button_to "Sair da conta", destroy_user_session_path, method: :delete,
+        class: "w-full py-3 rounded-full text-sm font-medium transition-all cursor-pointer",
+        style: "background-color: #fff; color: #8D6E63; border: 1px solid #E0E0E0" %>
 </div>
