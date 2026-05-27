@@ -67,9 +67,10 @@ Rails.application.routes.draw do
     end
     resources :discount_rules, except: [:show]
     resources :bookings,       only: [:index, :show] do
-      member { patch "cancelar", to: "admin/bookings#cancel" }
+      member { patch "cancelar", action: :cancel }
     end
     resources :payments, only: [:index, :show]
+    resources :credits,  only: [:index]
 
     authenticate :user, ->(u) { u.owner? } do
       mount Sidekiq::Web => "/sidekiq"

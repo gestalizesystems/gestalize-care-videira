@@ -2,8 +2,9 @@ module MercadoPago
   class PixCreator < ApplicationService
     MOCK_TOKEN_PREFIX = "TEST-".freeze
 
-    def initialize(booking_group)
-      @group = booking_group
+    def initialize(booking_group, amount_cents: nil)
+      @group        = booking_group
+      @amount_cents = amount_cents || booking_group.total_cents
     end
 
     def call
@@ -13,7 +14,7 @@ module MercadoPago
 
       sdk  = Mercadopago::SDK.new(ENV.fetch("MERCADOPAGO_ACCESS_TOKEN"))
       resp = sdk.payment.create(
-        transaction_amount: @group.total_cents / 100.0,
+        transaction_amount: @amount_cents / 100.0,
         description:        "Aluguel de sala – Videira Dental",
         payment_method_id:  "pix",
         payer:              { email: @group.dentist.email },
@@ -59,7 +60,7 @@ module MercadoPago
 
     def sandbox_pix_code
       "00020101021226930014BR.GOV.BCB.PIX0111#{@group.id.gsub('-', '')[0..10]}52040000530398654" \
-        "#{format('%010.2f', @group.total_cents / 100.0).delete('.')}5802BR5922VIDEIRA DENTAL SANDBOX" \
+        "#{format('%010.2f', @amount_cents / 100.0).delete('.')}5802BR5922VIDEIRA DENTAL SANDBOX" \
         "6009SAO PAULO62290525#{@group.id.gsub('-', '')[0..24]}6304ABCD"
     end
   end
