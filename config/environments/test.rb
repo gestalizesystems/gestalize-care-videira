@@ -43,6 +43,10 @@ Rails.application.configure do
   # ActionMailer::Base.deliveries array.
   config.action_mailer.delivery_method = :test
 
+  # Use the in-memory test adapter so `deliver_later` and other jobs don't
+  # require a Redis/Sidekiq connection.
+  config.active_job.queue_adapter = :test
+
   # Unlike controllers, the mailer instance doesn't have any context about the
   # incoming request so you'll need to provide the :host parameter yourself.
   config.action_mailer.default_url_options = { host: "www.example.com" }

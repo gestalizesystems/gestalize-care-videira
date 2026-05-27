@@ -50,8 +50,8 @@ turnos = [
   { starts: "19:00", ends: "22:00", price_cents: 12000, label: "Turno Noite"    },
 ]
 
-# Cria para os próximos 14 dias (exceto domingos)
-14.times do |i|
+# Cria para os próximos 30 dias (exceto domingos)
+30.times do |i|
   date = Date.tomorrow + i.days
   next if date.sunday?
 
@@ -70,6 +70,18 @@ turnos = [
 end
 
 puts "  Turnos: #{Availability.count} criados"
+
+# ── Crédito de exemplo para a dentista demo ─────────────────────────────────
+dentist = User.find_by(email: "dentista@videiradental.com.br")
+if dentist && Credit.where(user: dentist, clinic: clinic).none?
+  Credit.create!(
+    user:         dentist,
+    clinic:       clinic,
+    amount_cents: 5_000,
+    reason:       "Crédito promocional de boas-vindas"
+  )
+  puts "  Crédito demo: R$ 50,00 para #{dentist.email}"
+end
 
 puts "\nSeed concluído!"
 puts "  owner:   owner@videiradental.com.br | #{senha}"
