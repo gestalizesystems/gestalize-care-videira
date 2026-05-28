@@ -259,7 +259,7 @@ todos os `<dialog>` automaticamente — **não adicione nenhuma classe de posici
   Abrir modal
 </button>
 
-<%# Renderiza o modal — coloque ao final da view, fora de qualquer wrapper com transform %>
+<%# Renderiza o modal — coloque ao final da view %>
 <%= render layout: "shared/modal", locals: { id: "meu-modal", title: "Título do modal" } do %>
 
   <%# Conteúdo livre: form, texto, lista, etc. %>
@@ -319,14 +319,16 @@ todos os `<dialog>` automaticamente — **não adicione nenhuma classe de posici
 - `<dialog id="..." onclick="if(event.target===this)this.close()">` com padding e header prontos
 - Título (`font-medium text-sm`, cor primária) + botão X de fechar
 - Conteúdo via `yield`
-- **Sem posicionamento inline** — o centering é 100% CSS global
+- **Sem posicionamento inline** — o centering é 100% CSS global via `position: fixed; inset: 0; margin: auto; height: fit-content`
 
 ### ⚠️ Onde renderizar o `<dialog>`
 
-Renderize sempre **ao final da view**, fora de qualquer `<div>` que tenha `transform`, `filter`,
-`will-change` ou `overflow: hidden`. Esses contextos podem quebrar o `position: fixed` do modal.
-O partial do layout (`admin.html.erb`, `application.html.erb`) já renderiza o modal de logout
-fora do container centralizado como exemplo correto.
+Renderize sempre **ao final da view**. Evite colocar `<dialog>` dentro de elementos que tenham
+`transform`, `filter`, `perspective` ou `will-change: transform` — esses contextos criam um novo
+"containing block" para `position: fixed` e quebram o centering automático.
+
+`overflow: hidden` em ancestrais **não** afeta `position: fixed` por spec; não há necessidade
+de mover modais por causa disso.
 
 ---
 

@@ -47,17 +47,17 @@ dialog:modal {
   border: none;
   border-radius: 1.5rem;
   padding: 0;
-  margin: 0;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   width: min(22rem, calc(100vw - 2rem));
   max-height: 90dvh;
   overflow-y: auto;
-  /* Centering: inset: unset cancels any browser UA inset: 0 */
   position: fixed;
-  inset: unset;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  margin: auto;
+  height: fit-content;
 }
 dialog::backdrop {
   background-color: rgba(0, 0, 0, 0.45);
