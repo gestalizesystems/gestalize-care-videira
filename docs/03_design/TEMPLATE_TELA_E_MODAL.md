@@ -237,86 +237,96 @@ Use este template para qualquer view nova. Adapte o conteúdo interno; mantenha 
 
 ## 2 · Esqueleto base de um MODAL
 
-Modais usam o elemento `<dialog>` nativo do HTML (estilo já definido em `application.css`).
-Controle de abertura/fechamento via Stimulus.
+Modais usam o elemento `<dialog>` nativo do HTML. O CSS global (`application.css`) já centraliza
+todos os `<dialog>` automaticamente — **não adicione nenhuma classe de posicionamento inline**.
 
-### HTML do modal (qualquer lugar da view)
+### Regras obrigatórias
+
+- **Sempre** use o partial `shared/_modal` (veja abaixo) — nunca escreva `<dialog>` do zero.
+- **Sempre** abra via `open_modal` helper → `onclick="<%= open_modal('id-do-modal') %>"`.
+  O helper garante que `.showModal()` é chamado (obrigatório para o backdrop e o centering).
+- **Nunca** use `.show()` em vez de `.showModal()`.
+- **Nunca** adicione classes de posição/transform/margin no `<dialog>` — o CSS global cuida disso.
+- Fechar ao clicar fora: `onclick="if(event.target===this)this.close()"` (já incluso no partial).
+- `Esc` fecha por padrão (comportamento nativo).
+
+### Usando o partial `shared/_modal`
 
 ```erb
-<dialog id="modal-confirmar" data-controller="modal">
+<%# Abre o modal — coloque o botão em qualquer lugar da view %>
+<button type="button" onclick="<%= open_modal('meu-modal') %>"
+        class="btn-primary cursor-pointer">
+  Abrir modal
+</button>
 
-  <%# Cabeçalho %>
-  <div class="px-6 pt-6 pb-4 flex items-start justify-between gap-3">
-    <div>
-      <h2 class="text-lg font-semibold" style="color: #3E2723">Título do modal</h2>
-      <p class="text-sm mt-1" style="color: #8D6E63">Descrição curta do que vai acontecer.</p>
-    </div>
-    <button type="button" data-action="click->modal#close"
-            class="p-1 rounded-full hover:bg-gray-100" aria-label="Fechar">
-      <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
-           style="color: #8D6E63">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-      </svg>
-    </button>
-  </div>
+<%# Renderiza o modal — coloque ao final da view, fora de qualquer wrapper com transform %>
+<%= render layout: "shared/modal", locals: { id: "meu-modal", title: "Título do modal" } do %>
 
-  <%# Corpo — qualquer conteúdo aqui (form, texto, lista) %>
-  <div class="px-6 py-2">
-    <p class="text-sm" style="color: #3E2723">
-      Conteúdo do modal — pode ser um form, confirmação, etc.
-    </p>
-  </div>
+  <%# Conteúdo livre: form, texto, lista, etc. %>
+  <p class="text-sm mb-5" style="color: #8D6E63">Descrição do que vai acontecer.</p>
 
-  <%# Rodapé com ações: outline à esquerda, preenchido à direita %>
-  <div class="px-6 pt-4 pb-6 flex gap-3">
-    <button type="button" data-action="click->modal#close"
-            class="btn-outline flex-1">
+  <%# Rodapé padrão: outline à esquerda, preenchido à direita %>
+  <div class="flex gap-3">
+    <button type="button" onclick="this.closest('dialog').close()"
+            class="btn-outline flex-1 cursor-pointer">
       Cancelar
     </button>
     <%= button_to "Confirmar", acao_path, method: :post,
           class: "btn-primary flex-1 cursor-pointer" %>
   </div>
 
-</dialog>
+<% end %>
 ```
 
-### Botão que abre o modal
+### Modal com formulário interno
 
 ```erb
-<button type="button"
-        data-action="click->modal#openById"
-        data-modal-id-param="modal-confirmar"
-        class="btn-primary cursor-pointer">
-  Abrir modal
-</button>
+<%= render layout: "shared/modal", locals: { id: "form-modal", title: "Adicionar item" } do %>
+  <%= form_with url: itens_path, method: :post, data: { turbo: false },
+        class: "flex flex-col gap-4" do %>
+    <div>
+      <label class="label">Nome</label>
+      <input type="text" name="nome" class="input-field" placeholder="Nome" required>
+    </div>
+    <%= render "shared/modal_actions", label: "Salvar" %>
+  <% end %>
+<% end %>
 ```
 
-### Stimulus controller necessário (uma vez no projeto)
+> O partial `shared/_modal_actions` já inclui botão Cancelar (`btn-outline flex-1`) e
+> botão Salvar (`btn-primary flex-1`) no padrão correto — use sempre que o modal tiver formulário.
 
-`app/javascript/controllers/modal_controller.js`:
+### Modal de confirmação / destrutivo
 
-```javascript
-import { Controller } from "@hotwired/stimulus"
-
-export default class extends Controller {
-  connect() {
-    this.element.addEventListener("click", (e) => {
-      if (e.target === this.element) this.close()
-    })
-  }
-
-  open()  { this.element.showModal() }
-  close() { this.element.close() }
-
-  openById(event) {
-    const id = event.params.id
-    document.getElementById(id)?.showModal()
-  }
-}
+```erb
+<%= render layout: "shared/modal", locals: { id: "delete-modal", title: "Excluir item?" } do %>
+  <p class="text-center text-sm mb-5" style="color: #8D6E63">
+    Essa ação não pode ser desfeita.
+  </p>
+  <div class="flex gap-3">
+    <button type="button" onclick="this.closest('dialog').close()"
+            class="btn-outline flex-1 cursor-pointer">
+      Cancelar
+    </button>
+    <%= button_to "Excluir", item_path(@item), method: :delete,
+          class: "btn-danger-filled flex-1" %>
+  </div>
+<% end %>
 ```
 
-> O click fora do modal (no backdrop) fecha automaticamente.
-> `Esc` fecha por padrão (comportamento nativo do `<dialog>`).
+### O que o partial `shared/_modal` entrega
+
+- `<dialog id="..." onclick="if(event.target===this)this.close()">` com padding e header prontos
+- Título (`font-medium text-sm`, cor primária) + botão X de fechar
+- Conteúdo via `yield`
+- **Sem posicionamento inline** — o centering é 100% CSS global
+
+### ⚠️ Onde renderizar o `<dialog>`
+
+Renderize sempre **ao final da view**, fora de qualquer `<div>` que tenha `transform`, `filter`,
+`will-change` ou `overflow: hidden`. Esses contextos podem quebrar o `position: fixed` do modal.
+O partial do layout (`admin.html.erb`, `application.html.erb`) já renderiza o modal de logout
+fora do container centralizado como exemplo correto.
 
 ---
 
