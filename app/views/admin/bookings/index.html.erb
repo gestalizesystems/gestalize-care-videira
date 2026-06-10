@@ -89,7 +89,7 @@
 
 <%# ── Modais: alterar reserva por grupo ──────────────────────────────────── %>
 <% @booking_groups.each do |group| %>
-  <%= render layout: "shared/modal", locals: { id: "edit-booking-#{group.id}", title: "+ Alterar reserva" } do %>
+  <%= render layout: "shared/modal", locals: { id: "edit-booking-#{group.id}", title: "Alterar reserva" } do %>
     <div class="flex items-center gap-3 mb-4 pb-3 border-b" style="border-color: #E0E0E0">
       <%= render "shared/avatar", user: group.dentist, size: "sm" %>
       <div>
@@ -140,20 +140,9 @@
   <% end %>
 
   <%# Confirmar cancelamento %>
-  <dialog id="cancel-booking-<%= group.id %>" onclick="if(event.target===this)this.close()"
-          class="rounded-3xl p-6 shadow-xl max-w-sm w-full mx-auto">
-    <h3 class="text-center text-base font-medium mb-2" style="color: #3E2723">Cancelar reserva?</h3>
-    <p class="text-center text-xs mb-5" style="color: #8D6E63">
-      O valor de R$ <%= money(group.total_cents) %> será retornado como crédito para o cliente.
-    </p>
-    <div class="flex gap-3">
-      <button type="button" onclick="this.closest('dialog').close()"
-              class="btn-outline flex-1 cursor-pointer">Não</button>
-      <%= button_to cancelar_admin_booking_path(group), method: :patch,
-            class: "flex-1 py-3 rounded-full text-sm font-medium text-white cursor-pointer",
-            style: "background-color: #d4183d" do %>
-        Sim, cancelar
-      <% end %>
-    </div>
-  </dialog>
+  <%= render "shared/confirm_modal", id: "cancel-booking-#{group.id}",
+        message: "Cancelar reserva?",
+        detail: "O valor de R$ #{money(group.total_cents)} será retornado como crédito para o cliente.",
+        confirm_path: cancelar_admin_booking_path(group), confirm_method: :patch,
+        confirm_label: "Sim, cancelar", danger: true %>
 <% end %>

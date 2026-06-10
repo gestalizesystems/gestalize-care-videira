@@ -26,14 +26,44 @@ export default class extends Controller {
   onFormData = (event) => {
     const name = this.element.name
     if (!name) return
-    event.formData.set(name, this.digits())
+    event.formData.set(name, this.submitValue())
+  }
+
+  submitValue() {
+    if (this.patternValue === "money") {
+      const d = this.digits()
+      return d === "" ? "" : (parseInt(d, 10) / 100).toFixed(2)
+    }
+    // CRO mantém o valor formatado (contém UF + número).
+    if (this.patternValue === "cro") return this.element.value
+    return this.digits()
   }
 
   format() {
-    const digits = this.digits()
-    this.element.value = this.patternValue === "cpf"
-      ? this.formatCpf(digits)
-      : this.formatPhone(digits)
+    if (this.patternValue === "cpf")   { this.element.value = this.formatCpf(this.digits());   return }
+    if (this.patternValue === "money") { this.element.value = this.formatMoney(this.digits()); return }
+    if (this.patternValue === "cro")   { this.element.value = this.formatCro(this.element.value); return }
+    this.element.value = this.formatPhone(this.digits())
+  }
+
+  // Formato: CRO-XX 00000  (XX = UF, depois o número de inscrição)
+  formatCro(raw) {
+    let v = (raw || "").toUpperCase().replace(/[^A-Z0-9]/g, "").replace(/^CRO/, "")
+    const letters = v.replace(/[0-9]/g, "").slice(0, 2)
+    const digits  = v.replace(/[A-Z]/g, "").slice(0, 6)
+    if (letters === "" && digits === "") return ""
+    let out = "CRO-" + letters
+    if (digits) out += (letters.length === 2 ? " " : "") + digits
+    return out
+  }
+
+  formatMoney(d) {
+    d = d.replace(/^0+/, "")
+    if (d === "") return ""
+    while (d.length < 3) d = "0" + d
+    const cents = d.slice(-2)
+    const intPart = d.slice(0, -2).replace(/\B(?=(\d{3})+(?!\d))/g, ".")
+    return `R$ ${intPart},${cents}`
   }
 
   digits() {

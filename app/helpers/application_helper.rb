@@ -48,6 +48,16 @@ module ApplicationHelper
     "#{digits[0,3]}.#{digits[3,3]}.#{digits[6,3]}-#{digits[9,2]}"
   end
 
+  def format_cro(value)
+    v = value.to_s.upcase.gsub(/[^A-Z0-9]/, "").sub(/\ACRO/, "")
+    letters = v.gsub(/[0-9]/, "")[0, 2].to_s
+    digits  = v.gsub(/[A-Z]/, "")[0, 6].to_s
+    return value if letters.blank? && digits.blank?
+    out = "CRO-#{letters}"
+    out += "#{letters.length == 2 ? ' ' : ''}#{digits}" if digits.present?
+    out
+  end
+
   def format_phone(value)
     digits = value.to_s.gsub(/\D/, "")
     case digits.length

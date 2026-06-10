@@ -15,9 +15,10 @@
     <div class="min-h-screen overflow-x-hidden">
       <div class="max-w-md mx-auto px-4 py-6">
 
+        <% unless content_for?(:hide_admin_chrome) %>
         <div class="flex justify-center mb-6 relative">
-          <%= link_to admin_root_path do %>
-            <%= render "shared/logo", size: "lg" %>
+          <%= link_to admin_root_path, class: "block" do %>
+            <%= render "shared/logo", size: "full" %>
           <% end %>
 
           <div class="absolute right-0 top-0">
@@ -33,38 +34,43 @@
           </div>
         </div>
 
-        <%= render layout: "shared/modal", locals: { id: "logout-modal", title: "Tem certeza que deseja sair?" } do %>
-          <div class="flex gap-3">
-            <button type="button" onclick="this.closest('dialog').close()"
-                    class="btn-outline flex-1 cursor-pointer">
-              Cancelar
-            </button>
-            <%= button_to destroy_user_session_path, method: :delete,
-                  class: "btn-primary flex-1 cursor-pointer" do %>
-              Sair
-            <% end %>
-          </div>
-        <% end %>
+        <%= render "shared/confirm_modal", id: "logout-modal",
+              message: "Tem certeza que deseja sair?",
+              confirm_path: destroy_user_session_path, confirm_method: :delete,
+              confirm_label: "Sair" %>
 
         <%= render "shared/flash" %>
 
-        <div class="grid grid-cols-2 gap-3 mb-8">
+        <div class="grid grid-cols-3 gap-3 mb-8">
           <% [
-               { label: "Reservas",    path: admin_bookings_path },
-               { label: "Clientes",    path: admin_users_path },
-               { label: "Turnos",      path: admin_availabilities_path },
-               { label: "Videira Shop", path: "#" },
+               { label: "Dashboard", path: admin_root_path },
+               { label: "Reservas",  path: admin_bookings_path },
+               { label: "Turnos",    path: admin_availabilities_path },
+               { label: "Descontos", path: admin_discount_rules_path },
+               { label: "Clientes",  path: admin_users_path },
+               { label: "Videira Shop", path: "#", disabled: true },
              ].each do |item| %>
-            <% active = current_page?(item[:path]) %>
-            <%= link_to item[:path],
-                  class: "rounded-2xl p-5 shadow-sm hover:shadow-md transition-all active:scale-[0.98] flex items-center justify-center",
-                  style: "background-color: #{active ? '#C9B8A8' : '#ffffff'}" do %>
-              <span class="text-sm font-medium uppercase tracking-wide" style="color: #5D4037">
-                <%= item[:label] %>
-              </span>
+            <% if item[:disabled] %>
+              <div class="rounded-2xl p-4 shadow-sm flex flex-col items-center justify-center text-center opacity-50 cursor-not-allowed"
+                   style="background-color: #ffffff">
+                <span class="text-xs font-medium uppercase tracking-wide" style="color: #5D4037">
+                  <%= item[:label] %>
+                </span>
+                <span class="text-[9px] font-medium uppercase tracking-wide mt-1" style="color: #8D6E63">Em breve</span>
+              </div>
+            <% else %>
+              <% active = current_page?(item[:path]) %>
+              <%= link_to item[:path],
+                    class: "rounded-2xl p-4 shadow-sm hover:shadow-md transition-all active:scale-[0.98] flex items-center justify-center text-center min-h-[72px]",
+                    style: "background-color: #{active ? '#C9B8A8' : '#ffffff'}" do %>
+                <span class="text-xs font-medium uppercase tracking-wide" style="color: #5D4037">
+                  <%= item[:label] %>
+                </span>
+              <% end %>
             <% end %>
           <% end %>
         </div>
+        <% end %>
 
         <main>
           <%= yield %>

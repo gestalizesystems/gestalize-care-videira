@@ -1,0 +1,33 @@
+<%# Modal de confirmação padrão — frase centralizada, sem ícone X, botões iguais.
+    Locals:
+      id            (String)  — id do <dialog>
+      message       (String)  — frase centralizada
+      confirm_path  (String)  — destino do botão de confirmação
+      confirm_method (Symbol)  — :post | :delete | :patch (default :post)
+      confirm_label (String)  — texto do botão (default "Confirmar")
+      danger        (Bool)    — botão de confirmação vermelho (default false)
+      large         (Bool)    — frase 10% maior (default false) %>
+<% confirm_method = local_assigns.fetch(:confirm_method, :post) %>
+<% confirm_label  = local_assigns.fetch(:confirm_label, "Confirmar") %>
+<% danger         = local_assigns.fetch(:danger, false) %>
+<% large          = local_assigns.fetch(:large, false) %>
+<% detail         = local_assigns[:detail] %>
+<dialog id="<%= id %>" onclick="if(event.target===this)this.close()">
+  <div class="p-6">
+    <p class="text-center font-medium <%= detail ? 'mb-2' : 'mb-5' %>" style="color:#3E2723;<%= ' font-size:1.1rem;' if large %>">
+      <%= message %>
+    </p>
+    <% if detail %>
+      <p class="text-center text-xs mb-5" style="color:#8D6E63"><%= detail %></p>
+    <% end %>
+    <div class="flex gap-3">
+      <button type="button" onclick="this.closest('dialog').close()"
+              class="btn-outline flex-1 cursor-pointer">
+        Cancelar
+      </button>
+      <%= button_to confirm_label, confirm_path, method: confirm_method,
+            form: { class: "flex-1" },
+            class: "#{danger ? 'btn-danger-filled' : 'btn-primary'} w-full cursor-pointer" %>
+    </div>
+  </div>
+</dialog>

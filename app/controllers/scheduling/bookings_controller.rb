@@ -2,15 +2,18 @@ class Scheduling::BookingsController < ApplicationController
   before_action :authenticate_user!
 
   def index
-    scope = policy_scope(BookingGroup).includes(:bookings, :payment).order(created_at: :desc)
+    base = policy_scope(BookingGroup).includes(:bookings, :payment)
 
-    if params[:month].present?
-      year, month = params[:month].split("-").map(&:to_i)
+    @months = base.pluck(:created_at).map { |d| d.strftime("%Y-%m") }.uniq.sort.reverse
+    @selected_month = params[:month].presence || @months.first
+
+    scope = base.order(created_at: :desc)
+
+    if @selected_month.present?
+      year, month = @selected_month.split("-").map(&:to_i)
       scope = scope.where(created_at: Date.new(year, month).beginning_of_month..Date.new(year, month).end_of_month)
     end
 
-    @selected_month = params[:month] || Date.current.strftime("%Y-%m")
-    @months = (0..11).map { |i| (Date.current - i.months).strftime("%Y-%m") }
     @pagy, @booking_groups = pagy(scope)
   end
 

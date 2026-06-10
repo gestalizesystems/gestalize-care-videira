@@ -47,7 +47,7 @@
 <% end %>
 
 <%# ── Modal: Nova regra ──────────────────────────────────────────────────── %>
-<%= render layout: "shared/modal", locals: { id: "new-rule-modal", title: "+ Nova regra de desconto" } do %>
+<%= render layout: "shared/modal", locals: { id: "new-rule-modal", title: "Nova regra de desconto" } do %>
   <%= form_with url: admin_discount_rules_path, method: :post, data: { turbo: false }, class: "flex flex-col gap-4" do %>
     <div>
       <label class="label">Mínimo de horários</label>
@@ -84,17 +84,10 @@
   <% end %>
 
   <% if rule.active? %>
-    <%= render layout: "shared/modal", locals: { id: "delete-rule-#{rule.id}", title: "Desativar regra?" } do %>
-      <p class="text-center text-sm mb-5" style="color:#8D6E63">
-        <%= rule.min_slots %> horários → <%= rule.discount_percent %>% de desconto
-      </p>
-      <div class="flex gap-3">
-        <button type="button" onclick="this.closest('dialog').close()" class="btn-outline flex-1 cursor-pointer">
-          Cancelar
-        </button>
-        <%= button_to "Desativar", admin_discount_rule_path(rule), method: :delete,
-              class: "btn-danger-filled flex-1" %>
-      </div>
-    <% end %>
+    <%= render "shared/confirm_modal", id: "delete-rule-#{rule.id}",
+          message: "Desativar regra?",
+          detail: "#{rule.min_slots} horários → #{rule.discount_percent}% de desconto",
+          confirm_path: admin_discount_rule_path(rule), confirm_method: :delete,
+          confirm_label: "Desativar", danger: true %>
   <% end %>
 <% end %>

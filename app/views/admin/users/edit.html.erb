@@ -18,7 +18,8 @@
     </div>
     <div>
       <%= f.label :phone, "Telefone", class: "label" %>
-      <%= f.telephone_field :phone, class: "input-field" %>
+      <%= f.telephone_field :phone, class: "input-field",
+            data: { controller: "input-mask", "input-mask-pattern-value": "phone" } %>
     </div>
     <div>
       <%= f.label :cpf, "CPF (11 dígitos)", class: "label" %>
