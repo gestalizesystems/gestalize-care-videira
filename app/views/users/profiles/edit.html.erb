@@ -44,7 +44,8 @@
         <%= f.text_field :cro,
               placeholder: "CRO-XX 00000",
               class: "w-full bg-transparent border-none outline-none py-3 text-sm",
-              style: "color: #3E2723" %>
+              style: "color: #3E2723",
+              data: { controller: "input-mask", "input-mask-pattern-value": "cro" } %>
       </div>
     </div>
 
@@ -71,9 +72,10 @@
         <label class="label">Contato</label>
         <div class="bg-[#fef8e1] rounded-2xl px-4 py-1">
           <%= f.telephone_field :phone, autocomplete: "tel",
-                placeholder: "+55",
+                placeholder: "(00) 00000-0000",
                 class: "w-full bg-transparent border-none outline-none py-3 text-sm",
-                style: "color: #3E2723" %>
+                style: "color: #3E2723",
+                data: { controller: "input-mask", "input-mask-pattern-value": "phone" } %>
         </div>
       </div>
     </div>
@@ -108,15 +110,7 @@
 </div>
 
 <%# Modal Logout %>
-<%= render layout: "shared/modal", locals: { id: "logout-modal", title: "Tem certeza que deseja sair?" } do %>
-  <div class="flex gap-3">
-    <button type="button" onclick="this.closest('dialog').close()"
-            class="btn-outline flex-1 cursor-pointer">
-      Cancelar
-    </button>
-    <%= button_to destroy_user_session_path, method: :delete,
-          class: "btn-primary flex-1 cursor-pointer" do %>
-      Sair
-    <% end %>
-  </div>
-<% end %>
+<%= render "shared/confirm_modal", id: "logout-modal",
+      message: "Tem certeza que deseja sair?",
+      confirm_path: destroy_user_session_path, confirm_method: :delete,
+      confirm_label: "Sair" %>

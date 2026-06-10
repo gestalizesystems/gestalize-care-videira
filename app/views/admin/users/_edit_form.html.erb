@@ -4,7 +4,12 @@
 </p>
 <%= form_with model: [:admin, user], data: { turbo: false }, class: "flex flex-col gap-4", builder: VdcFormBuilder do |f| %>
   <%= f.vdc_field :name,       "Nome" %>
-  <%= f.vdc_field :phone,      "Telefone",           :telephone_field %>
+  <%= f.vdc_field :cro,        "CRO", :text_field,
+        placeholder: "CRO-XX 00000",
+        data: { controller: "input-mask", "input-mask-pattern-value": "cro" } %>
+  <%= f.vdc_field :specialty,  "Área de atuação" %>
+  <%= f.vdc_field :phone,      "Telefone",           :telephone_field,
+        data: { controller: "input-mask", "input-mask-pattern-value": "phone" } %>
   <%= f.vdc_field :cpf,        "CPF (11 dígitos)" %>
   <%= f.vdc_field :birth_date, "Data de nascimento",  :date_field %>
   <%= render "shared/modal_actions", label: "Salvar" %>

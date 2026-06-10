@@ -1,7 +1,12 @@
-<%# Uso: <%= render 'shared/logo', size: 'sm' | 'md' | 'lg' %>
+<%# Uso: <%= render 'shared/logo', size: 'sm' | 'md' | 'lg' | 'full' %>
 <% size = local_assigns[:size] || 'md' %>
-<% heights = { 'sm' => 'h-8', 'md' => 'h-10', 'lg' => 'h-14' } %>
+<% sizes = {
+     'sm'   => 'h-8 w-auto',
+     'md'   => 'h-10 w-auto',
+     'lg'   => 'h-14 w-auto',
+     'full' => 'w-72 h-auto'
+   } %>
 
 <%= image_tag "logo.jpeg",
       alt: "Videira Clinic",
-      class: "#{heights[size]} w-auto object-contain" %>
+      class: "#{sizes[size]} object-contain" %>

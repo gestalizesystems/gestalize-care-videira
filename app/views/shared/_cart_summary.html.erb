@@ -10,14 +10,13 @@
       </span>
       <div class="flex items-center gap-2 ml-auto">
         <%= button_to carrinho_path, method: :delete,
-              class: "text-xs font-medium px-4 py-2 rounded-full border cursor-pointer",
-              style: "border-color: #5D4037; color: #5D4037; background: transparent",
+              class: "btn-sm-outline inline-flex items-center justify-center",
+              form: { class: "contents" },
               data: { turbo: false } do %>
           Limpar seleção
         <% end %>
         <%= link_to carrinho_path,
-              class: "text-xs font-medium px-4 py-2 rounded-full text-white",
-              style: "background-color: #5D4037",
+              class: "btn-sm-primary inline-flex items-center justify-center",
               data: { turbo_frame: "_top" } do %>
           Adicionar ao carrinho
         <% end %>
