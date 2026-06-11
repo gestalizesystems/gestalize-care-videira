@@ -20,7 +20,7 @@ class Payments::PaymentsController < ApplicationController
   # InfinitePay redireciona para /pagamento/retorno?order_nsu=...&transaction_nsu=...&slug=...
   def return
     group = BookingGroup.find_by(id: params[:order_nsu])
-    return redirect_to root_path, alert: "Reserva não encontrada." unless group
+    return handle_credit_return if group.nil?
 
     @payment = group.payment
     authorize @payment, :show?
@@ -60,5 +60,37 @@ class Payments::PaymentsController < ApplicationController
     redirect_to reservas_path, notice: "Reserva cancelada."
   rescue => e
     redirect_to pagamento_path(@payment), alert: "Não foi possível cancelar: #{e.message}"
+  end
+
+  private
+
+  # Retorno do InfinitePay para uma recarga de crédito (order_nsu = credit_purchase.id)
+  def handle_credit_return
+    purchase = CreditPurchase.find_by(id: params[:order_nsu])
+    unless purchase && purchase.user_id == current_user.id
+      return redirect_to root_path, alert: "Pagamento não encontrado."
+    end
+
+    if purchase.pending? && params[:transaction_nsu].present? && params[:slug].present?
+      result = InfinitePay::PaymentChecker.call(
+        order_nsu:       params[:order_nsu],
+        transaction_nsu: params[:transaction_nsu],
+        slug:            params[:slug]
+      )
+
+      if result.success? && result.value["paid"]
+        CreditPurchaseConfirmer.call_from_webhook(
+          "order_nsu"       => params[:order_nsu],
+          "transaction_nsu" => params[:transaction_nsu]
+        )
+        purchase.reload
+      end
+    end
+
+    if purchase.paid?
+      redirect_to carteira_path, notice: "Crédito adicionado com sucesso! 🎉"
+    else
+      redirect_to carteira_path, notice: "Pagamento em processamento. O crédito aparecerá assim que confirmado."
+    end
   end
 end

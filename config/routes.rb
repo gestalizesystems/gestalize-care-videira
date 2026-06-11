@@ -23,6 +23,7 @@ Rails.application.routes.draw do
     path_names: { edit: "editar" }
 
   resource :carteira, only: [:show], controller: "users/wallets"
+  resources :recargas, only: [:create], controller: "users/credit_purchases"
 
   # ---- Agendamento ------------------------------------------
   scope module: "scheduling" do
@@ -77,7 +78,10 @@ Rails.application.routes.draw do
     end
     resources :discount_rules, except: [:show]
     resources :bookings,       only: [:index, :show, :create] do
-      member { patch "cancelar", action: :cancel }
+      member do
+        patch "cancelar",      action: :cancel
+        patch "alterar-turno", action: :change_slot, as: :change_slot
+      end
     end
     resources :payments, only: [:index, :show]
     resources :credits,  only: [:index]

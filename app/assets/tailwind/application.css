@@ -123,7 +123,7 @@ input, select, textarea {
 
   /* Botões */
   .btn-primary {
-    @apply py-3 px-6 rounded-full text-white text-sm font-medium transition-all active:scale-[0.98];
+    @apply py-3 px-6 rounded-full text-white text-sm font-medium border border-transparent transition-all active:scale-[0.98];
     background-color: #5D4037;
   }
   .btn-primary:hover { background-color: #4E342E; }
@@ -149,17 +149,17 @@ input, select, textarea {
 
   /* Ação destrutiva preenchida (vermelho sólido) — modais de confirmar exclusão */
   .btn-danger-filled {
-    @apply py-3 px-4 rounded-full text-white text-sm font-medium cursor-pointer transition-all active:scale-[0.98];
+    @apply py-3 px-4 rounded-full text-white text-sm font-medium border border-transparent cursor-pointer transition-all active:scale-[0.98];
     background-color: #d4183d;
   }
 
   .btn-sm-primary {
-    @apply text-xs px-4 py-2 rounded-full text-white font-medium;
+    @apply text-xs px-4 py-2 rounded-full text-white font-medium border border-transparent;
     background-color: #5D4037;
   }
 
   .btn-sm-outline {
-    @apply text-xs px-4 py-2 rounded-full border;
+    @apply text-xs px-4 py-2 rounded-full border font-medium;
     border-color: #5D4037;
     color: #5D4037;
   }

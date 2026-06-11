@@ -20,13 +20,13 @@
     <% if detail %>
       <p class="text-center text-xs mb-5" style="color:#8D6E63"><%= detail %></p>
     <% end %>
-    <div class="flex gap-3">
+    <div class="grid grid-cols-2 gap-3">
       <button type="button" onclick="this.closest('dialog').close()"
-              class="btn-outline flex-1 cursor-pointer">
+              class="btn-outline w-full cursor-pointer">
         Cancelar
       </button>
       <%= button_to confirm_label, confirm_path, method: confirm_method,
-            form: { class: "flex-1" },
+            form: { class: "w-full" },
             class: "#{danger ? 'btn-danger-filled' : 'btn-primary'} w-full cursor-pointer" %>
     </div>
   </div>

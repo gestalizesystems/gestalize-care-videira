@@ -5,7 +5,7 @@ class PagesController < ApplicationController
     min_date = Date.tomorrow
     requested = params[:date].present? ? Date.parse(params[:date]) : min_date
     @date = [requested, min_date].max
-    @date = [@date, min_date + 90.days].min
+    @date = [@date, Date.current + 3.months].min
 
     @availabilities = Availability
       .available

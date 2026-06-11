@@ -8,12 +8,15 @@
   </button>
 </div>
 
+<% min_date = Date.current %>
+<% max_date = Date.current + 3.months %>
+
 <%# ── Date badge (calendário padrão) ─────────────────────────────────────── %>
-<div class="mb-3"
+<div class="mb-3 flex justify-end"
      data-controller="calendar"
      data-calendar-selected-value="<%= @date %>"
-     data-calendar-min-value="<%= Date.current - 1.year %>"
-     data-calendar-max-value="<%= Date.current + 1.year %>"
+     data-calendar-min-value="<%= min_date %>"
+     data-calendar-max-value="<%= max_date %>"
      data-calendar-base-value="<%= admin_availabilities_path %>">
   <button type="button" data-action="click->calendar#open"
           class="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full bg-white shadow-sm cursor-pointer">
@@ -28,31 +31,50 @@
   <%= render "shared/calendar_dialog" %>
 </div>
 
-<%# ── Week strip ─────────────────────────────────────────────────────────── %>
+<%# ── Week strip (hoje → 3 meses) ─────────────────────────────────────────── %>
 <% week_start = @date.beginning_of_week(:sunday) %>
+<% wdays = %w[DOM SEG TER QUA QUI SEX SÁB] %>
 <div class="bg-white rounded-2xl shadow-sm px-2 py-2 mb-5 flex items-center gap-1">
-  <%= link_to admin_availabilities_path(date: (@date - 7).to_s),
-        class: "shrink-0 w-7 h-7 flex items-center justify-center rounded-full text-base hover:bg-[#fef8e1]",
-        style: "color: #8D6E63" do %>‹<% end %>
+  <% if (week_start - 1) >= min_date %>
+    <%= link_to admin_availabilities_path(date: [@date - 7, min_date].max.to_s),
+          class: "shrink-0 w-7 h-7 flex items-center justify-center rounded-full text-base hover:bg-[#fef8e1]",
+          style: "color: #8D6E63" do %>‹<% end %>
+  <% else %>
+    <span class="shrink-0 w-7 h-7 flex items-center justify-center text-base opacity-20" style="color:#8D6E63">‹</span>
+  <% end %>
+
   <div class="flex-1 flex justify-between">
     <% 7.times do |i| %>
       <% day = week_start + i %>
       <% active = day == @date %>
-      <%= link_to admin_availabilities_path(date: day.to_s),
-            class: "flex flex-col items-center px-2 py-1.5 rounded-2xl transition-all",
-            style: active ? "background-color: #5D4037" : "" do %>
-        <span class="text-xs font-medium" style="color: <%= active ? '#ffffff' : '#8D6E63' %>">
-          <%= %w[DOM SEG TER QUA QUI SEX SÁB][day.wday] %>
+      <% disabled = day < min_date || day > max_date %>
+      <% if disabled %>
+        <span class="flex flex-col items-center px-2 py-1.5 rounded-2xl opacity-25">
+          <span class="text-xs font-medium" style="color:#8D6E63"><%= wdays[day.wday] %></span>
+          <span class="text-xs font-medium" style="color:#5D4037"><%= day.day %></span>
         </span>
-        <span class="text-xs font-medium" style="color: <%= active ? '#ffffff' : '#5D4037' %>">
-          <%= day.day %>
+      <% elsif active %>
+        <span class="flex flex-col items-center px-2 py-1.5 rounded-2xl" style="background-color:#5D4037">
+          <span class="text-xs font-medium text-white"><%= wdays[day.wday] %></span>
+          <span class="text-xs font-medium text-white"><%= day.day %></span>
         </span>
+      <% else %>
+        <%= link_to admin_availabilities_path(date: day.to_s),
+              class: "flex flex-col items-center px-2 py-1.5 rounded-2xl transition-all" do %>
+          <span class="text-xs font-medium" style="color:#8D6E63"><%= wdays[day.wday] %></span>
+          <span class="text-xs font-medium" style="color:#5D4037"><%= day.day %></span>
+        <% end %>
       <% end %>
     <% end %>
   </div>
-  <%= link_to admin_availabilities_path(date: (@date + 7).to_s),
-        class: "shrink-0 w-7 h-7 flex items-center justify-center rounded-full text-base hover:bg-[#fef8e1]",
-        style: "color: #8D6E63" do %>›<% end %>
+
+  <% if (week_start + 7) <= max_date %>
+    <%= link_to admin_availabilities_path(date: [@date + 7, max_date].min.to_s),
+          class: "shrink-0 w-7 h-7 flex items-center justify-center rounded-full text-base hover:bg-[#fef8e1]",
+          style: "color: #8D6E63" do %>›<% end %>
+  <% else %>
+    <span class="shrink-0 w-7 h-7 flex items-center justify-center text-base opacity-20" style="color:#8D6E63">›</span>
+  <% end %>
 </div>
 
 <%# ── Lista de turnos + modais de reserva ────────────────────────────────── %>
@@ -97,7 +119,7 @@
           <% if av.booked? %>
             <span class="badge-warning">Reservado</span>
           <% else %>
-            <% if av.available? %>
+            <% if av.available? && !av.past? %>
               <button type="button"
                       data-action="click->book-slot#open"
                       data-book-slot-id-param="<%= av.id %>"

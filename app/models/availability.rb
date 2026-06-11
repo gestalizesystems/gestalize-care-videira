@@ -17,6 +17,7 @@ class Availability < ApplicationRecord
 
   validate :ends_after_starts
   validate :no_overlapping_slots
+  validate :not_in_the_past, on: :create
 
   enum :status, {
     available:  "available",
@@ -32,12 +33,28 @@ class Availability < ApplicationRecord
   # Derives a human label from the time slot
   def label
     return "Aluguel de Sala" unless starts_at
+    return "Hora Avulsa" if avulsa?
     case starts_at.hour
     when  0..5  then "Turno Madrugada"
     when  6..11 then "Turno Manhã"
     when 12..17 then "Turno Tarde"
     when 18..23 then "Turno Noite"
     end
+  end
+
+  # Turno curto (até 1h) — ex.: 13:00–14:00 ou 23:00–00:00
+  def avulsa?
+    return false unless starts_at && ends_at
+    s, e = slot_minutes
+    (e - s) <= 60
+  end
+
+  # [início, fim] em minutos no dia; fim ≤ início significa que cruza a meia-noite.
+  def slot_minutes
+    s = starts_at.hour * 60 + starts_at.min
+    e = ends_at.hour * 60 + ends_at.min
+    e += 1440 if e <= s
+    [s, e]
   end
 
   def time_range
@@ -52,22 +69,39 @@ class Availability < ApplicationRecord
     slot_start > lead_hours.hours.from_now
   end
 
+  # Horário do turno já passou em relação a agora.
+  def past?
+    return false unless date && starts_at
+    Time.zone.local(date.year, date.month, date.day, starts_at.hour, starts_at.min) < Time.current
+  end
+
   private
+
+  def not_in_the_past
+    errors.add(:base, "Não é possível criar um turno com horário que já passou.") if past?
+  end
 
   def ends_after_starts
     return unless starts_at && ends_at
-    errors.add(:ends_at, "deve ser após o horário de início") if ends_at <= starts_at
+    # Permite cruzar a meia-noite (ex.: 23:00–00:00); só barra início == fim.
+    if (starts_at.hour * 60 + starts_at.min) == (ends_at.hour * 60 + ends_at.min)
+      errors.add(:ends_at, "deve ser diferente do horário de início")
+    end
   end
 
   def no_overlapping_slots
     return unless date && starts_at && ends_at && clinic_id
 
-    overlap = clinic.availabilities
+    s1, e1 = slot_minutes
+    conflict = clinic.availabilities
       .where(date: date)
       .where.not(id: id)
       .where.not(status: %w[cancelled])
-      .where("starts_at < ? AND ends_at > ?", ends_at, starts_at)
+      .any? do |other|
+        s2, e2 = other.slot_minutes
+        s1 < e2 && s2 < e1
+      end
 
-    errors.add(:base, "Já existe um turno neste intervalo de horário") if overlap.exists?
+    errors.add(:base, "Já existe um turno neste intervalo de horário") if conflict
   end
 end

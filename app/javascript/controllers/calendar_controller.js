@@ -63,19 +63,32 @@ export default class extends Controller {
 
     for (let i = 0; i < firstWday; i++) html += `<div></div>`
 
+    const today    = new Date()
+    const todayStr = `${today.getFullYear()}-${this.pad(today.getMonth() + 1)}-${this.pad(today.getDate())}`
+
     for (let day = 1; day <= lastDay; day++) {
       const dateStr = `${this.year}-${this.pad(this.month + 1)}-${this.pad(day)}`
       const date    = new Date(dateStr + "T12:00:00")
       const isSel   = dateStr === sel
       const isOff   = date < min || date > max
+      const isToday = dateStr === todayStr
+      const ring    = isToday ? "border:1.5px solid #5D4037;" : ""
 
       if (isSel) {
-        html += `<div class="flex items-center justify-center h-8 w-8 mx-auto rounded-full text-xs font-bold text-white" style="background-color:#5D4037">${day}</div>`
+        html += `<div class="flex items-center justify-center h-8 w-8 mx-auto rounded-full text-xs font-bold text-white" style="background-color:#5D4037;${ring}">${day}</div>`
+      } else if (isToday) {
+        if (isOff) {
+          html += `<div class="flex items-center justify-center h-8 w-8 mx-auto rounded-full text-xs font-bold" style="color:#5D4037;${ring}">${day}</div>`
+        } else {
+          html += `<button data-action="click->calendar#pick" data-date="${dateStr}"
+                           class="flex items-center justify-center h-8 w-8 mx-auto rounded-full text-xs font-bold transition-colors hover:bg-[#fef8e1]"
+                           style="color:#5D4037;${ring}">${day}</button>`
+        }
       } else if (isOff) {
         html += `<div class="flex items-center justify-center h-8 w-8 mx-auto text-xs opacity-25" style="color:#5D4037">${day}</div>`
       } else {
         html += `<button data-action="click->calendar#pick" data-date="${dateStr}"
-                         class="flex items-center justify-center h-8 w-8 mx-auto rounded-full text-xs font-medium transition-colors hover:bg-gray-100"
+                         class="flex items-center justify-center h-8 w-8 mx-auto rounded-full text-xs font-medium transition-colors hover:bg-[#fef8e1]"
                          style="color:#5D4037">${day}</button>`
       }
     }

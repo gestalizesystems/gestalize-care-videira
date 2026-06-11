@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_06_09_213011) do
+ActiveRecord::Schema[7.2].define(version: 2026_06_10_180343) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -106,6 +106,26 @@ ActiveRecord::Schema[7.2].define(version: 2026_06_09_213011) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["cnpj"], name: "index_clinics_on_cnpj", unique: true
+  end
+
+  create_table "credit_purchases", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "user_id", null: false
+    t.uuid "clinic_id", null: false
+    t.uuid "credit_id"
+    t.integer "amount_cents", null: false
+    t.string "status", default: "pending", null: false
+    t.string "gateway", default: "infinitepay", null: false
+    t.string "checkout_url"
+    t.string "gateway_id"
+    t.datetime "expires_at"
+    t.datetime "paid_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["clinic_id"], name: "index_credit_purchases_on_clinic_id"
+    t.index ["credit_id"], name: "index_credit_purchases_on_credit_id"
+    t.index ["status"], name: "index_credit_purchases_on_status"
+    t.index ["user_id"], name: "index_credit_purchases_on_user_id"
+    t.check_constraint "amount_cents > 0", name: "credit_purchases_amount_positive"
   end
 
   create_table "credits", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -221,6 +241,9 @@ ActiveRecord::Schema[7.2].define(version: 2026_06_09_213011) do
   add_foreign_key "bookings", "booking_groups"
   add_foreign_key "bookings", "clinics"
   add_foreign_key "bookings", "users", column: "dentist_id"
+  add_foreign_key "credit_purchases", "clinics"
+  add_foreign_key "credit_purchases", "credits"
+  add_foreign_key "credit_purchases", "users"
   add_foreign_key "credits", "booking_groups", column: "source_booking_group_id"
   add_foreign_key "credits", "booking_groups", column: "used_on_booking_group_id"
   add_foreign_key "credits", "clinics"

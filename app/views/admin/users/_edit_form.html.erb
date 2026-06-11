@@ -10,7 +10,8 @@
   <%= f.vdc_field :specialty,  "Área de atuação" %>
   <%= f.vdc_field :phone,      "Telefone",           :telephone_field,
         data: { controller: "input-mask", "input-mask-pattern-value": "phone" } %>
-  <%= f.vdc_field :cpf,        "CPF (11 dígitos)" %>
+  <%= f.vdc_field :cpf,        "CPF (11 dígitos)", :text_field,
+        data: { controller: "input-mask", "input-mask-pattern-value": "cpf" } %>
   <%= f.vdc_field :birth_date, "Data de nascimento",  :date_field %>
   <%= render "shared/modal_actions", label: "Salvar" %>
 <% end %>

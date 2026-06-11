@@ -2,42 +2,54 @@
 
 <% selected_date = params[:date].present? ? Date.parse(params[:date]) : Date.current %>
 
-<div class="flex items-center justify-between mb-4">
+<div class="flex items-center justify-between mb-4"
+     data-controller="calendar"
+     data-calendar-selected-value="<%= selected_date %>"
+     data-calendar-min-value="<%= Date.current - 1.year %>"
+     data-calendar-max-value="<%= Date.current + 1.year %>"
+     data-calendar-base-value="<%= admin_bookings_path %>">
   <h1 class="text-xl font-medium" style="color: #5D4037">Reservas</h1>
-  <button type="button"
-          class="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full bg-white shadow-sm"
+  <button type="button" data-action="click->calendar#open"
+          class="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full bg-white shadow-sm cursor-pointer"
           style="color: #5D4037">
     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24"
          stroke="currentColor" stroke-width="2" style="color:#8D6E63">
       <path stroke-linecap="round" stroke-linejoin="round"
             d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
     </svg>
-    <%= l(selected_date, format: :long).downcase %>
+    <span style="color:#5D4037"><%= l(selected_date, format: :long).downcase %></span>
   </button>
+
+  <%= render "shared/calendar_dialog" %>
 </div>
 
-<%# ── Week strip ─────────────────────────────────────────────────────────── %>
+<%# ── Week strip (livre) ──────────────────────────────────────────────────── %>
 <% week_start = selected_date.beginning_of_week(:sunday) %>
+<% wdays = %w[DOM SEG TER QUA QUI SEX SÁB] %>
 <div class="bg-white rounded-2xl shadow-sm px-2 py-2 mb-5 flex items-center gap-1">
   <%= link_to admin_bookings_path(date: (selected_date - 7).to_s),
         class: "shrink-0 w-7 h-7 flex items-center justify-center rounded-full text-base hover:bg-[#fef8e1]",
         style: "color: #8D6E63" do %>‹<% end %>
+
   <div class="flex-1 flex justify-between">
     <% 7.times do |i| %>
       <% day = week_start + i %>
       <% active = day == selected_date %>
-      <%= link_to admin_bookings_path(date: day.to_s),
-            class: "flex flex-col items-center px-2 py-1.5 rounded-2xl transition-all",
-            style: active ? "background-color: #5D4037" : "" do %>
-        <span class="text-xs font-medium" style="color: <%= active ? '#ffffff' : '#8D6E63' %>">
-          <%= %w[DOM SEG TER QUA QUI SEX SÁB][day.wday] %>
+      <% if active %>
+        <span class="flex flex-col items-center px-2 py-1.5 rounded-2xl" style="background-color:#5D4037">
+          <span class="text-xs font-medium text-white"><%= wdays[day.wday] %></span>
+          <span class="text-xs font-medium text-white"><%= day.day %></span>
         </span>
-        <span class="text-xs font-medium" style="color: <%= active ? '#ffffff' : '#5D4037' %>">
-          <%= day.day %>
-        </span>
+      <% else %>
+        <%= link_to admin_bookings_path(date: day.to_s),
+              class: "flex flex-col items-center px-2 py-1.5 rounded-2xl transition-all" do %>
+          <span class="text-xs font-medium" style="color:#8D6E63"><%= wdays[day.wday] %></span>
+          <span class="text-xs font-medium" style="color:#5D4037"><%= day.day %></span>
+        <% end %>
       <% end %>
     <% end %>
   </div>
+
   <%= link_to admin_bookings_path(date: (selected_date + 7).to_s),
         class: "shrink-0 w-7 h-7 flex items-center justify-center rounded-full text-base hover:bg-[#fef8e1]",
         style: "color: #8D6E63" do %>›<% end %>
@@ -98,36 +110,62 @@
       </div>
     </div>
     <% if group.pending? || group.confirmed? %>
-      <div class="flex flex-col gap-3">
-        <div>
-          <label class="label">Data</label>
-          <div class="bg-[#fef8e1] rounded-2xl px-4 py-1 flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24"
-                 stroke="currentColor" stroke-width="2" style="color:#8D6E63">
-              <path stroke-linecap="round" stroke-linejoin="round"
-                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-            </svg>
-            <input type="text" readonly
-                   value="<%= l(group.bookings.first.availability.date, format: :long) %>"
-                   class="w-full bg-transparent border-none outline-none py-3 text-sm"
-                   style="color: #3E2723">
-          </div>
+      <% if group.bookings.size == 1 %>
+        <% current = group.bookings.first.availability %>
+        <p class="label">Turno atual</p>
+        <div class="rounded-2xl p-3 border mb-4" style="border-color:#E0E0E0">
+          <p class="text-sm font-medium" style="color:#3E2723"><%= current.label %></p>
+          <p class="text-xs mt-0.5" style="color:#8D6E63">
+            <%= l(current.date, format: "%d/%m") %> · <%= current.starts_at.strftime("%H:%M") %>–<%= current.ends_at.strftime("%H:%M") %>
+          </p>
         </div>
-        <% group.bookings.each do |b| %>
-          <div class="rounded-2xl p-4 border" style="border-color: #E0E0E0">
-            <p class="text-xs mb-1" style="color: #8D6E63"><%= b.availability.label %></p>
-            <p class="text-xs" style="color: #8D6E63">
-              <%= b.availability.starts_at.strftime("%H:%M") %> – <%= b.availability.ends_at.strftime("%H:%M") %>
-            </p>
-            <p class="text-sm font-medium mt-1" style="color: #5D4037">R$ <%= money(b.price_cents) %></p>
+
+        <p class="label">Alterar para um turno disponível</p>
+        <% slots = @available_slots.reject { |s| s.id == current.id } %>
+        <% if slots.empty? %>
+          <p class="text-sm mb-4" style="color:#8D6E63">Nenhum turno disponível no momento.</p>
+        <% else %>
+          <div class="flex flex-col gap-2 max-h-60 overflow-y-auto mb-4">
+            <% slots.each do |slot| %>
+              <%= button_to change_slot_admin_booking_path(group), method: :patch,
+                    params: { availability_id: slot.id }, data: { turbo: false },
+                    form: { class: "w-full" },
+                    class: "w-full rounded-2xl p-3 border hover:bg-[#fef8e1] cursor-pointer transition-colors flex items-center justify-between gap-2",
+                    style: "border-color:#E0E0E0" do %>
+                <span class="text-left">
+                  <span class="block text-sm font-medium" style="color:#3E2723"><%= slot.label %></span>
+                  <span class="block text-xs" style="color:#8D6E63"><%= l(slot.date, format: "%d/%m") %> · <%= slot.starts_at.strftime("%H:%M") %>–<%= slot.ends_at.strftime("%H:%M") %></span>
+                </span>
+                <span class="text-sm font-medium shrink-0" style="color:#5D4037">R$ <%= money(slot.price_cents) %></span>
+              <% end %>
+            <% end %>
           </div>
         <% end %>
+
         <button type="button" onclick="this.closest('dialog').close(); document.getElementById('cancel-booking-<%= group.id %>').showModal()"
                 class="w-full py-3 rounded-full text-sm font-medium cursor-pointer border"
                 style="border-color: #d4183d; color: #d4183d; background: transparent">
           Cancelar reserva
         </button>
-      </div>
+      <% else %>
+        <div class="flex flex-col gap-3">
+          <% group.bookings.each do |b| %>
+            <div class="rounded-2xl p-4 border" style="border-color: #E0E0E0">
+              <p class="text-xs mb-1" style="color: #8D6E63"><%= b.availability.label %> — <%= l(b.availability.date, format: "%d/%m") %></p>
+              <p class="text-xs" style="color: #8D6E63">
+                <%= b.availability.starts_at.strftime("%H:%M") %> – <%= b.availability.ends_at.strftime("%H:%M") %>
+              </p>
+              <p class="text-sm font-medium mt-1" style="color: #5D4037">R$ <%= money(b.price_cents) %></p>
+            </div>
+          <% end %>
+          <p class="text-xs" style="color:#8D6E63">Reservas com múltiplos turnos não podem ser trocadas individualmente — cancele e crie novamente, se necessário.</p>
+          <button type="button" onclick="this.closest('dialog').close(); document.getElementById('cancel-booking-<%= group.id %>').showModal()"
+                  class="w-full py-3 rounded-full text-sm font-medium cursor-pointer border"
+                  style="border-color: #d4183d; color: #d4183d; background: transparent">
+            Cancelar reserva
+          </button>
+        </div>
+      <% end %>
     <% else %>
       <p class="text-sm text-center" style="color: #8D6E63">
         Esta reserva já foi <%= t("booking_group.status.#{group.status}") %> e não pode ser alterada.

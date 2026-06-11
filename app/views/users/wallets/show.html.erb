@@ -1,4 +1,5 @@
 <% content_for :title, "Carteira" %>
+<% content_for :hide_app_chrome, true %>
 
 <%= render "shared/back_button", path: root_path %>
 
@@ -16,7 +17,8 @@
   </p>
 </div>
 
-<div class="bg-white rounded-2xl shadow-sm p-4 mb-4 flex items-center gap-4">
+<button type="button" onclick="<%= open_modal('add-credit-modal') %>"
+        class="w-full bg-white rounded-2xl shadow-sm p-4 mb-4 flex items-center gap-4 cursor-pointer active:scale-[0.98] transition-all text-left">
   <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
        style="background-color: #E0E0E0">
     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24"
@@ -28,7 +30,23 @@
     <p class="text-sm font-medium" style="color: #3E2723">Adicionar crédito</p>
     <p class="text-xs" style="color: #8D6E63">Adicione saldo via PIX</p>
   </div>
-</div>
+</button>
+
+<%= render layout: "shared/modal", locals: { id: "add-credit-modal", title: "Adicionar crédito" } do %>
+  <%= form_with url: recargas_path, method: :post, data: { turbo: false }, class: "flex flex-col gap-4" do %>
+    <div>
+      <label class="label">Valor</label>
+      <div class="bg-[#fef8e1] rounded-2xl px-4 py-1">
+        <input type="text" inputmode="numeric" name="amount" placeholder="R$ 0,00"
+               data-controller="input-mask" data-input-mask-pattern-value="money"
+               class="w-full bg-transparent border-none outline-none py-3 text-sm"
+               style="color: #3E2723" required>
+      </div>
+    </div>
+    <p class="text-xs" style="color: #8D6E63">Você será direcionado ao checkout Pix do InfinitePay para concluir o pagamento.</p>
+    <%= render "shared/modal_actions", label: "Continuar para o Pix" %>
+  <% end %>
+<% end %>
 
 <div class="bg-white rounded-2xl shadow-sm p-4">
   <p class="text-xs leading-relaxed" style="color: #8D6E63">
