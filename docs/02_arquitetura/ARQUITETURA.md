@@ -1,647 +1,269 @@
 # Videira Dental Clinic — ARQUITETURA.md
 
-> Arquitetura definitiva do sistema VDC.
-> Camadas, convenções e padrões de código de referência para toda a implementação.
-> Última atualização: 2026-05-09
+> Arquitetura **real e atual** do sistema VDC, conferida contra o código.
+> Última atualização: 2026-06-10 (auditoria código × docs)
 
 ---
 
 ## 1. Visão geral
 
-VDC é uma aplicação **Rails 7.2 fullstack monolítica** com Hotwire (Turbo + Stimulus). Não há SPA, não há API JSON pública, não há serviço externo de frontend. O navegador recebe HTML renderizado pelo Rails e a interatividade é incremental (Turbo Frames + Streams para áreas dinâmicas, Stimulus controllers para comportamento client-side).
+VDC é uma aplicação **Rails 7.2 fullstack monolítica** com Hotwire (Turbo + Stimulus). Não há SPA, não há API JSON pública. O navegador recebe HTML renderizado pelo Rails; a interatividade é incremental (Turbo Frames/Streams + Stimulus).
 
-Princípios:
+Princípios em vigor no código:
 
-1. **Convention over configuration.** Onde Rails define um padrão, segui-lo. Custom apenas quando justificado.
-2. **Models magros / services finos / controllers RESTful.** Lógica de domínio no model. Orquestração de fluxos cross-model em services. Controllers só convertem HTTP em chamadas de domínio.
-3. **Multi-tenant desde o MVP.** Toda query de domínio é escopada por `clinic_id` via `policy_scope`. Nada é "global".
-4. **Auditoria por padrão.** Toda entidade que sofre mutação relevante tem `has_paper_trail`.
-5. **Pessimistic locking onde houver disputa de recurso.** Concorrência em `Availability` é tratada com `lock!` + unique index defensivo.
-
----
-
-## 2. Estrutura de pastas
-
-```
-videira_dental/
-├── app/
-│   ├── assets/
-│   │   ├── stylesheets/
-│   │   │   └── application.tailwind.css   ← @import Prompt + CSS vars + @tailwind
-│   │   └── images/
-│   │       └── logo.svg
-│   ├── channels/
-│   │   └── application_cable/
-│   ├── controllers/
-│   │   ├── application_controller.rb
-│   │   ├── home_controller.rb
-│   │   ├── cart_controller.rb
-│   │   ├── booking_groups_controller.rb
-│   │   ├── bookings_controller.rb
-│   │   ├── payments_controller.rb
-│   │   ├── users_controller.rb
-│   │   ├── webhooks_controller.rb
-│   │   ├── admin/
-│   │   │   ├── base_controller.rb
-│   │   │   ├── availabilities_controller.rb
-│   │   │   ├── bookings_controller.rb
-│   │   │   ├── discount_rules_controller.rb
-│   │   │   └── users_controller.rb
-│   │   └── users/
-│   │       ├── omniauth_callbacks_controller.rb
-│   │       ├── registrations_controller.rb
-│   │       └── sessions_controller.rb
-│   ├── helpers/
-│   │   ├── application_helper.rb
-│   │   ├── currency_helper.rb
-│   │   └── date_helper.rb
-│   ├── javascript/
-│   │   ├── application.js
-│   │   └── controllers/
-│   │       ├── index.js
-│   │       ├── countdown_controller.js
-│   │       ├── clipboard_controller.js
-│   │       ├── flash_controller.js
-│   │       ├── modal_controller.js
-│   │       ├── phone_mask_controller.js
-│   │       ├── week_selector_controller.js
-│   │       └── cart_controller.js
-│   ├── jobs/
-│   │   ├── application_job.rb
-│   │   └── expire_payments_job.rb
-│   ├── mailers/
-│   │   └── application_mailer.rb            ← MVP sem mails transacionais (placeholder)
-│   ├── models/
-│   │   ├── application_record.rb
-│   │   ├── concerns/
-│   │   │   └── auditable.rb                 ← shortcut para has_paper_trail + meta
-│   │   ├── clinic.rb
-│   │   ├── user.rb
-│   │   ├── room.rb
-│   │   ├── availability.rb
-│   │   ├── discount_rule.rb
-│   │   ├── booking_group.rb
-│   │   ├── booking.rb
-│   │   └── payment.rb
-│   ├── policies/
-│   │   ├── application_policy.rb
-│   │   ├── availability_policy.rb
-│   │   ├── booking_policy.rb
-│   │   ├── booking_group_policy.rb
-│   │   ├── discount_rule_policy.rb
-│   │   ├── payment_policy.rb
-│   │   └── user_policy.rb
-│   ├── services/
-│   │   ├── application_service.rb           ← base com .call de classe
-│   │   ├── discount_calculator.rb
-│   │   ├── booking_group_creator.rb         ← orquestra create do BookingGroup
-│   │   ├── booking_canceller.rb             ← regra 48h + atualizações
-│   │   ├── mercado_pago/
-│   │   │   ├── pix_creator.rb
-│   │   │   ├── payment_finder.rb
-│   │   │   └── webhook_validator.rb
-│   │   └── payment_confirmer.rb             ← chamado pelo webhook
-│   └── views/
-│       ├── layouts/
-│       │   ├── application.html.erb
-│       │   └── admin.html.erb
-│       ├── shared/
-│       │   ├── _avatar.html.erb
-│       │   ├── _back_button.html.erb
-│       │   ├── _flash.html.erb
-│       │   ├── _logo.html.erb
-│       │   ├── _booking_cart.html.erb
-│       │   ├── _slot_card.html.erb
-│       │   ├── _week_selector.html.erb
-│       │   └── _versions_table.html.erb
-│       ├── home/
-│       │   └── index.html.erb
-│       ├── booking_groups/
-│       │   ├── new.html.erb
-│       │   └── show.html.erb
-│       ├── bookings/
-│       │   ├── index.html.erb
-│       │   └── show.html.erb
-│       ├── payments/
-│       │   ├── show.html.erb
-│       │   ├── _pending.html.erb
-│       │   ├── _paid.html.erb
-│       │   └── _expired.html.erb
-│       ├── users/
-│       │   └── show.html.erb
-│       ├── devise/
-│       │   ├── sessions/new.html.erb
-│       │   ├── registrations/new.html.erb
-│       │   ├── registrations/edit.html.erb
-│       │   └── shared/_links.html.erb
-│       ├── cart/
-│       │   ├── _cart.html.erb
-│       │   └── add.turbo_stream.erb
-│       └── admin/
-│           ├── availabilities/
-│           ├── bookings/
-│           ├── discount_rules/
-│           └── users/
-├── config/
-│   ├── application.rb                        ← UUID default + tz America/Sao_Paulo
-│   ├── routes.rb
-│   ├── database.yml
-│   ├── sidekiq.yml
-│   ├── locales/pt-BR.yml
-│   ├── importmap.rb
-│   └── initializers/
-│       ├── devise.rb
-│       ├── pundit.rb
-│       ├── pagy.rb
-│       ├── paper_trail.rb
-│       ├── sidekiq.rb
-│       └── mercadopago.rb
-├── db/
-│   ├── migrate/
-│   ├── schema.rb
-│   └── seeds.rb
-├── spec/  (ou test/)                         ← ver §10
-├── lib/
-│   └── tasks/
-├── public/
-├── tmp/
-├── bin/
-├── .env.example
-├── .editorconfig
-├── .rubocop.yml
-├── Gemfile
-├── Procfile                                  ← deploy
-└── tailwind.config.js
-```
-
-> **Mudança em relação à estrutura sugerida no VSCODE_SETUP.md:** centralizei os partials compartilhados (`_slot_card`, `_week_selector`, `_booking_cart`) em `app/views/shared/` em vez de espalhá-los. Isso simplifica o `render` (`render 'shared/slot_card'`) e evita duplicação entre Home e Admin que usam o mesmo `WeekSelector`.
+1. **Convention over configuration.** Onde Rails define um padrão, segui-lo.
+2. **Models magros / services finos / controllers RESTful.** Lógica de domínio no model; orquestração cross-model e I/O externo em services; controllers só convertem HTTP em chamadas de domínio.
+3. **Tenant único por deploy, multi-clínica preparado.** `Current.clinic` (CurrentAttributes) resolve a clínica via `ENV["CLINIC_ID"]` com fallback `Clinic.first`.
+4. **Auditoria por padrão.** Entidades com mutação relevante têm `has_paper_trail`.
+5. **Dinheiro em centavos.** Todas as colunas monetárias são `*_cents` (integer). O concern `MoneyConvertible` (`money_field :price`) expõe o valor em reais como float para exibição.
+6. **Enums como string + check constraint no Postgres.** `enum :status, { pending: "pending", ... }` — legível no banco e protegido por constraint (diferente do plano original de enums integer).
+7. **Pessimistic locking + unique index** contra double-booking (`lock!` no checkout + index único parcial em `bookings.availability_id` para status ≠ cancelled).
 
 ---
 
-## 3. Camadas da aplicação
-
-### 3.1 Models (`app/models`)
-
-**Responsabilidade:** dados, validações, associações, scopes, transições de estado **atômicas e auto-suficientes** (`confirm!`, `expire!`, `cancel!`).
-
-Regras:
-
-- 1 arquivo por entidade. Sem god-objects.
-- Métodos de classe são **factories** ou **finders** (`User.from_omniauth`, `DiscountRule.best_for`).
-- Métodos de instância com `!` levantam exceção em falha; sem `!` retornam booleano ou nil.
-- Toda transição que toca múltiplas tabelas vive dentro de `transaction do … end` no próprio model.
-- Sem callbacks `after_save`/`after_create` que causam side-effects externos (jobs, mails, broadcasts). Esses ficam no service que chamou o save.
-- Concerns só para comportamento **realmente** compartilhado (`Auditable` para `has_paper_trail` + meta). Nada de "trash dump" em concerns.
-
-### 3.2 Services (`app/services`)
-
-**Responsabilidade:** orquestrar fluxos que cruzam múltiplos models, ou que envolvem I/O externo (MercadoPago).
-
-Regras:
-
-- Toda service herda de `ApplicationService`, que oferece `self.call(*args, **kwargs) = new(*args, **kwargs).call`.
-- Retorna `Result` simples: `OpenStruct.new(success?: true/false, value:, error:)` ou hash. Sem framework de monads.
-- Nunca acessa `current_user` diretamente — recebe-o como argumento.
-- Idempotência onde possível (importante para `PaymentConfirmer` chamado pelo webhook).
-- Subnamespaces para integrações: `MercadoPago::PixCreator`, `MercadoPago::WebhookValidator`.
-
-```ruby
-# app/services/application_service.rb
-class ApplicationService
-  def self.call(...) = new(...).call
-end
-```
-
-### 3.3 Jobs (`app/jobs`)
-
-**Responsabilidade:** trabalho assíncrono via Sidekiq.
-
-Regras:
-
-- Herdam de `ApplicationJob`. `queue_as :default` salvo exceções.
-- Idempotentes — podem ser re-executados sem efeitos colaterais.
-- Sem lógica de domínio: o job carrega registros e delega para um service ou método de model.
-- Recorrentes (cron) ficam declarados em `config/sidekiq.yml` via `sidekiq-cron` (a adicionar) ou `sidekiq-scheduler`.
-
-### 3.4 Controllers (`app/controllers`)
-
-**Responsabilidade:** parsing de params, autorização (Pundit), invocação de service/model, escolha de view/redirect.
-
-Regras:
-
-- 1 controller por recurso, RESTful (`index/show/new/create/edit/update/destroy`). Actions custom (`cancel`) só quando o recurso não cabe em CRUD puro.
-- `before_action` para set de recurso e autenticação. Nada de queries inline na action.
-- `private` no rodapé com `set_*` e `*_params`.
-- Controllers admin sempre dentro de `Admin::` namespace e herdam de `Admin::BaseController`.
-- Webhooks vivem em `WebhooksController`, com `skip_before_action :authenticate_user!` e `:verify_authenticity_token` somente nas actions necessárias.
-- Sempre que um redirect retornar de uma action de mutação, usar `notice` para sucesso e `alert` para erro.
-
-### 3.5 Views, layouts e partials (`app/views`)
-
-**Responsabilidade:** HTML semântico mínimo, ERB com Rails helpers, classes Tailwind.
-
-Regras:
-
-- 2 layouts: `application.html.erb` (público + dentista) e `admin.html.erb` (sidebar + grid de navegação).
-- Partials começam com `_` e ficam em `app/views/shared/` quando usados por mais de um controller.
-- Cada Turbo Frame tem um `id` previsível (`"slot_#{availability.id}"`, `"cart"`, `"payment_status"`).
-- Cada Turbo Stream broadcast tem um nome de canal previsível (`"payment_#{payment.id}"`).
-- Nada de inline `<style>` ou `<script>` em ERB. Comportamento via Stimulus.
-- Helpers de formatação ficam em `app/helpers/` (`brl(amount)`, `dia_semana(date)`).
-
-### 3.6 Stimulus Controllers (`app/javascript/controllers`)
-
-**Responsabilidade:** comportamento client-side incremental.
-
-Regras:
-
-- Um controller por arquivo, nome em snake_case com sufixo `_controller.js`.
-- Métodos públicos são as actions referenciadas em `data-action`. Métodos privados começam com `_`.
-- `static targets`, `static values`, `static classes` declarados explicitamente.
-- Sem fetch direto — usar Turbo (`<form data-turbo-frame>`) sempre que possível.
-- `connect()` configura, `disconnect()` faz cleanup (importantíssimo para timers/intervals).
-
-### 3.7 Policies (`app/policies`)
-
-**Responsabilidade:** regras de autorização por role e por escopo de tenant.
-
-Regras:
-
-- 1 policy por model. Métodos com `?` (`index?`, `show?`, `update?`, `cancel?`).
-- `Scope` interna sempre filtra por `clinic_id`.
-- Policies de admin são as **mesmas** policies do recurso — admin é um role, não um namespace separado de autorização. O namespace `Admin::` é só de roteamento/controllers/views.
-- `verify_authorized` e `verify_policy_scoped` ativos no `ApplicationController`. Actions que pulam autorização (cart, webhook) usam `after_action :skip_authorization`.
-
----
-
-## 4. Convenções de código
-
-### 4.1 Ruby style
-
-- Indentação: 2 espaços, sem tabs.
-- Aspas duplas por padrão (consistente com Rails); aspas simples apenas em strings sem interpolação dentro de blocos longos onde a economia ajude leitura.
-- `frozen_string_literal: true` **opcional** (RuboCop desabilitado para isso — vide §11).
-- Métodos curtos preferidos (até 20 linhas — limite RuboCop relaxado).
-- Endless method (`def x = …`) permitido para getters/predicados de uma linha. Métodos com lógica usam `def…end`.
-- Hash literals no estilo `{ key: value }`. Símbolos sempre que a chave for fixa.
-- `unless` apenas para condição simples. Nunca `unless…else`.
-- Guard clauses preferidas a `if` aninhado.
-- Comentários **somente** quando o "porquê" não é óbvio. Nada de comentar o "o quê".
-
-### 4.2 Naming
-
-- Models: `PascalCase` singular (`BookingGroup`).
-- Tabelas: `snake_case` plural (`booking_groups`).
-- FKs: `<singular>_id` (`booking_group_id`). Para self/aliased: `<role>_id` (`created_by_id`).
-- Enums: símbolos em `snake_case`, valores `integer` indexados a partir de 0 (`{ pending: 0, confirmed: 1, … }`). **Nunca** alterar a ordem após o deploy.
-- Services: substantivo + sufixo de ação (`DiscountCalculator`, `BookingGroupCreator`, `PaymentConfirmer`).
-- Jobs: substantivo + `Job` (`ExpirePaymentsJob`).
-- Stimulus controllers: nome em kebab-case na referência HTML (`data-controller="phone-mask"`), arquivo `phone_mask_controller.js`.
-- Routes: paths em **português** (`/conta`, `/minhas-reservas`, `/admin/disponibilidade`); helpers seguem o `as:` (snake_case) ou o nome do recurso.
-- I18n keys: estrutura `pt-BR.activerecord.attributes.<model>.<attr>` para tradução automática de erros.
-
-### 4.3 ERB style
-
-- Atributos HTML em ordem: `id`, `class`, `data-*`, demais.
-- Nada de `<%= raw … %>` ou `html_safe` salvo em conteúdo controlado.
-- Em vez de `style="background-color: #5D4037"`, usar **Tailwind utility com cor do tema** (`bg-primary`). Estilos inline só quando o valor é dinâmico vindo do banco.
-- Locais explícitos no `render`: `render 'shared/avatar', user: @user, size: :md`. Sem `:object` mágico.
-- Turbo Frames sempre com `id` semântico e fallback de conteúdo (não deixar frame vazio quando JS desabilitado).
-
-### 4.4 Stimulus conventions
-
-- Ler `static values` em vez de `data-*` brutos no controller.
-- Toda emissão custom usa `this.dispatch("eventName", { detail })` para que outros controllers possam ouvir.
-- Estado local → `static values`. Estado global compartilhado entre frames → preferir Turbo Stream do server.
-
-### 4.5 Tailwind conventions
-
-- Cores definidas em `tailwind.config.js` (`primary`, `secondary`, `accent`, `background`, `foreground`, `pix`, `success`, `destructive`).
-- Classes sempre na ordem: layout → flexbox/grid → espaçamento → tipografia → cores → estado.
-- Componentes recorrentes (botão primário, card branco) viram **partial**, não classe utilitária CSS.
-
-### 4.6 Migrations
-
-- Sempre `null: false` em colunas obrigatórias.
-- Sempre `default:` em flags booleanas.
-- `precision`/`scale` explícitos em `decimal`.
-- Foreign keys com `foreign_key: true` (cria constraint no Postgres).
-- Índices justificados no nome ou em comentário acima da migration.
-- Uma única responsabilidade por migration. Nunca misturar criação de tabela com seed/data fix.
-
-### 4.7 Erros e mensagens
-
-- Mensagens de UI sempre em **pt-BR**.
-- Erros de domínio levantados com mensagem direta para o usuário (`raise "Cancelamento não permitido: faltam menos de 48h."`). Controller faz rescue e converte em flash.
-- Erros internos (5xx, MercadoPago indisponível) loggados com `Rails.logger.error` e mostrados como mensagem genérica ("Tivemos um problema. Tente novamente.").
-
----
-
-## 5. Comunicação entre camadas
+## 2. Estrutura real de pastas (app/)
 
 ```
-HTTP request
-    ↓
-Routes → Controller (Pundit authorize, params permit)
-    ↓                                ↓
-    │                                ↓ (fluxo cross-model ou I/O externo)
-    │                              Service
-    ↓                                ↓
-   Model.<query|state-method>  ←── Model
-    ↓                                ↓
-   ActiveRecord ←──────────────── ActiveRecord
-    ↓
-Database
-```
-
-### 5.1 Quando usar service vs método de model
-
-**Use service quando:**
-- O fluxo cruza 3+ models (`BookingGroupCreator` toca BookingGroup, Booking, Availability, Payment).
-- Há I/O externo (MercadoPago HTTP, envio de mail, broadcast Turbo Stream).
-- Há lógica de negócio que não pertence "a" nenhum model em particular (`DiscountCalculator`).
-
-**Use método de model quando:**
-- A operação muda apenas o próprio registro e seus filhos diretos (`BookingGroup#confirm!` muda BookingGroup + seus Bookings + seu Payment).
-- A regra é uma propriedade do registro (`Availability#cancellable?`).
-
-### 5.2 Webhook → service → model
-
-```
-WebhooksController#mercadopago
-    ↓ valida assinatura via MercadoPago::WebhookValidator
-    ↓ extrai provider_payment_id
-    ↓ busca dados via MercadoPago::PaymentFinder
-    ↓
-PaymentConfirmer.call(provider_payment_id, status: "approved")
-    ↓ idempotente (no-op se já paid)
-    ↓ encontra BookingGroup pelo external_reference
-    ↓
-BookingGroup#confirm!  (transação, atualiza bookings + payment)
-    ↓
-Turbo::StreamsChannel.broadcast_replace_to("payment_#{id}", …)
-```
-
-### 5.3 Cart → BookingGroup
-
-```
-Anonymous user → CartController#add → session[:cart_ids] += id
-                                              ↓
-                                     Turbo Stream replace _cart partial
-Login obrigatório antes do checkout
-                                              ↓
-BookingGroupsController#new → exibe resumo (DiscountCalculator.call)
-                                              ↓
-BookingGroupsController#create → BookingGroupCreator.call
-                                              ↓
-                              transaction:
-                                lock! availabilities (SELECT FOR UPDATE)
-                                re-valida booked: false
-                                cria BookingGroup (status: pending)
-                                cria N Bookings (status: pending)
-                                marca availability.booked = true (hold)
-                                MercadoPago::PixCreator.call → cria Payment
-                              clear session[:cart_ids]
-                                              ↓
-                              redirect_to payment_path(@payment)
-```
-
----
-
-## 6. Routes (definitivas)
-
-```ruby
-Rails.application.routes.draw do
-  devise_for :users, controllers: {
-    omniauth_callbacks: 'users/omniauth_callbacks',
-    registrations:      'users/registrations',
-    sessions:           'users/sessions'
-  }, path_names: {
-    sign_in:  'login',
-    sign_out: 'logout',
-    sign_up:  'cadastro'
-  }
-
-  # Webhook MercadoPago — sem CSRF, sem auth
-  post '/webhooks/mercadopago', to: 'webhooks#mercadopago'
-
-  root 'home#index'
-
-  # Carrinho de slots (session-based, anônimo permitido)
-  post   '/carrinho/adicionar', to: 'cart#add',    as: :cart_add
-  delete '/carrinho/remover',   to: 'cart#remove', as: :cart_remove
-  delete '/carrinho/limpar',    to: 'cart#clear',  as: :cart_clear
-
-  # Dentista autenticada
-  get   '/conta',           to: 'users#show',     as: :conta
-  patch '/conta',           to: 'users#update'
-  get   '/minhas-reservas', to: 'bookings#index', as: :bookings
-
-  resources :booking_groups, only: %i[new create show], path: 'reservas',
-            path_names: { new: 'confirmar' }
-  resources :payments, only: %i[show], path: 'pagamento'
-  resources :bookings, only: %i[show] do
-    member { patch :cancel }
-  end
-
-  namespace :admin do
-    get '/', to: redirect('/admin/reservas')
-    resources :availabilities, path: 'disponibilidade', except: %i[show]
-    resources :bookings,       path: 'reservas',        only: %i[index show update]
-    resources :users,          path: 'clientes',        only: %i[index show update]
-    resources :discount_rules, path: 'descontos',       except: %i[show]
-  end
-
-  get '/up', to: proc { [200, {}, ['ok']] }
-end
-```
-
-> **Mudanças em relação ao `routes.rb` original:**
-> - `cart` muda de `POST /cart/...` (3 POSTs) para verbos REST corretos: `add` (POST), `remove` (DELETE), `clear` (DELETE).
-> - Path em pt-BR: `carrinho` em vez de `cart`.
-> - `payments` ganha `path: 'pagamento'` (singular pt-BR, consistente com a tela `/pagamento/:id` do CONTEXT).
-> - `booking_groups` ganha `path_names: { new: 'confirmar' }` para que `new_booking_group_path` resolva como `/reservas/confirmar` (match com a rota documentada no CONTEXT seção 10).
-
----
-
-## 7. Layouts
-
-### 7.1 `application.html.erb` (público + dentista)
-
-- Fundo `#fef8e1`, fonte Prompt.
-- Container `max-w-md mx-auto px-4 py-6`.
-- `<header>` condicional: logo central + (avatar/login) + (carrinho se tiver itens).
-- `<%= yield %>` no main.
-- Turbo Frame `#cart` permanente para que adições do carrinho sobrevivam navegação.
-- `<%= render 'shared/flash' %>` no topo do main.
-
-### 7.2 `admin.html.erb` (owner)
-
-- Mesmo wrapper visual do `application` (consistência visual).
-- Header com logo central + botão logout à direita.
-- Grid 2x2 de navegação (`Reservas`, `Clientes`, `Disponibilidade`, `Descontos`).
-- `<%= yield %>` abaixo da grid.
-- Sem carrinho (owner não compra).
-
----
-
-## 8. Concorrência e estados
-
-### 8.1 Disputa de slot
-
-A unique index em `bookings.availability_id` é a defesa **canônica** contra double-booking. O fluxo do `BookingGroupCreator`:
-
-```ruby
-ActiveRecord::Base.transaction do
-  availabilities = Availability.where(id: cart_ids).lock!     # SELECT FOR UPDATE
-  raise BookingGroupCreator::SlotTaken if availabilities.any?(&:booked?)
-
-  group = BookingGroup.create!(...)
-  availabilities.each do |av|
-    Booking.create!(booking_group: group, availability: av, user:, status: :pending)
-    av.update!(booked: true)
-  end
-  Payment.create!(...)   # depois de criar o pix via MercadoPago
-end
-```
-
-`SlotTaken` é capturado no controller e vira flash explicativo + redirect.
-
-### 8.2 Webhook duplicado
-
-`PaymentConfirmer` é idempotente:
-
-```ruby
-return if booking_group.confirmed?
-booking_group.confirm!
-```
-
-### 8.3 Job de expiração
-
-`ExpirePaymentsJob` busca `Payment.expiring` (`pending` + `expires_at < now`) e expira o `BookingGroup`. Race com webhook resolvida pelo idempotente: se `confirm!` já rodou (status `confirmed`), `expire!` não muda nada útil, mas para evitar inconsistência, `expire!` também valida:
-
-```ruby
-def expire!
-  return unless pending?
-  transaction { … }
-end
-```
-
----
-
-## 9. I18n
-
-- Locale default: `pt-BR`.
-- `config.time_zone = 'America/Sao_Paulo'`.
-- Arquivo `config/locales/pt-BR.yml` com:
-  - `activerecord.models.*` (nomes singular/plural)
-  - `activerecord.attributes.*` (todos os campos visíveis na UI)
-  - `errors.messages.*` (mensagens custom)
-  - `helpers.submit.*` (textos de botões "Criar/Atualizar/Destruir")
-- Datas: helper `dia_semana(date)` retorna "Quarta-feira, 14 de Maio".
-- Moeda: helper `brl(amount) → "R$ 150,00"`.
-
----
-
-## 10. Testes
-
-> **Decisão:** apesar de `--skip-test` no `rails new`, **adicionar RSpec** depois (`gem 'rspec-rails'`). O setup de migrations + autorização + transições de estado é complexo demais para confiar em "testar manualmente". Custo de adicionar = ~1h, ganho = regressão automática para sempre.
-
-Estrutura mínima:
-
-```
-spec/
-├── rails_helper.rb
-├── spec_helper.rb
-├── factories/                ← FactoryBot
+app/
+├── controllers/
+│   ├── application_controller.rb        ← Pundit + Pagy + Devise + PaperTrail whodunnit
+│   ├── pages_controller.rb              ← home (slots públicos), sobre, contato
+│   ├── auth/                            ← Devise customizado
+│   │   ├── sessions_controller.rb
+│   │   ├── registrations_controller.rb
+│   │   └── omniauth_callbacks_controller.rb
+│   ├── scheduling/
+│   │   ├── carts_controller.rb          ← session[:cart_ids] add/remove/clear
+│   │   └── bookings_controller.rb       ← confirmar (new/create), index, show, cancelar
+│   ├── payments/
+│   │   ├── payments_controller.rb       ← show, pending (redirect ao checkout), return, cancel
+│   │   └── webhooks_controller.rb       ← POST /webhooks/infinitepay (reserva OU recarga)
+│   ├── users/
+│   │   ├── profiles_controller.rb       ← /perfil
+│   │   ├── wallets_controller.rb        ← /carteira (saldo de créditos)
+│   │   └── credit_purchases_controller.rb ← POST /recargas (recarga via Pix)
+│   └── admin/                           ← herdam de Admin::BaseController (require_owner!)
+│       ├── base_controller.rb
+│       ├── dashboard_controller.rb      ← KPIs + gráfico de receita
+│       ├── clinics_controller.rb
+│       ├── users_controller.rb          ← + add_credit / remove_credit
+│       ├── services_controller.rb
+│       ├── availabilities_controller.rb ← + toggle (bloquear/liberar)
+│       ├── discount_rules_controller.rb
+│       ├── bookings_controller.rb       ← + create manual, cancelar, alterar-turno
+│       ├── payments_controller.rb
+│       └── credits_controller.rb
 ├── models/
-│   ├── availability_spec.rb  ← cancellable?, validations
-│   ├── booking_spec.rb       ← cancel!, confirm!
-│   ├── booking_group_spec.rb ← confirm!, expire!
-│   └── discount_rule_spec.rb ← best_for
+│   ├── current.rb                       ← Current.clinic (CurrentAttributes)
+│   ├── concerns/money_convertible.rb    ← money_field :price → price_cents/100.0
+│   ├── clinic.rb  user.rb  service.rb   ← Service = tipo de turno/atendimento (não há Room)
+│   ├── availability.rb                  ← status: available/booked/cancelled/blocked
+│   ├── discount_rule.rb  booking_group.rb  booking.rb  payment.rb
+│   ├── credit.rb                        ← crédito em conta (cancelamento ou recarga)
+│   └── credit_purchase.rb               ← recarga de crédito via Pix (InfinitePay)
 ├── services/
-│   ├── discount_calculator_spec.rb
-│   ├── booking_group_creator_spec.rb
-│   └── payment_confirmer_spec.rb
+│   ├── application_service.rb           ← Result struct (success?/value/error) + log helpers
+│   ├── discount_calculator.rb
+│   ├── booking_group_creator.rb         ← transação + FOR UPDATE + abate créditos
+│   ├── booking_canceller.rb             ← regra 48h + libera slot + emite crédito
+│   ├── credit_issuer.rb
+│   ├── credit_purchase_confirmer.rb     ← confirma recarga e cria Credit
+│   ├── payment_confirmer.rb             ← idempotente; broadcast Turbo + mailer
+│   ├── admin_booking_creator.rb         ← reserva manual criada pela owner
+│   ├── admin_booking_group_creator.rb
+│   ├── admin_booking_slot_changer.rb    ← troca turno; cobra/credita diferença de preço
+│   ├── difference_payment_confirmer.rb  ← confirma pagamento de diferença (order_nsu = payment.id)
+│   └── infinite_pay/
+│       ├── checkout_creator.rb          ← POST /links (reserva)
+│       ├── credit_checkout_creator.rb   ← POST /links (recarga)
+│       ├── difference_checkout_creator.rb ← POST /links (diferença na troca de turno)
+│       └── payment_checker.rb           ← POST /payment_check (fallback do webhook)
+├── jobs/
+│   └── expire_payments_job.rb           ← sidekiq-cron a cada 5 min (fila :critical)
+├── mailers/
+│   └── booking_mailer.rb                ← confirmation, cancellation, credit_issued
 ├── policies/
-└── system/                   ← happy-path: criar reserva, cancelar
-    ├── booking_flow_spec.rb
-    └── payment_flow_spec.rb
+│   ├── application_policy.rb
+│   ├── booking_policy.rb  booking_group_policy.rb
+│   ├── payment_policy.rb  user_policy.rb
+│   └── (admin usa require_owner! no BaseController; nem todo recurso tem policy própria)
+├── javascript/controllers/
+│   ├── calendar_controller.js           ← calendário/seleção de data
+│   ├── book_slot_controller.js          ← seleção de turnos
+│   ├── countdown_controller.js  clipboard_controller.js
+│   ├── flash_controller.js  input_mask_controller.js  password_toggle_controller.js
+└── views/
+    ├── layouts/ (application, admin, mailer)
+    ├── pages/  scheduling/  payments/payments/  users/  auth/  admin/  shared/
+    └── (catálogo completo de telas em docs/03_design/CATALOGO_TELAS.md)
 ```
 
-Cobertura mínima exigida antes do deploy: services + transições de estado dos models.
+> CSS: **Tailwind v4** via `tailwindcss-rails` (binário standalone). Não existe `tailwind.config.js` — tokens e classes utilitárias (`.btn-*`, `.card-*`, `.badge-*`) vivem em `app/assets/tailwind/application.css`. Ver `docs/03_design/DESIGN_SYSTEM.md`.
 
 ---
 
-## 11. Linting e formatação
+## 3. Camadas — regras em vigor
 
-`.rubocop.yml`:
+### 3.1 Models
 
-```yaml
-AllCops:
-  NewCops: enable
-  TargetRubyVersion: 3.3
-  Exclude:
-    - 'db/schema.rb'
-    - 'db/migrate/*'
-    - 'bin/**/*'
-    - 'vendor/**/*'
-    - 'node_modules/**/*'
-    - 'config/initializers/devise.rb'
+- Dados, validações, associações, scopes e transições de estado (`confirm!`, `expire!`, `cancel!`).
+- Sem callbacks com side-effects externos (jobs, mails, broadcasts) — esses ficam nos services.
+- `has_paper_trail` nas entidades auditadas (User, Availability, BookingGroup, Booking, Payment, Credit, CreditPurchase, DiscountRule, Clinic).
 
-Layout/LineLength:
-  Max: 120
+### 3.2 Services
 
-Metrics/MethodLength:
-  Max: 20
+- Herdam de `ApplicationService`; o retorno é `Result` (`success?`, `value`, `error`) — não OpenStruct.
+- Helpers privados: `success(value)`, `failure(error)`, `log_error`, `log_warn`.
+- Nunca acessam `current_user` — recebem tudo como kwargs.
+- Integrações em subnamespace: `InfinitePay::*`.
+- Idempotência nos confirmadores (`PaymentConfirmer`, `CreditPurchaseConfirmer`): no-op se já processado.
 
-Metrics/AbcSize:
-  Max: 25
+### 3.3 Controllers
 
-Style/Documentation:
-  Enabled: false
+- RESTful; actions custom apenas quando necessário (`cancel`, `change_slot`, `toggle`, `return`).
+- Admin herda de `Admin::BaseController` (`require_owner!` + layout admin + `price_to_cents`).
+- Webhook (`Payments::WebhooksController`) herda direto de `ActionController::Base` com `protect_from_forgery with: :null_session` e responde sempre 200 para evitar retentativas em loop.
+- Paths das rotas em **português** (`/carteira`, `/recargas`, `/reservas/confirmar`, `/pagamento/retorno`).
 
-Style/FrozenStringLiteralComment:
-  Enabled: false
+### 3.4 Jobs
 
-Style/HashSyntax:
-  EnforcedShorthandSyntax: either   # permite { user: } e { user: user }
-```
+- `ExpirePaymentsJob` (fila `:critical`): expira `Payment` pendente vencido + `BookingGroup` e faz broadcast. Agendado via sidekiq-cron (a cada 5 min).
+- `ApplicationJob` tem `retry_on ActiveRecord::Deadlocked` e `discard_on ActiveJob::DeserializationError`.
 
-Pré-commit (opcional): `gem 'lefthook'` ou `overcommit` para rodar `rubocop` + testes rápidos.
+### 3.5 Autorização
+
+- Pundit no fluxo do dentista (`policy_scope` em pagamentos/reservas).
+- No admin a defesa primária é o `require_owner!`; policies existem para os recursos compartilhados com o dentista.
+- `rescue_from Pundit::NotAuthorizedError` → flash + `redirect_back`.
 
 ---
 
-## 12. Variáveis de ambiente (definitivas)
+## 4. Fluxos críticos
+
+### 4.1 Checkout de reserva (Pix via InfinitePay)
+
+```
+Dentista adiciona slots → session[:cart_ids]
+        ↓
+Scheduling::BookingsController#create
+        ↓
+BookingGroupCreator (transação):
+  lock! availabilities (SELECT FOR UPDATE)
+  re-valida disponibilidade
+  cria BookingGroup + Bookings (pending) + marca slots booked
+  abate créditos disponíveis (FIFO)
+  se total restante > 0 → InfinitePay::CheckoutCreator (POST /links)
+  cria Payment (gateway: infinitepay, checkout_url)
+        ↓
+Dentista é redirecionado ao checkout hospedado do InfinitePay
+        ↓
+InfinitePay → POST /webhooks/infinitepay (order_nsu = booking_group.id)
+        ↓
+PaymentConfirmer: confirma group + bookings + payment,
+  broadcast Turbo Stream ("payment_<id>"), BookingMailer.confirmation
+        ↓
+Retorno (/pagamento/retorno): se webhook ainda não chegou,
+  InfinitePay::PaymentChecker consulta o status como fallback
+```
+
+### 4.2 Recarga de crédito
+
+```
+Carteira (/carteira) → POST /recargas (valor livre)
+        ↓
+CreditPurchase (pending) → InfinitePay::CreditCheckoutCreator (order_nsu = purchase.id)
+        ↓
+Webhook ou retorno → CreditPurchaseConfirmer:
+  cria Credit ("Recarga via Pix") + marca purchase paid
+```
+
+O webhook diferencia o tipo consultando onde o `order_nsu` existe: `booking_groups` (reserva → `PaymentConfirmer`), `credit_purchases` (recarga → `CreditPurchaseConfirmer`) ou `payments` (diferença de troca de turno → `DifferencePaymentConfirmer`).
+
+### 4.2b Troca de turno com diferença de preço (admin)
+
+`AdminBookingSlotChanger`: se o turno novo é **mais caro**, consome crédito disponível primeiro e, se restar valor, cria um `Payment` de diferença (`order_nsu = payment.id`, UUID gerado antes) com checkout InfinitePay próprio; se é **mais barato**, emite `Credit` com a diferença. Por isso `payments.booking_group_id` deixou de ser unique (1—N).
+
+### 4.3 Cancelamento
+
+```
+Dentista cancela booking (≥ 48h de antecedência, CANCELLATION_LEAD_HOURS)
+        ↓
+BookingCanceller: cancela booking, libera availability,
+  cancela o group se não restarem bookings ativos,
+  CreditIssuer emite crédito se o grupo estava pago,
+  BookingMailer.cancellation (+ credit_issued)
+```
+
+### 4.4 Expiração
+
+`ExpirePaymentsJob` (5 em 5 min) expira payments pendentes vencidos e os grupos correspondentes, liberando os slots. **Atenção:** o job ainda **não** expira `CreditPurchase` pendente (pendência registrada no roadmap).
+
+---
+
+## 5. Concorrência e integridade
+
+- **Double-booking:** `lock!` (FOR UPDATE) no checkout + index único parcial `idx_bookings_availability_unique_active` (`bookings.availability_id` where status ≠ cancelled) + index `idx_availabilities_no_double_booking` (`dentist_id, date, starts_at`).
+- **Webhook duplicado:** confirmadores idempotentes (retornam `:already_processed`).
+- **Race webhook × expiração:** `expire!` é no-op se o grupo já está confirmado; `PaymentConfirmer` é no-op se expirado.
+- **Constraints no banco:** todos os status têm check constraint; valores monetários têm checks de positividade.
+
+---
+
+## 6. Segurança do webhook (estado atual)
+
+O InfinitePay **não documenta assinatura HMAC**. A validação atual é:
+
+1. `order_nsu` precisa existir como `BookingGroup` ou `CreditPurchase` (UUIDs não enumeráveis);
+2. só processa `capture_method == "pix"` com `paid_amount > 0`.
+
+Limitações conhecidas (itens do roadmap): não há comparação de `paid_amount` contra o valor esperado do pagamento, nem verificação ativa via `payment_check` antes de confirmar via webhook.
+
+---
+
+## 7. I18n e formatação
+
+- Locale: `pt-BR` (forçado em `ApplicationController#set_locale`); `config/locales/pt-BR.yml`.
+- Status na UI sempre via `t("modelo.status.#{obj.status}")` + helpers `*_status_badge`.
+- Moeda via helper `money` (ver DESIGN_SYSTEM.md).
+
+---
+
+## 8. Testes
+
+- **RSpec** — 148 exemplos: models, services, requests (admin + scheduling + webhooks) e system specs.
+- System specs rodam com **Capybara + rack_test** (sem Selenium/Chrome — specs `js: true` não são suportados hoje).
+- WebMock para o InfinitePay; FactoryBot + Faker; Shoulda-Matchers nos models.
+- Qualidade: `bin/rubocop` (rubocop-rails-omakase) e `bin/brakeman`.
+- CI: `.github/workflows/ci.yml` (brakeman, importmap audit, rubocop, rspec com Postgres + Redis como services).
+
+---
+
+## 9. Variáveis de ambiente (reais)
+
+Fonte canônica: `.env.example`. Resumo:
 
 ```bash
-# Banco
-DATABASE_URL=postgresql://localhost/videira_dental_development
-
-# MercadoPago
-MERCADOPAGO_ACCESS_TOKEN=TEST-xxxx
-MERCADOPAGO_PUBLIC_KEY=TEST-xxxx
-MERCADOPAGO_WEBHOOK_SECRET=xxxx           # OBRIGATÓRIO — usado em WebhookValidator
-
-# Google OAuth
-GOOGLE_CLIENT_ID=xxxx.apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET=xxxx
-
-# App
-APP_HOST=http://localhost:3000
-APP_DEFAULT_TIMEZONE=America/Sao_Paulo
-RAILS_ENV=development
-SECRET_KEY_BASE=                          # gerado via `rails secret`
-
-# Pagamento — janela em minutos (default 30)
-PAYMENT_EXPIRATION_MINUTES=30
-
-# Cancelamento — antecedência em horas (default 48)
+DATABASE_URL=        # produção (dev usa peer auth)
+REDIS_URL=redis://localhost:6379/0
+SECRET_KEY_BASE=
+GOOGLE_CLIENT_ID= / GOOGLE_CLIENT_SECRET=
+INFINITEPAY_HANDLE=  # InfiniteTag sem "$"
+APP_HOST=            # monta webhook_url e redirect_url
 CANCELLATION_LEAD_HOURS=48
+PAYMENT_EXPIRY_MINUTES=30
+OWNER_PASSWORD=      # seed
+MAILER_FROM= / SMTP_HOST= / SMTP_PORT= / SMTP_USERNAME= / SMTP_PASSWORD=
+CLINIC_ID=           # opcional; resolve Current.clinic quando houver +1 clínica
 ```
 
-> **Mudança em relação ao `.env.example` original:** adicionar `PAYMENT_EXPIRATION_MINUTES` e `CANCELLATION_LEAD_HOURS` como vars de ambiente para que a regra de negócio não precise de deploy de código quando a dona quiser ajustar. Default mantém o documentado (30/48).
+> Não existem mais variáveis MercadoPago. O app não usa Rails credentials — é 100% ENV.
 
 ---
 
-*Arquitetura validada — base canônica para o ROADMAP_TECNICO.md.*
+## 10. Deploy
+
+Kamal 2 + Docker (web Rails + job Sidekiq + accessories Postgres 16 e Redis 7 na mesma VPS). Detalhes operacionais e troubleshooting no `README.md`.
+
+---
+
+*Documento alinhado ao código em 2026-06-10. Divergências históricas (MercadoPago, Room, enums integer, money decimal) estão registradas em `docs/01_projeto/ATIVIDADES_DECISOES.md`.*

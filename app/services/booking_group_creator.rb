@@ -2,10 +2,12 @@ class BookingGroupCreator < ApplicationService
   class SlotUnavailableError < StandardError; end
   class PaymentError < StandardError; end
 
-  def initialize(user:, availability_ids:)
+  def initialize(user:, availability_ids:, credit_cents: nil)
     @user             = user
     @availability_ids = Array(availability_ids)
     @clinic           = Availability.find_by(id: @availability_ids.first)&.clinic
+    # nil = usar todo o crédito disponível; número = teto escolhido pelo cliente (0 = não usar)
+    @requested_credit_cents = credit_cents
   end
 
   def call
@@ -77,22 +79,33 @@ class BookingGroupCreator < ApplicationService
   private
 
   def apply_available_credits(group, total_cents)
+    target = @requested_credit_cents.nil? ? total_cents : @requested_credit_cents
+    target = [[target, total_cents].min, 0].max
+    return 0 if target.zero?
+
     credits = Credit.available
       .where(user: @user, clinic: @clinic)
       .lock("FOR UPDATE")
       .order(:created_at)
       .to_a
 
-    return 0 if credits.empty?
-
     applied = 0
     credits.each do |credit|
-      break if applied >= total_cents
+      break if applied >= target
+      remaining = target - applied
       credit.update!(used_at: Time.current, used_on_booking_group: group)
-      applied += credit.amount_cents
+      if credit.amount_cents > remaining
+        # Crédito maior que o necessário: usa o que falta e gera troco.
+        Credit.create!(user: @user, clinic: @clinic,
+                       amount_cents: credit.amount_cents - remaining,
+                       reason: "Troco de crédito")
+        applied += remaining
+      else
+        applied += credit.amount_cents
+      end
     end
 
-    [applied, total_cents].min
+    applied
   end
 
   def confirm_fully_credit_paid(group, credits_applied)

@@ -20,7 +20,7 @@ class Payments::PaymentsController < ApplicationController
   # InfinitePay redireciona para /pagamento/retorno?order_nsu=...&transaction_nsu=...&slug=...
   def return
     group = BookingGroup.find_by(id: params[:order_nsu])
-    return handle_credit_return if group.nil?
+    return handle_non_booking_return if group.nil?
 
     @payment = group.payment
     authorize @payment, :show?
@@ -64,10 +64,48 @@ class Payments::PaymentsController < ApplicationController
 
   private
 
+  def handle_non_booking_return
+    if (purchase = CreditPurchase.find_by(id: params[:order_nsu]))
+      return handle_credit_return(purchase)
+    end
+    if (payment = Payment.find_by(id: params[:order_nsu]))
+      return handle_difference_return(payment)
+    end
+    redirect_to root_path, alert: "Pagamento não encontrado."
+  end
+
+  # Retorno do InfinitePay para a diferença de uma alteração de reserva (order_nsu = payment.id)
+  def handle_difference_return(payment)
+    group = payment.booking_group
+    unless group&.dentist_id == current_user.id
+      return redirect_to root_path, alert: "Pagamento não encontrado."
+    end
+
+    if payment.pending? && params[:transaction_nsu].present? && params[:slug].present?
+      result = InfinitePay::PaymentChecker.call(
+        order_nsu:       params[:order_nsu],
+        transaction_nsu: params[:transaction_nsu],
+        slug:            params[:slug]
+      )
+      if result.success? && result.value["paid"]
+        DifferencePaymentConfirmer.call_from_webhook(
+          "order_nsu"       => params[:order_nsu],
+          "transaction_nsu" => params[:transaction_nsu]
+        )
+        payment.reload
+      end
+    end
+
+    if payment.paid?
+      redirect_to reserva_path(group), notice: "Diferença paga! Reserva atualizada. 🎉"
+    else
+      redirect_to reserva_path(group), notice: "Pagamento em processamento. Atualizamos assim que confirmar."
+    end
+  end
+
   # Retorno do InfinitePay para uma recarga de crédito (order_nsu = credit_purchase.id)
-  def handle_credit_return
-    purchase = CreditPurchase.find_by(id: params[:order_nsu])
-    unless purchase && purchase.user_id == current_user.id
+  def handle_credit_return(purchase)
+    unless purchase.user_id == current_user.id
       return redirect_to root_path, alert: "Pagamento não encontrado."
     end
 

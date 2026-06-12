@@ -72,9 +72,12 @@ class Scheduling::BookingsController < ApplicationController
         redirect_to confirmar_reservas_path, alert: result.error
       end
     else
+      credit_cents = params[:credit_amount].present? ? (params[:credit_amount].to_s.tr(",", ".").to_f * 100).round : nil
+
       result = BookingGroupCreator.call(
         user:             current_user,
-        availability_ids: cart_ids
+        availability_ids: cart_ids,
+        credit_cents:     credit_cents
       )
 
       if result.success?

@@ -82,6 +82,17 @@
     </div>
 
     <div>
+      <label class="label">CPF</label>
+      <div class="bg-[#fef8e1] rounded-2xl px-4 py-1">
+        <%= f.text_field :cpf,
+              placeholder: "000.000.000-00",
+              class: "w-full bg-transparent border-none outline-none py-3 text-sm",
+              style: "color: #3E2723",
+              data: { controller: "input-mask", "input-mask-pattern-value": "cpf" } %>
+      </div>
+    </div>
+
+    <div>
       <label class="label">E-mail</label>
       <div class="bg-[#fef8e1] rounded-2xl px-4 py-1 opacity-60">
         <input type="email" readonly

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_06_10_180343) do
+ActiveRecord::Schema[7.2].define(version: 2026_06_11_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -171,7 +171,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_06_10_180343) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "checkout_url"
-    t.index ["booking_group_id"], name: "index_payments_on_booking_group_id", unique: true
+    t.index ["booking_group_id"], name: "index_payments_on_booking_group_id"
     t.index ["clinic_id"], name: "index_payments_on_clinic_id"
     t.index ["gateway_id"], name: "index_payments_on_gateway_id", unique: true, where: "(gateway_id IS NOT NULL)"
     t.check_constraint "amount_cents > 0", name: "payments_amount_positive"

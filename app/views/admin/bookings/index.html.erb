@@ -113,12 +113,18 @@
       <% if group.bookings.size == 1 %>
         <% current = group.bookings.first.availability %>
         <p class="label">Turno atual</p>
-        <div class="rounded-2xl p-3 border mb-4" style="border-color:#E0E0E0">
-          <p class="text-sm font-medium" style="color:#3E2723"><%= current.label %></p>
-          <p class="text-xs mt-0.5" style="color:#8D6E63">
-            <%= l(current.date, format: "%d/%m") %> · <%= current.starts_at.strftime("%H:%M") %>–<%= current.ends_at.strftime("%H:%M") %>
-          </p>
+        <div class="rounded-2xl p-3 border mb-4 flex items-center justify-between gap-2" style="border-color:#E0E0E0">
+          <div>
+            <p class="text-sm font-medium" style="color:#3E2723"><%= current.label %></p>
+            <p class="text-xs mt-0.5" style="color:#8D6E63">
+              <%= l(current.date, format: "%d/%m") %> · <%= current.starts_at.strftime("%H:%M") %>–<%= current.ends_at.strftime("%H:%M") %>
+            </p>
+          </div>
+          <span class="text-sm font-medium shrink-0" style="color:#5D4037">R$ <%= money(current.price_cents) %></span>
         </div>
+        <p class="text-xs mb-4" style="color:#8D6E63">
+          Diferença a menos vira crédito; a mais é abatida do crédito do cliente (recarregável via Pix na carteira).
+        </p>
 
         <p class="label">Alterar para um turno disponível</p>
         <% slots = @available_slots.reject { |s| s.id == current.id } %>

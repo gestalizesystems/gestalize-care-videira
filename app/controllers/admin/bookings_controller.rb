@@ -53,7 +53,12 @@ class Admin::BookingsController < Admin::BaseController
     result = AdminBookingSlotChanger.call(booking: booking, new_availability: new_av)
 
     if result.success?
-      redirect_to admin_bookings_path(date: new_av.date), notice: "Turno alterado com sucesso."
+      notice = if result.value[:charge_created]
+        "Turno alterado. Cobrança da diferença gerada — o cliente deve pagar via Pix na reserva."
+      else
+        "Turno alterado com sucesso."
+      end
+      redirect_to admin_bookings_path(date: new_av.date), notice: notice
     else
       redirect_to admin_bookings_path, alert: result.error
     end

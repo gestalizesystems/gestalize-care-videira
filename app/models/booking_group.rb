@@ -5,7 +5,9 @@ class BookingGroup < ApplicationRecord
   belongs_to :dentist, class_name: "User"
   belongs_to :discount_rule, optional: true
   has_many   :bookings, dependent: :destroy
-  has_one    :payment,  dependent: :destroy
+  has_many   :payments, dependent: :destroy
+  # Pagamento principal (o mais antigo) — compatibilidade com o fluxo existente.
+  has_one    :payment, -> { order(created_at: :asc) }
 
   validates :subtotal_cents, :total_cents, presence: true,
     numericality: { greater_than: 0 }

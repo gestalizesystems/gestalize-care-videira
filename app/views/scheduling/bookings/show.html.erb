@@ -54,3 +54,14 @@
 <% if @booking_group.pending? && @booking_group.payment.present? %>
   <%= link_to "Ver QR Code Pix →", pagamento_path(@booking_group.payment), class: "btn-cta" %>
 <% end %>
+
+<%# Diferença pendente (alteração de turno para valor maior) %>
+<% @booking_group.payments.where(gateway: "infinitepay", status: "pending")
+     .where.not(id: @booking_group.payment&.id).each do |dp| %>
+  <div class="mt-3">
+    <p class="text-xs mb-2 text-center" style="color:#8D6E63">
+      Diferença pendente da alteração de turno
+    </p>
+    <%= link_to "Pagar diferença · R$ #{money(dp.amount_cents)} →", pagamento_path(dp), class: "btn-cta" %>
+  </div>
+<% end %>

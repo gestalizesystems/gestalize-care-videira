@@ -112,6 +112,6 @@ class Admin::UsersController < Admin::BaseController
   end
 
   def admin_user_create_params
-    params.require(:user).permit(:name, :email, :phone, :birth_date, :cro, :specialty)
+    params.require(:user).permit(:name, :email, :phone, :birth_date, :cpf, :cro, :specialty)
   end
 end

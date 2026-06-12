@@ -6,11 +6,12 @@ class Payments::WebhooksController < ActionController::Base
 
     # InfinitePay não documenta assinatura HMAC — validamos pelo order_nsu existir no banco.
     # NOTA: confirmar com suporte InfinitePay se há header de assinatura a validar.
-    order_nsu  = payload["order_nsu"].to_s
-    is_booking = BookingGroup.exists?(id: order_nsu)
-    is_credit  = CreditPurchase.exists?(id: order_nsu)
+    order_nsu     = payload["order_nsu"].to_s
+    is_booking    = BookingGroup.exists?(id: order_nsu)
+    is_credit     = CreditPurchase.exists?(id: order_nsu)
+    is_difference = Payment.exists?(id: order_nsu)
 
-    unless is_booking || is_credit
+    unless is_booking || is_credit || is_difference
       Rails.logger.warn("[Webhook InfinitePay] order_nsu desconhecido: #{order_nsu}")
       return head :ok
     end
@@ -19,8 +20,10 @@ class Payments::WebhooksController < ActionController::Base
     if payload["capture_method"] == "pix" && payload["paid_amount"].to_i > 0
       if is_booking
         PaymentConfirmer.call_from_webhook(payload)
-      else
+      elsif is_credit
         CreditPurchaseConfirmer.call_from_webhook(payload)
+      else
+        DifferencePaymentConfirmer.call_from_webhook(payload)
       end
     end
 

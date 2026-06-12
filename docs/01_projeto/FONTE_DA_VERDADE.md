@@ -6,6 +6,22 @@
 
 ---
 
+## ⚠️ Status (2026-06-10): spec histórica — a implementação divergiu
+
+Este documento é a **spec original** e permanece válido como visão de produto. Mas a implementação evoluiu em pontos importantes. Para o estado atual, consulte `ARQUITETURA.md`, `BANCO_DE_DADOS.md` e `MODULOS.md` (auditados em 2026-06-10). Divergências principais:
+
+| Spec original | Implementação real | Motivo |
+|---|---|---|
+| MercadoPago + QR Pix inline | **InfinitePay Checkout** (link hospedado, redirect) | Troca de gateway; ver `INFINITEPAY.md` |
+| Model `Room` (1 sala por clínica) | Não existe — `Service` (tipo de turno) + `Availability` direto na clínica | Modelo de turno/serviço representa melhor o negócio |
+| Money `decimal(10,2)` | **Centavos** (`*_cents` integer) + concern `MoneyConvertible` | Evita erros de arredondamento |
+| Enums integer | **Enums string** + check constraint no Postgres | Banco legível; constraint protege fora do Rails |
+| Ruby 3.3 | **Ruby 3.2.3** (`.ruby-version`) | Versão disponível no ambiente |
+| Sem créditos | Sistema de **créditos** (cancelamento) + **recarga via Pix** (`CreditPurchase`) | Evolução de produto pós-MVP |
+| Rotas `/conta`, `/minhas-reservas`, controllers `users/` | `/perfil`, `/carteira`, `/reservas`, namespaces `auth/`, `scheduling/`, `payments/`, `users/` | Reorganização na implementação |
+
+---
+
 ## 1. Definição do projeto
 
 **Videira Dental Clinic (VDC)** é uma plataforma SaaS web para **aluguel de sala odontológica**. A dona da clínica (uma dentista proprietária) cria janelas de disponibilidade da sala e define o preço de cada uma. Outras dentistas, clientes da plataforma, navegam essa agenda, selecionam um ou mais slots, fazem checkout em lote com **um único QR Code Pix** (com possível desconto por quantidade) e, ao pagar, têm a reserva confirmada.

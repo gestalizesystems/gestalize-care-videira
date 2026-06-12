@@ -1,602 +1,166 @@
 # Videira Dental Clinic — BANCO_DE_DADOS.md
 
-> Schema definitivo do banco PostgreSQL.
-> Migrations prontas para rodar na ordem listada.
-> Última atualização: 2026-05-09
+> Schema PostgreSQL **real**, espelhado de `db/schema.rb` (versão 2026_06_11_120000).
+> Última atualização: 2026-06-11 (auditoria código × docs)
 
 ---
 
 ## 1. Convenções
 
-- **PK:** UUID v4 (`gen_random_uuid()` via extensão `pgcrypto`).
-- **Timestamps:** `created_at` / `updated_at` em **todas** as tabelas (`t.timestamps`).
-- **Timezone:** `America/Sao_Paulo` no `application.rb`. Datetimes salvos em UTC.
-- **Decimais monetários:** `decimal(10, 2)` (até R$ 99.999.999,99).
-- **Percentuais:** `decimal(5, 2)` (0,00 – 999,99).
-- **Enums:** `integer` no banco com mapeamento em ActiveRecord enum. Ordem nunca alterada após deploy.
-- **FKs:** sempre com `foreign_key: true` (cria constraint Postgres).
-- **`null: false`:** padrão. Coluna nullable é exceção e deve ser justificada.
-- **Índices:** justificados (busca, FK, unique). Listados na seção 4.
+- **PK:** UUID (`gen_random_uuid()` via pgcrypto) em todas as tabelas de domínio.
+- **Dinheiro:** sempre `*_cents` (integer) com check constraint de positividade. Conversão para reais via concern `MoneyConvertible`.
+- **Status:** `string` com **check constraint** no Postgres + `enum` string no model (legível em queries SQL diretas; ordem não importa).
+- **FKs:** constraint real no banco (`add_foreign_key`) em todas as relações.
+- **Auditoria:** tabela `versions` (PaperTrail) com `object_changes`.
+
+> Divergência histórica: o plano original (2026-05) previa enums integer, money decimal e tabela `rooms`. A implementação real usa enums string, centavos e **não tem `rooms`** — o conceito virou `services` (tipo de turno/atendimento) + `availabilities` ligadas direto à clínica.
 
 ---
 
-## 2. Setup inicial
+## 2. Tabelas de domínio
 
-Em `config/application.rb`, antes das migrations:
+### clinics — tenant root
+| Coluna | Tipo | Regras |
+|---|---|---|
+| name, cnpj, phone, email | string | `null: false`; `cnpj` unique |
+| logo_url | string | opcional (logo também via Active Storage) |
 
-```ruby
-module VideiraDental
-  class Application < Rails::Application
-    config.load_defaults 7.2
-    config.time_zone = 'America/Sao_Paulo'
-    config.i18n.default_locale = :"pt-BR"
-    config.active_record.default_timezone = :utc
+### users — owner e dentistas (Devise)
+| Coluna | Tipo | Regras |
+|---|---|---|
+| clinic_id | uuid | FK, **nullable** (associada no cadastro) |
+| name | string | `null: false` |
+| role | string | check: `owner` \| `dentist` (default `dentist`) |
+| email / encrypted_password / reset_* / remember_* | — | Devise |
+| provider, uid | string | Google OAuth; unique parcial `(provider, uid)` |
+| phone, birth_date, cpf, cro, specialty | — | cpf unique parcial |
 
-    config.generators do |g|
-      g.orm :active_record, primary_key_type: :uuid
-    end
-  end
-end
-```
+### services — tipos de turno/atendimento
+| Coluna | Tipo | Regras |
+|---|---|---|
+| clinic_id | uuid | FK `null: false` |
+| name | string | `null: false` |
+| duration_minutes | integer | check `> 0` |
+| price_cents | integer | check `>= 0` |
+| active | boolean | default true |
 
----
+### availabilities — turnos (slots) da agenda
+| Coluna | Tipo | Regras |
+|---|---|---|
+| clinic_id | uuid | FK `null: false` |
+| service_id | uuid | FK, opcional |
+| dentist_id | uuid | FK → users, opcional |
+| date / starts_at / ends_at | date / time | `null: false` |
+| price_cents | integer | default 0 |
+| status | string | check: `available` \| `booked` \| `cancelled` \| `blocked` |
 
-## 3. Migrations (ordem de execução)
+Índice único `idx_availabilities_no_double_booking` em `(dentist_id, date, starts_at)`.
 
-> Cada bloco abaixo é uma migration completa. Gerar via `rails g migration <Name>`, então **substituir o conteúdo** pelo bloco correspondente.
+### discount_rules — desconto por volume
+| Coluna | Tipo | Regras |
+|---|---|---|
+| clinic_id | uuid | FK `null: false` |
+| min_slots | integer | check `> 0` |
+| discount_percent | integer | check `1..100` |
+| active | boolean | unique parcial `(clinic_id, min_slots)` where active |
 
-### 3.1 EnablePgcrypto
+### booking_groups — N reservas sob 1 pagamento
+| Coluna | Tipo | Regras |
+|---|---|---|
+| clinic_id / dentist_id | uuid | FK `null: false` |
+| discount_rule_id | uuid | FK, opcional |
+| subtotal_cents / total_cents | integer | `null: false`; `total_cents > 0` |
+| discount_cents | integer | default 0, check `>= 0` |
+| status | string | check: `pending` \| `confirmed` \| `cancelled` \| `expired` |
 
-```ruby
-class EnablePgcrypto < ActiveRecord::Migration[7.2]
-  def change
-    enable_extension 'pgcrypto'
-  end
-end
-```
+### bookings — reserva individual de um slot
+| Coluna | Tipo | Regras |
+|---|---|---|
+| clinic_id / booking_group_id / availability_id / dentist_id | uuid | FK `null: false` |
+| price_cents | integer | check `>= 0` |
+| status | string | check: `pending` \| `confirmed` \| `cancelled` |
 
-### 3.2 CreateClinics
+**Defesa canônica contra double-booking:** índice único parcial `idx_bookings_availability_unique_active` em `availability_id` where `status <> 'cancelled'`.
 
-```ruby
-class CreateClinics < ActiveRecord::Migration[7.2]
-  def change
-    create_table :clinics, id: :uuid, default: 'gen_random_uuid()' do |t|
-      t.string :name,        null: false
-      t.string :slug,        null: false
-      t.string :owner_email, null: false
-      t.timestamps
-    end
-    add_index :clinics, :slug, unique: true
-  end
-end
-```
+### payments — pagamentos do grupo (InfinitePay)
+| Coluna | Tipo | Regras |
+|---|---|---|
+| clinic_id / booking_group_id | uuid | FK `null: false`; **1—N** desde 2026-06-11 (pagamento principal + pagamentos de diferença na troca de turno) |
+| amount_cents | integer | check `> 0` |
+| status | string | check: `pending` \| `paid` \| `failed` \| `cancelled` \| `expired` |
+| gateway | string | default `infinitepay` |
+| gateway_id | string | `transaction_nsu` do InfinitePay; unique parcial |
+| checkout_url | string | link do checkout hospedado |
+| expires_at / paid_at | datetime | janela `PAYMENT_EXPIRY_MINUTES` |
 
-### 3.3 DeviseCreateUsers
+> Não existem mais colunas Pix inline (`pix_code`, `pix_qr_url`) — removidas na migração MercadoPago → InfinitePay (`ReplaceMercadopagoWithInfinitepay`).
 
-```ruby
-class DeviseCreateUsers < ActiveRecord::Migration[7.2]
-  def change
-    create_table :users, id: :uuid, default: 'gen_random_uuid()' do |t|
-      # Devise (database_authenticatable + recoverable + rememberable + validatable)
-      t.string   :email,                null: false, default: ""
-      t.string   :encrypted_password,   null: false, default: ""
-      t.string   :reset_password_token
-      t.datetime :reset_password_sent_at
-      t.datetime :remember_created_at
+### credits — crédito em conta do dentista
+| Coluna | Tipo | Regras |
+|---|---|---|
+| user_id / clinic_id | uuid | FK `null: false` |
+| source_booking_group_id | uuid | FK, opcional (origem: cancelamento) |
+| used_on_booking_group_id | uuid | FK, opcional (consumo no checkout) |
+| amount_cents | integer | check `> 0` |
+| reason | string | ex.: "Recarga via Pix" |
+| used_at | datetime | null = disponível |
 
-      # Perfil (campos do Figma)
-      t.string  :name,       null: false
-      t.string  :phone
-      t.string  :cro_number
-      t.string  :specialty
-      t.date    :birth_date
-      t.string  :google_uid
-      t.integer :role,       null: false, default: 1   # 0=owner, 1=dentist
+Índice composto `(user_id, clinic_id, used_at)` para o cálculo de saldo (`Credit.balance_for`). Sem validade (`expires_at`) por decisão de produto.
 
-      # Multi-tenant
-      t.references :clinic, null: false, foreign_key: true, type: :uuid
+### credit_purchases — recarga de crédito via Pix
+| Coluna | Tipo | Regras |
+|---|---|---|
+| user_id / clinic_id | uuid | FK `null: false` |
+| credit_id | uuid | FK, opcional — preenchido na confirmação |
+| amount_cents | integer | check `> 0` |
+| status | string | `pending` \| `paid` \| `expired` \| `cancelled` (enum no model; **sem** check constraint — só índice em status) |
+| gateway / gateway_id / checkout_url / expires_at / paid_at | — | mesmos campos de payments |
 
-      t.timestamps
-    end
+### versions — PaperTrail
+`item_type/item_id` (string — compatível com UUID), `whodunnit`, `event`, `object`, `object_changes`.
 
-    add_index :users, :email,                unique: true
-    add_index :users, :reset_password_token, unique: true
-    add_index :users, :google_uid,           unique: true, where: 'google_uid IS NOT NULL'
-    add_index :users, [:clinic_id, :role]
-  end
-end
-```
-
-> **Mudanças em relação ao migrations_reference.rb:**
-> - **Removidos** os 7 campos de endereço (`street`, `street_number`, `complement`, `neighborhood`, `city`, `state`, `zip_code`). Não estão no CONTEXT.md como requisitos do MVP, não aparecem no Figma e não são usados em fluxo nenhum (cobrança Pix não exige endereço). Entram em fase futura se necessário.
-> - **Avatar:** o campo `avatar_url` foi removido. Avatar usa **ActiveStorage** via `has_one_attached :avatar` no model (forma idiomática Rails para upload). Nenhuma coluna em `users`.
-> - **`google_uid` index:** agora `unique` com `where: 'google_uid IS NOT NULL'` (partial index). Garante que dois usuários não compartilhem o mesmo Google account, sem bloquear cadastros email/senha.
-
-### 3.4 ActiveStorage
-
-```bash
-rails active_storage:install
-```
-
-> Gera 3 tabelas (`active_storage_blobs`, `_attachments`, `_variant_records`) com PK UUID porque o default está configurado.
-
-### 3.5 CreateRooms
-
-```ruby
-class CreateRooms < ActiveRecord::Migration[7.2]
-  def change
-    create_table :rooms, id: :uuid, default: 'gen_random_uuid()' do |t|
-      t.references :clinic, null: false, foreign_key: true, type: :uuid
-      t.string :name,        null: false
-      t.text   :description
-      t.timestamps
-    end
-    add_index :rooms, :clinic_id, unique: true   # MVP: 1 room por clinic
-  end
-end
-```
-
-> **Mudança:** adicionado **unique index em `clinic_id`** para impor no banco a regra "uma sala por clínica no MVP". Quando mudar para multi-room, basta drop do índice. Documenta a invariante atual.
-
-### 3.6 CreateAvailabilities
-
-```ruby
-class CreateAvailabilities < ActiveRecord::Migration[7.2]
-  def change
-    create_table :availabilities, id: :uuid, default: 'gen_random_uuid()' do |t|
-      t.references :room,       null: false, foreign_key: true, type: :uuid
-      t.references :created_by, null: false, foreign_key: { to_table: :users }, type: :uuid
-      t.date    :date,      null: false
-      t.time    :starts_at, null: false
-      t.time    :ends_at,   null: false
-      t.decimal :price,     null: false, precision: 10, scale: 2
-      t.boolean :booked,    null: false, default: false
-      t.timestamps
-    end
-    add_index :availabilities, [:room_id, :date]
-    add_index :availabilities, [:date, :booked]
-    add_check_constraint :availabilities, 'ends_at > starts_at',
-                         name: 'availabilities_ends_after_starts'
-    add_check_constraint :availabilities, 'price > 0',
-                         name: 'availabilities_price_positive'
-  end
-end
-```
-
-> **Mudanças:** adicionados **2 check constraints** no banco. A validação Ruby pode ser bypassada (atualizações via SQL, race condition); o constraint do Postgres garante a invariante.
-
-### 3.7 CreateDiscountRules
-
-```ruby
-class CreateDiscountRules < ActiveRecord::Migration[7.2]
-  def change
-    create_table :discount_rules, id: :uuid, default: 'gen_random_uuid()' do |t|
-      t.references :clinic,           null: false, foreign_key: true, type: :uuid
-      t.integer :min_slots,           null: false
-      t.decimal :discount_percent,    null: false, precision: 5, scale: 2
-      t.boolean :active,              null: false, default: true
-      t.timestamps
-    end
-    add_index :discount_rules, [:clinic_id, :active]
-    add_index :discount_rules, [:clinic_id, :min_slots], unique: true,
-              name: 'idx_discount_rules_unique_min_slots_per_clinic'
-    add_check_constraint :discount_rules, 'min_slots >= 2',
-                         name: 'discount_rules_min_slots_min_2'
-    add_check_constraint :discount_rules,
-                         'discount_percent > 0 AND discount_percent <= 100',
-                         name: 'discount_rules_discount_percent_range'
-  end
-end
-```
-
-> **Mudanças:**
-> - **Unique index `(clinic_id, min_slots)`** — impede a dona de criar 2 regras conflitantes para a mesma quantidade. O método `DiscountRule.best_for` precisa de uma resposta determinística.
-> - **Check constraints** para `min_slots >= 2` (desconto não faz sentido para 1 slot) e `discount_percent` no range (0, 100].
-
-### 3.8 CreateBookingGroups
-
-```ruby
-class CreateBookingGroups < ActiveRecord::Migration[7.2]
-  def change
-    create_table :booking_groups, id: :uuid, default: 'gen_random_uuid()' do |t|
-      t.references :user,          null: false, foreign_key: true, type: :uuid
-      t.references :clinic,        null: false, foreign_key: true, type: :uuid
-      t.references :discount_rule, null: true,  foreign_key: true, type: :uuid
-      t.decimal :subtotal,         null: false, precision: 10, scale: 2
-      t.decimal :discount_percent, null: false, precision: 5,  scale: 2, default: 0
-      t.decimal :discount_amount,  null: false, precision: 10, scale: 2, default: 0
-      t.decimal :total,            null: false, precision: 10, scale: 2
-      t.integer :status,           null: false, default: 0  # 0=pending, 1=confirmed, 2=expired, 3=cancelled
-      t.timestamps
-    end
-    add_index :booking_groups, [:user_id, :status]
-    add_index :booking_groups, [:clinic_id, :status]
-    add_check_constraint :booking_groups,
-                         'subtotal >= 0 AND total >= 0 AND discount_amount >= 0',
-                         name: 'booking_groups_amounts_non_negative'
-    add_check_constraint :booking_groups,
-                         'total = subtotal - discount_amount',
-                         name: 'booking_groups_total_consistency'
-  end
-end
-```
-
-> **Mudança:** check constraint `total = subtotal - discount_amount`. Garante consistência matemática mesmo se o cálculo for refeito no futuro com outra arquitetura.
-
-### 3.9 CreateBookings
-
-```ruby
-class CreateBookings < ActiveRecord::Migration[7.2]
-  def change
-    create_table :bookings, id: :uuid, default: 'gen_random_uuid()' do |t|
-      t.references :booking_group,  null: false, foreign_key: true, type: :uuid
-      t.references :availability,   null: false, foreign_key: true, type: :uuid
-      t.references :user,           null: false, foreign_key: true, type: :uuid
-      t.integer  :status,           null: false, default: 0  # 0=pending, 1=confirmed, 2=cancelled
-      t.text     :cancel_reason
-      t.datetime :cancelled_at
-      t.timestamps
-    end
-    add_index :bookings, [:booking_group_id, :status]
-    add_index :bookings, :availability_id, unique: true   # 1 slot → no máx 1 booking
-    add_index :bookings, [:user_id, :status]
-    add_check_constraint :bookings,
-                         "(status = 2) = (cancelled_at IS NOT NULL)",
-                         name: 'bookings_cancelled_consistency'
-  end
-end
-```
-
-> **Mudança:** check constraint que garante "se status = cancelled, `cancelled_at` está preenchido; se não, `cancelled_at` é nulo". Impede estado inconsistente.
-
-### 3.10 CreatePayments
-
-```ruby
-class CreatePayments < ActiveRecord::Migration[7.2]
-  def change
-    create_table :payments, id: :uuid, default: 'gen_random_uuid()' do |t|
-      t.references :booking_group, null: false, foreign_key: true, type: :uuid
-      t.string   :provider,        null: false, default: 'mercadopago'
-      t.string   :provider_id
-      t.text     :pix_code         # "copia e cola" Pix
-      t.text     :pix_qr_url       # base64 do QR code (text porque base64 cresce)
-      t.integer  :status,          null: false, default: 0  # 0=pending, 1=paid, 2=expired
-      t.decimal  :amount,          null: false, precision: 10, scale: 2
-      t.datetime :expires_at,      null: false
-      t.datetime :paid_at
-      t.timestamps
-    end
-    add_index :payments, [:status, :expires_at]
-    add_index :payments, :booking_group_id, unique: true   # 1 payment por grupo
-    add_index :payments, :provider_id, where: 'provider_id IS NOT NULL'
-    add_check_constraint :payments, 'amount > 0',
-                         name: 'payments_amount_positive'
-    add_check_constraint :payments,
-                         "(status = 1) = (paid_at IS NOT NULL)",
-                         name: 'payments_paid_consistency'
-  end
-end
-```
-
-> **Mudanças:**
-> - `pix_qr_url` mudou de `string` (255) para `text` — o que o MercadoPago retorna em `qr_code_base64` é uma string base64 grande, não uma URL. **O nome da coluna está mantido por compatibilidade com o código existente, mas conceitualmente armazena o QR como base64.** Documentado.
-> - Index parcial em `provider_id` para acelerar a consulta no webhook (encontrar Payment pelo ID do MercadoPago).
-> - Check `paid_at` consistente com `status = paid`.
-
-### 3.11 PaperTrail
-
-```bash
-rails generate paper_trail:install --with-changes
-```
-
-Editar a migration gerada para usar UUID:
-
-```ruby
-class CreateVersions < ActiveRecord::Migration[7.2]
-  def change
-    create_table :versions, id: :uuid, default: 'gen_random_uuid()' do |t|
-      t.string   :item_type,  null: false
-      t.uuid     :item_id,    null: false
-      t.string   :event,      null: false
-      t.string   :whodunnit                          # UUID do user (string)
-      t.jsonb    :object
-      t.jsonb    :object_changes
-      t.datetime :created_at
-    end
-    add_index :versions, %i[item_type item_id]
-    add_index :versions, :whodunnit
-    add_index :versions, :created_at
-  end
-end
-```
-
-> **Mudanças:**
-> - PK `:uuid`.
-> - `item_id` como `uuid` (não string), pois todos os models usam UUID.
-> - `object` e `object_changes` como `jsonb` (não `text`) — performance e indexação.
-> - `whodunnit` segue como `string` (PaperTrail default), armazena o UUID do user serializado.
+### active_storage_*
+Tabelas padrão do Active Storage (avatares de usuário e logo da clínica). PKs bigint (default Rails).
 
 ---
 
-## 4. Lista consolidada de índices e constraints (justificada)
-
-| Tabela | Índice/Constraint | Tipo | Justificativa |
-|---|---|---|---|
-| `clinics` | `slug` | unique | Roteamento futuro por slug |
-| `users` | `email` | unique | Devise validatable |
-| `users` | `reset_password_token` | unique | Devise recoverable |
-| `users` | `google_uid` | unique partial | OAuth: 1 conta Google = 1 user |
-| `users` | `(clinic_id, role)` | composto | Listar dentistas/owner por clínica |
-| `rooms` | `clinic_id` | unique | MVP: 1 room por clínica |
-| `availabilities` | `(room_id, date)` | composto | Lista de slots por dia (Home + Admin) |
-| `availabilities` | `(date, booked)` | composto | Filtro "disponíveis em X data" |
-| `availabilities` | `ends_at > starts_at` | check | Invariante de horário |
-| `availabilities` | `price > 0` | check | Invariante de preço |
-| `discount_rules` | `(clinic_id, active)` | composto | `DiscountRule.active.for_clinic` |
-| `discount_rules` | `(clinic_id, min_slots)` | unique | `best_for` precisa de regra única por quantidade |
-| `discount_rules` | `min_slots >= 2` | check | Desconto não se aplica a 1 slot |
-| `discount_rules` | `discount_percent ∈ (0,100]` | check | Sanity |
-| `booking_groups` | `(user_id, status)` | composto | "Minhas reservas" filtrado por status |
-| `booking_groups` | `(clinic_id, status)` | composto | Admin lista por status |
-| `booking_groups` | `total = subtotal - discount_amount` | check | Consistência matemática |
-| `booking_groups` | amounts >= 0 | check | Sanity |
-| `bookings` | `(booking_group_id, status)` | composto | Contar bookings ativos do grupo |
-| `bookings` | `availability_id` | unique | **CRÍTICO**: protege contra double-booking |
-| `bookings` | `(user_id, status)` | composto | Histórico da dentista |
-| `bookings` | cancelled consistency | check | `cancelled_at` ↔ status |
-| `payments` | `(status, expires_at)` | composto | Job de expiração: `pending` + `expires_at < now` |
-| `payments` | `booking_group_id` | unique | 1 payment por grupo |
-| `payments` | `provider_id` | partial | Lookup pelo webhook |
-| `payments` | `amount > 0` | check | Sanity |
-| `payments` | paid consistency | check | `paid_at` ↔ status |
-| `versions` | `(item_type, item_id)` | composto | PaperTrail lookup do histórico |
-| `versions` | `whodunnit` | simples | "O que esta dentista alterou?" |
-| `versions` | `created_at` | simples | Ordenar histórico |
-
----
-
-## 5. ERD final (textual)
+## 3. Relacionamentos
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                                  CLINIC                                      │
-│  id (uuid PK), name, slug (unique), owner_email                              │
-└─────────┬───────────────────────────┬──────────────────────┬─────────────────┘
-          │ 1                         │ 1                    │ 1
-          │                           │                      │
-          │ N                         │ 1                    │ N
-   ┌──────▼───────┐         ┌─────────▼────────┐    ┌────────▼───────────────┐
-   │     USER      │         │       ROOM        │    │     DISCOUNT_RULE       │
-   │ id, email,    │         │ id, name, descr.  │    │ id, min_slots, %, ...   │
-   │ name, role,   │         └─────────┬─────────┘    └────────┬────────────────┘
-   │ cro, …        │                   │ 1                     │ 1
-   │ clinic_id FK  │                   │                       │
-   └─────┬─────────┘                   │ N                     │ 0..N
-         │                       ┌─────▼─────────────┐         │
-         │                       │   AVAILABILITY     │         │
-         │ N (created_by)        │ id, date,         ◄─────┐   │
-         ├───────────────────────► starts_at, ends_at,│    │   │
-         │                       │ price, booked     │    │   │
-         │ N (dentist)           └─────┬─────────────┘    │   │
-         │                             │ 1                │   │
-         │                             │                  │   │
-         │                             │ 0..1 (unique)    │   │
-         │                       ┌─────▼─────────────┐    │   │
-         │                       │      BOOKING       │    │   │
-         │ N                     │ id, status,       │    │   │
-         ├───────────────────────► cancel_reason,    │    │   │
-         │                       │ cancelled_at      │    │   │
-         │                       │ booking_group_id  │    │   │
-         │                       │ availability_id   ├────┘   │
-         │                       │ user_id           │        │
-         │                       └─────┬─────────────┘        │
-         │                             │ N                    │
-         │                             │                      │
-         │                             │ 1                    │
-         │                       ┌─────▼─────────────┐        │
-         │ N                     │  BOOKING_GROUP     │        │
-         ├───────────────────────► id, subtotal,     │        │
-         │ (dentist)             │ discount_*, total,│        │
-         │                       │ status            ◄────────┘
-         │                       │ user_id, clinic_id│
-         │                       │ discount_rule_id  │
-         │                       └─────┬─────────────┘
-         │                             │ 1
-         │                             │
-         │                             │ 1 (unique)
-         │                       ┌─────▼─────────────┐
-         │                       │      PAYMENT       │
-         │                       │ id, provider,     │
-         │                       │ provider_id,      │
-         │                       │ pix_code, qr_url, │
-         │                       │ status, amount,   │
-         │                       │ expires_at,       │
-         │                       │ paid_at           │
-         │                       │ booking_group_id  │
-         │                       └───────────────────┘
-         │
-         │ N (PaperTrail whodunnit, soft-link)
-         │
-         ▼
-   ┌─────────────────────────────────────────────────────┐
-   │                     VERSION                          │
-   │ id, item_type, item_id, event, whodunnit (user_id), │
-   │ object (jsonb), object_changes (jsonb), created_at  │
-   └─────────────────────────────────────────────────────┘
-```
+Clinic 1—N User, Service, Availability, DiscountRule, BookingGroup, Booking,
+           Payment, Credit, CreditPurchase
 
-### Cardinalidades validadas
-
-| Origem | Cardinalidade | Destino | Forçada por |
-|---|---|---|---|
-| `Clinic` → `User` | 1 → N | `users.clinic_id NOT NULL FK` | migration |
-| `Clinic` → `Room` | 1 → 1 | `rooms.clinic_id` unique | unique index |
-| `Clinic` → `DiscountRule` | 1 → N | `discount_rules.clinic_id` | migration |
-| `Clinic` → `BookingGroup` | 1 → N | `booking_groups.clinic_id` | migration |
-| `Room` → `Availability` | 1 → N | `availabilities.room_id` | migration |
-| `User(owner)` → `Availability` | 1 → N | `availabilities.created_by_id` | migration |
-| `User(dentist)` → `BookingGroup` | 1 → N | `booking_groups.user_id` | migration |
-| `User(dentist)` → `Booking` | 1 → N | `bookings.user_id` | migration |
-| `BookingGroup` → `Booking` | 1 → N | `bookings.booking_group_id` | migration |
-| `Availability` → `Booking` | 1 → 0..1 | `bookings.availability_id` unique | unique index |
-| `BookingGroup` → `Payment` | 1 → 1 | `payments.booking_group_id` unique | unique index |
-| `BookingGroup` → `DiscountRule` | N → 0..1 | `booking_groups.discount_rule_id` nullable | migration |
-
----
-
-## 6. Estados (state diagrams)
-
-### BookingGroup.status
-
-```
-[pending] ──confirm!──► [confirmed]
-   │
-   ├──expire!──► [expired]   (via Sidekiq quando payment.expires_at < now)
-   │
-   └──(todos os bookings cancelados)──► [cancelled]
-```
-
-### Booking.status
-
-```
-[pending] ──confirm!──► [confirmed]   (chamado por BookingGroup#confirm!)
-   │
-   ├──cancel_expired!──► [cancelled]  (via BookingGroup#expire!)
-   │
-[confirmed] ──cancel!(reason)──► [cancelled]   (regra 48h)
-```
-
-### Payment.status
-
-```
-[pending] ──webhook(approved)──► [paid]
-   │
-   └──ExpirePaymentsJob──► [expired]   (quando expires_at < now e ainda pending)
-```
-
-### Availability.booked
-
-```
-booked: false ──BookingGroupCreator (hold)──► booked: true
-                                                    │
-                            ┌───────────────────────┴───────────────────────┐
-                            │                                               │
-                  Booking#confirm!                                Booking#cancel_expired!
-                  (mantém true)                                  (volta para false)
-                            │                                               │
-                            ▼                                               ▼
-                       (mantém true)                            booked: false
-                            │
-                  Booking#cancel!(reason)
-                            ↓
-                       booked: false
+User (dentist) 1—N BookingGroup, Booking, Credit, CreditPurchase
+Service 1—N Availability (opcional)
+Availability 1—1 Booking (ativo; índice parcial)
+BookingGroup 1—N Booking
+BookingGroup 1—N Payment (principal + diferenças de troca de turno)
+BookingGroup 1—N Credit (como origem ou consumo)
+CreditPurchase 1—1 Credit (após confirmação)
 ```
 
 ---
 
-## 7. Seeds (`db/seeds.rb`)
+## 4. Decisões de schema (o porquê)
 
-> Mantém o conteúdo do `seeds.rb` atual com 2 ajustes.
-
-```ruby
-puts "Limpando dados existentes…"
-Payment.destroy_all
-Booking.destroy_all
-BookingGroup.destroy_all
-Availability.destroy_all
-DiscountRule.destroy_all
-Room.destroy_all
-User.destroy_all
-Clinic.destroy_all
-
-puts "Criando Clinic…"
-clinic = Clinic.create!(
-  name:        "Videira Dental Clinic",
-  slug:        "videira-dental",
-  owner_email: ENV.fetch("OWNER_EMAIL", "videiraclinic@gmail.com")
-)
-
-puts "Criando Owner…"
-owner = User.create!(
-  clinic:   clinic,
-  name:     "Cibele Videira",
-  email:    ENV.fetch("OWNER_EMAIL", "videiraclinic@gmail.com"),
-  password: ENV.fetch("OWNER_PASSWORD") { "ChangeMe!2026" },
-  role:     :owner
-)
-
-puts "Criando Room…"
-room = Room.create!(
-  clinic:      clinic,
-  name:        "Sala Principal",
-  description: "Sala odontológica completa com equipamentos"
-)
-
-puts "Criando DiscountRules…"
-DiscountRule.create!([
-  { clinic: clinic, min_slots: 2, discount_percent: 5.0,  active: true },
-  { clinic: clinic, min_slots: 3, discount_percent: 10.0, active: true },
-  { clinic: clinic, min_slots: 5, discount_percent: 15.0, active: true }
-])
-
-puts "Criando Availabilities (próximos 45 dias úteis)…"
-periods = [
-  { starts_at: '08:00', ends_at: '12:00', price: 150.00 },
-  { starts_at: '13:00', ends_at: '17:00', price: 150.00 },
-  { starts_at: '17:00', ends_at: '21:00', price: 120.00 }
-]
-
-(1..45).each do |i|
-  date = Date.current + i.days
-  next if date.sunday?
-  periods.each do |p|
-    Availability.create!(
-      room: room, created_by: owner,
-      date: date, starts_at: p[:starts_at],
-      ends_at: p[:ends_at], price: p[:price], booked: false
-    )
-  end
-end
-
-puts "✅ Seeds criados — #{Availability.count} slots, #{DiscountRule.count} regras."
-```
-
-> **Mudanças em relação ao seeds.rb original:**
-> - **Senha do owner deixa de ser hardcoded.** Usa `ENV.fetch("OWNER_PASSWORD") { "ChangeMe!2026" }`. Senha de produção real **nunca** deve viver no repositório.
-> - `Date.today` → `Date.current` (respeita `Time.zone`).
+| Decisão | Motivo |
+|---|---|
+| UUID como PK | IDs vazam em URLs e `order_nsu` do gateway — não enumeráveis |
+| Centavos (integer) | Evita erro de arredondamento de float/decimal em soma de carrinho e desconto |
+| Enum string + check constraint | Banco legível em suporte/BI; constraint impede estado inválido mesmo fora do Rails |
+| Índice único parcial em bookings | Garante no banco que um slot só tem 1 reserva ativa, independente de bug na aplicação |
+| `payments.booking_group_id` 1—N (era unique até 2026-06-11) | Troca de turno pelo admin pode gerar pagamento de diferença adicional ao pagamento principal |
+| Crédito sem `expires_at` | Decisão de produto (registrada em ATIVIDADES.md) |
+| `users.clinic_id` nullable | Cadastro via OAuth pode preceder associação à clínica |
 
 ---
 
-## 8. Comandos para rodar tudo do zero
+## 5. Pendências de schema (roadmap)
 
-```bash
-# 1. Banco
-rails db:create
-
-# 2. pgcrypto (primeiro!)
-rails g migration EnablePgcrypto
-# (substituir conteúdo pelo bloco 3.1)
-rails db:migrate
-
-# 3. Configurar UUID default em config/application.rb (vide §2)
-
-# 4. Demais migrations, na ordem 3.2 → 3.10
-rails g migration CreateClinics  …  # repetir para cada
-rails db:migrate
-
-# 5. ActiveStorage
-rails active_storage:install
-rails db:migrate
-
-# 6. PaperTrail
-rails generate paper_trail:install --with-changes
-# (editar para UUID conforme §3.11)
-rails db:migrate
-
-# 7. Seeds
-rails db:seed
-```
+- `credit_purchases.status` sem check constraint (inconsistente com as demais tabelas).
+- `bookings` não tem `cancel_reason` / `cancelled_at` (o motivo do cancelamento hoje não é persistido na reserva).
+- Integração Google Agenda exigirá `users.google_refresh_token` (+ `bookings.google_calendar_event_id`) — ver README.
 
 ---
 
-*Schema validado e pronto para implementação.*
+*Fonte da verdade do schema é sempre `db/schema.rb`. Este documento é o mapa comentado.*

@@ -47,7 +47,10 @@
 <% credit_applied = [credit_balance, @pricing[:total_cents]].min %>
 <% amount_due = @pricing[:total_cents] - credit_applied %>
 
-<%= form_with url: confirmar_reservas_path, method: :post, data: { turbo: false }, class: "flex flex-col gap-4" do |f| %>
+<%= form_with url: confirmar_reservas_path, method: :post, class: "flex flex-col gap-4",
+      data: { turbo: false, controller: "credit-split",
+              "credit-split-total-value": @pricing[:total_cents],
+              "credit-split-balance-value": credit_balance } do |f| %>
 
   <div>
     <p class="text-xs font-medium mb-3" style="color: #8D6E63">Forma de pagamento</p>
@@ -83,18 +86,19 @@
                 value: (credit_applied / 100.0).round(2),
                 min: 0, max: (credit_balance / 100.0).round(2),
                 step: "0.01",
-                placeholder: "R$ 0,00",
+                placeholder: "R$ 0,00 (opcional)",
                 class: "w-full bg-transparent border-none outline-none py-3 text-sm",
-                style: "color: #3E2723" %>
+                style: "color: #3E2723",
+                data: { "credit-split-target": "input", action: "input->credit-split#recompute" } %>
         </div>
         <p class="text-xs mt-1" style="color: #8D6E63">
-          Será usado R$ <%= money(credit_applied) %>
+          Será usado <span data-credit-split-target="usedField">R$ <%= money(credit_applied) %></span>
         </p>
       </div>
     <% end %>
 
-    <% if amount_due > 0 %>
-      <div class="bg-white rounded-2xl shadow-sm p-4 border-2" style="border-color: #5D4037">
+      <div class="bg-white rounded-2xl shadow-sm p-4 border-2" data-credit-split-target="pix"
+           style="border-color: #5D4037<%= '; display:none' if amount_due.zero? %>">
         <div class="flex items-center gap-3">
           <div class="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
                style="background-color: #E0F7FA">
@@ -116,7 +120,6 @@
           </svg>
         </div>
       </div>
-    <% end %>
   </div>
 
   <%# Breakdown %>
@@ -125,23 +128,23 @@
       <span>Valor total</span>
       <span>R$ <%= money(@pricing[:total_cents]) %></span>
     </div>
-    <% if credit_applied > 0 %>
-      <div class="flex justify-between text-xs" style="color: #388E3C">
-        <span>Créditos utilizados</span>
-        <span>– R$ <%= money(credit_applied) %></span>
-      </div>
-    <% end %>
+    <div class="flex justify-between text-xs" data-credit-split-target="usedRow"
+         style="color: #388E3C<%= '; display:none' if credit_applied.zero? %>">
+      <span>Créditos utilizados</span>
+      <span>– <span data-credit-split-target="usedAmount">R$ <%= money(credit_applied) %></span></span>
+    </div>
   </div>
 
   <div class="flex justify-between items-center px-1">
     <span class="text-sm" style="color: #3E2723">A pagar</span>
-    <span class="text-2xl font-medium" style="color: #5D4037">
+    <span class="text-2xl font-medium" style="color: #5D4037" data-credit-split-target="due">
       R$ <%= money(amount_due) %>
     </span>
   </div>
 
   <%= f.submit(amount_due.zero? ? "Confirmar reserva" : "Pagar",
-        class: "btn-primary w-full cursor-pointer py-4 text-sm") %>
+        class: "btn-primary w-full cursor-pointer py-4 text-sm",
+        data: { "credit-split-target": "submit" }) %>
 
   <p class="text-xs text-center" style="color: #8D6E63">
     Ao confirmar, você concorda com os Termos e condições da clínica.

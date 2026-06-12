@@ -83,6 +83,13 @@
             style: "color: #3E2723" %>
     </div>
 
+    <div class="bg-[#fef8e1] rounded-2xl px-4 py-1">
+      <%= f.text_field "user[cpf]", placeholder: "CPF (000.000.000-00)",
+            class: "w-full bg-transparent border-none outline-none py-3 text-sm",
+            style: "color: #3E2723",
+            data: { controller: "input-mask", "input-mask-pattern-value": "cpf" } %>
+    </div>
+
     <div class="grid grid-cols-2 gap-3">
       <div class="bg-[#fef8e1] rounded-2xl px-4 py-1">
         <%= f.date_field "user[birth_date]", placeholder: "dd/mm/aaaa",

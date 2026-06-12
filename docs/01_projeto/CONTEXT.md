@@ -1,7 +1,9 @@
 # Videira Dental Clinic — CONTEXT.md
-> Fonte da verdade do projeto. Alimenta todas as interações com IA.
-> Combina especificação original (vdc_final) com decisões e correções da implementação real.
+> Documento histórico de contexto. Alimentava as interações com IA na fase de construção.
+> Combina especificação original (vdc_final) com decisões e correções da época.
 > Última atualização: Maio 2026
+
+> ⚠️ **Status (2026-06-10):** documento **histórico**. Pontos como MercadoPago/QR inline, model `Room`, money decimal e enums integer **não refletem mais o código**. Para o estado atual use: `FONTE_DA_VERDADE.md` (visão de produto + tabela de divergências), `ARQUITETURA.md`, `BANCO_DE_DADOS.md` e `MODULOS.md`.
 
 ---
 

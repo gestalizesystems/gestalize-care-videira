@@ -45,6 +45,7 @@
 | Pagamento expirado | `payments/payments/_expired.html.erb` | — | Partial de fim de prazo. |
 | Meu perfil | `users/profiles/show.html.erb` | **C** | Card grande com avatar e dados + card de créditos + card de últimas reservas. |
 | Editar perfil | `users/profiles/edit.html.erb` | **A** | Form com labels acima de cada input. |
+| Carteira | `users/wallets/show.html.erb` | **C** | Saldo de créditos + form de recarga via Pix (POST `/recargas`). |
 
 ## Admin
 

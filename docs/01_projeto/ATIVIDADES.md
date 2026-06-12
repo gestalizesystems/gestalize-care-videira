@@ -40,8 +40,8 @@
 - Request specs: `admin/{services,availabilities,bookings,discount_rules,clinics,credits,payments}`, `scheduling/{carts,bookings}`.
 - Model spec: `credit_spec.rb` (associations, validations, scopes, balance_for).
 - Service spec: `credit_issuer_spec.rb` (payment paid / pending / nil / no group).
-- System specs: `booking_flow_spec.rb`, `admin_dashboard_spec.rb` com Capybara + Selenium headless Chrome.
-- `spec/support/capybara.rb` configurado (driven_by rack_test, js: true usa Chrome headless).
+- System specs: `booking_flow_spec.rb`, `admin_dashboard_spec.rb` com Capybara.
+- `spec/support/capybara.rb` configurado com `driven_by :rack_test`. **Nota (auditoria 2026-06-10):** não há `selenium-webdriver` no Gemfile — specs `js: true` não são suportados hoje (pendência na Fase 1 do ROADMAP).
 
 ### Melhorias (§6)
 - Seed agora cria 30 dias de turnos + um crédito demo de R$ 50,00 para a dentista.
@@ -56,7 +56,7 @@
 - `7.4` CSS — variáveis sem uso removidas (`--color-vdc-pix`, `--font-vdc`, `--radius-vdc`, `--pix-color`); classes mortas (`badge-danger`, `badge-neutral`) removidas.
 - `7.5` `ApplicationMailer` agora usa `MAILER_FROM` do ENV.
 - `7.6` `ApplicationJob` ganhou `retry_on ActiveRecord::Deadlocked` (3 tentativas) e `discard_on ActiveJob::DeserializationError`.
-- `7.7` Selenium + Capybara agora têm uso real (system specs).
+- `7.7` Capybara agora tem uso real (system specs com rack_test).
 
 ---
 

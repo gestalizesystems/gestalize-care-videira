@@ -74,7 +74,7 @@ Toda string visível no UI deve usar `t(...)`. Status enums seguem o padrão:
 - Ruby on Rails + ERB + Tailwind CSS v4
 - Stimulus para JS
 - Devise para autenticação
-- MercadoPago para pagamentos (Pix)
+- InfinitePay Checkout para pagamentos (Pix, checkout hospedado)
 - PostgreSQL
 
 ---

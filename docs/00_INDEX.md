@@ -8,19 +8,21 @@
 
 | Documento | Descrição |
 |-----------|-----------|
-| [[FONTE_DA_VERDADE]] | Documento master — spec canônica do sistema |
-| [[CONTEXT]] | Fonte da verdade de implementação — decisões e correções reais |
-| [[ATIVIDADES]] | Backlog priorizado de tarefas pendentes |
-| [[ROADMAP]] | Fases e marcos do produto |
-| [[ROADMAP_TECNICO]] | Tarefas técnicas em ordem de implementação, com prompts prontos |
+| [[FONTE_DA_VERDADE]] | Visão de produto original + tabela de divergências spec × implementação |
+| [[ATIVIDADES_DECISOES]] | Auditoria 2026-06-10: decisões com motivos (ADR leve) + pendências técnicas |
+| [[ATIVIDADES]] | Histórico das atividades implementadas em 2026-05 |
+| [[ROADMAP]] | **Roadmap de carreira Júnior → Tech Senior** ancorado no projeto |
+| [[ROADMAP_TECNICO]] | (Arquivado) roadmap de construção do MVP, concluído |
+| [[CONTEXT]] | (Histórico) contexto da fase de construção |
 
 ## 02 · Arquitetura
 
 | Documento | Descrição |
 |-----------|-----------|
-| [[ARQUITETURA]] | Camadas, convenções e padrões de código |
-| [[BANCO_DE_DADOS]] | Schema PostgreSQL e migrations |
-| [[MODULOS]] | Mapa funcional dos 5 módulos do sistema |
+| [[ARQUITETURA]] | Camadas, convenções e fluxos reais (auditado 2026-06-10) |
+| [[BANCO_DE_DADOS]] | Schema PostgreSQL real, espelhado de `db/schema.rb` |
+| [[MODULOS]] | Mapa funcional dos 6 módulos do sistema |
+| [[INFINITEPAY]] | Integração com o gateway de pagamento (API, webhook, retorno) |
 
 ## 03 · Design
 
@@ -50,11 +52,11 @@
 ## Fluxo de leitura recomendado
 
 ```
-FONTE_DA_VERDADE → ARQUITETURA → BANCO_DE_DADOS → MODULOS
+FONTE_DA_VERDADE → ARQUITETURA → BANCO_DE_DADOS → MODULOS → INFINITEPAY
        ↓
-  ROADMAP_TECNICO → ATIVIDADES
+  ATIVIDADES_DECISOES (decisões + pendências) → ROADMAP (júnior → tech senior)
        ↓
   03_design/README → TEMPLATE_TELA_E_MODAL → DESIGN_SYSTEM → CATALOGO_TELAS
 ```
 
-> **README.md** (raiz do projeto) cobre setup local, OAuth, MercadoPago e deploy com Kamal.
+> **README.md** (raiz do projeto) cobre setup local, OAuth, InfinitePay, SMTP e deploy com Kamal.

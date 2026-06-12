@@ -38,7 +38,8 @@ Sistema SaaS para aluguel de salas odontológicas. Dentistas buscam horários di
 - **Confirmação em tempo real** — webhook do InfinitePay + Turbo Streams confirmam a reserva e atualizam a tela sem refresh
 - **Expiração automática** — `ExpirePaymentsJob` (Sidekiq + sidekiq-cron, a cada 5 min) libera slots de pagamentos não concluídos
 - **Créditos / carteira** — cancelamento de reserva paga gera crédito em conta (sem estorno), abatido automaticamente em compras futuras
-- **Painel Admin** — gestão de clínica, dentistas, serviços, horários, regras de desconto, reservas, pagamentos e créditos
+- **Recarga de créditos** — o dentista compra crédito via Pix na carteira (`CreditPurchase` + `InfinitePay::CreditCheckoutCreator`); o webhook confirma e emite o crédito
+- **Painel Admin** — gestão de clínica, dentistas, serviços, horários, regras de desconto, reservas (incluindo criação manual e troca de turno com cobrança/crédito da diferença de preço), pagamentos e créditos
 - **E-mails transacionais** — confirmação, cancelamento e emissão de crédito via `BookingMailer`
 - **Autenticação** — Devise + login social Google OAuth 2.0
 - **Auditoria** — histórico completo de alterações com PaperTrail

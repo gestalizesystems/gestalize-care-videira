@@ -6,14 +6,14 @@ class CreditIssuer < ApplicationService
 
   def call
     return failure("Grupo de reserva inválido.") unless @group
-    payment = @group.payment
-    return success(nil) unless payment&.paid?
+    paid_total = @group.payments.paid.sum(:amount_cents)
+    return success(nil) unless paid_total.positive?
 
     credit = Credit.create!(
       user:                 @group.dentist,
       clinic:               @group.clinic,
       source_booking_group: @group,
-      amount_cents:         payment.amount_cents,
+      amount_cents:         paid_total,
       reason:               @reason || "Cancelamento reserva ##{@group.id.split('-').first}"
     )
 

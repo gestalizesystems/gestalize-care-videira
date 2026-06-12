@@ -1,6 +1,11 @@
 # Videira Dental Clinic — ROADMAP_TECNICO.md
 
-> Roadmap técnico definitivo, em ordem de implementação.
+> ⚠️ **ARQUIVADO (2026-06-10).** Este roadmap guiou a construção do MVP e foi **concluído**.
+> Partes dele ficaram históricas: o gateway virou **InfinitePay** (não MercadoPago), não existe model `Room`,
+> money é em centavos e enums são string — ver `../02_arquitetura/ARQUITETURA.md` para o estado atual.
+> O roadmap ativo agora é o **`ROADMAP.md` (De Júnior a Tech Senior)**.
+
+> Roadmap técnico original, em ordem de implementação.
 > Cada tarefa tem: justificativa de ordem, dependências, complexidade, prompt pronto para IA.
 > Última atualização: 2026-05-09
 
