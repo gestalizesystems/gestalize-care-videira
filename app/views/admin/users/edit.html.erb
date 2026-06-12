@@ -1,0 +1,39 @@
+<% content_for :title, "Editar #{@user.name}" %>
+
+<%= render "shared/back_button", path: admin_user_path(@user) %>
+
+<h1 class="text-xl font-medium mb-6 text-vdc-primary">Editar dentista</h1>
+
+<div class="card-md">
+  <div class="badge-warning text-xs mb-5 px-3 py-2 rounded-2xl">
+    O e-mail não pode ser alterado por este painel.
+  </div>
+
+  <%= form_with model: [:admin, @user], class: "flex flex-col gap-4" do |f| %>
+    <%= render "shared/form_errors", object: @user %>
+
+    <div>
+      <%= f.label :name, "Nome", class: "label" %>
+      <%= f.text_field :name, class: "input-field" %>
+    </div>
+    <div>
+      <%= f.label :phone, "Telefone", class: "label" %>
+      <%= f.telephone_field :phone, class: "input-field",
+            data: { controller: "input-mask", "input-mask-pattern-value": "phone" } %>
+    </div>
+    <div>
+      <%= f.label :cpf, "CPF (11 dígitos)", class: "label" %>
+      <%= f.text_field :cpf, class: "input-field",
+            data: { controller: "input-mask", "input-mask-pattern-value": "cpf" } %>
+    </div>
+    <div>
+      <%= f.label :birth_date, "Data de nascimento", class: "label" %>
+      <%= f.date_field :birth_date, class: "input-field" %>
+    </div>
+
+    <div class="flex gap-3 pt-2">
+      <%= f.submit "Salvar", class: "btn-primary flex-1 cursor-pointer" %>
+      <%= link_to "Cancelar", admin_user_path(@user), class: "btn-outline flex-1" %>
+    </div>
+  <% end %>
+</div>

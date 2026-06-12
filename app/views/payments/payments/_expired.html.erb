@@ -1,0 +1,15 @@
+<div class="card-sm border p-8 text-center" style="border-color: #E0E0E0">
+  <div class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+       style="background-color: #F5F5F5">
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8" fill="none" viewBox="0 0 24 24"
+         stroke="currentColor" stroke-width="2" style="color: #757575">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+    </svg>
+  </div>
+  <h2 class="text-2xl font-medium mb-2 text-vdc-primary">Pagamento expirado</h2>
+  <p class="text-sm mb-6 text-vdc-secondary">
+    O tempo para pagamento expirou e os horários foram liberados.
+    Você pode fazer uma nova reserva.
+  </p>
+  <%= link_to "Escolher novos horários →", root_path, class: "btn-primary inline-block" %>
+</div>

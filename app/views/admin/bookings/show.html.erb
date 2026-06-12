@@ -1,0 +1,89 @@
+<% content_for :title, "Reserva ##{@booking_group.id.split('-').first}" %>
+
+<%= render "shared/back_button", path: admin_bookings_path %>
+
+<div class="card mb-4">
+  <div class="flex items-center justify-between mb-5">
+    <h1 class="text-xl font-medium text-vdc-primary">Reserva</h1>
+    <span class="<%= booking_group_status_badge(@booking_group.status) %>">
+      <%= t("booking_group.status.#{@booking_group.status}") %>
+    </span>
+  </div>
+
+  <div class="text-sm mb-4 flex flex-col gap-1 text-vdc-secondary">
+    <p><strong class="text-vdc-foreground">Dentista:</strong> <%= @booking_group.dentist.name %> (<%= @booking_group.dentist.email %>)</p>
+    <p><strong class="text-vdc-foreground">Criado em:</strong> <%= l(@booking_group.created_at, format: :default) %></p>
+  </div>
+
+</div>
+
+<div class="flex flex-col gap-3 mb-4">
+  <% @booking_group.bookings.includes(:availability).each do |b| %>
+    <div class="bg-white rounded-2xl shadow-sm p-4 flex justify-between items-start">
+      <div>
+        <p class="font-medium text-sm text-vdc-foreground"><%= b.availability.label %></p>
+        <p class="text-xs mt-1 text-vdc-secondary">
+          <%= l(b.availability.date, format: :default) %> ·
+          <%= b.availability.time_range %>
+        </p>
+        <span class="text-xs <%= b.confirmed? ? 'text-vdc-success' : 'text-vdc-secondary' %>"><%= t("booking.status.#{b.status}", default: b.status.humanize) %></span>
+      </div>
+      <span class="text-sm font-medium text-vdc-primary">R$ <%= money(b.price_cents) %></span>
+    </div>
+  <% end %>
+</div>
+
+<div class="bg-white rounded-3xl shadow-lg p-6 mb-4 flex flex-col gap-2 text-sm">
+  <div class="flex justify-between text-vdc-secondary">
+    <span>Subtotal</span>
+    <span>R$ <%= money(@booking_group.subtotal_cents) %></span>
+  </div>
+  <% if @booking_group.discount_cents > 0 %>
+    <div class="flex justify-between text-vdc-success">
+      <span>Desconto</span>
+      <span>− R$ <%= money(@booking_group.discount_cents) %></span>
+    </div>
+  <% end %>
+  <div class="flex justify-between font-medium border-t pt-3 mt-1 border-vdc-default">
+    <span class="text-vdc-foreground">Total</span>
+    <span class="text-xl font-medium text-vdc-primary">R$ <%= money(@booking_group.total_cents) %></span>
+  </div>
+</div>
+
+<% if @booking_group.payment %>
+  <% p = @booking_group.payment %>
+  <div class="card-md mb-4">
+    <h2 class="font-medium mb-3 text-vdc-primary">Pagamento</h2>
+    <div class="flex flex-col gap-1 text-sm text-vdc-secondary">
+      <p>Status: <span class="<%= payment_status_badge(p.status) %>">
+        <%= t("payment.status.#{p.status}") %>
+      </span></p>
+      <p>Gateway ID: <span class="font-mono text-xs text-vdc-foreground"><%= p.gateway_id %></span></p>
+      <% if p.paid_at %><p>Pago em: <%= l(p.paid_at, format: :default) %></p><% end %>
+      <% if p.expires_at %><p>Expira em: <%= l(p.expires_at, format: :default) %></p><% end %>
+    </div>
+  </div>
+<% end %>
+
+<% if @booking_group.pending? || @booking_group.confirmed? %>
+  <%= button_to cancelar_admin_booking_path(@booking_group), method: :patch,
+        class: "btn-danger w-full",
+        data: { turbo_confirm: "Cancelar esta reserva e liberar os horários?" } do %>
+    Cancelar reserva
+  <% end %>
+<% end %>
+
+<% unless @versions.empty? %>
+  <div class="card-md mt-4">
+    <h2 class="font-medium mb-4 text-vdc-primary">Histórico</h2>
+    <div class="flex flex-col gap-3">
+      <% @versions.each do |v| %>
+        <div class="text-xs border-l-2 pl-3 border-vdc-accent">
+          <p class="font-medium text-vdc-foreground"><%= v.event %></p>
+          <p class="text-vdc-secondary"><%= l(v.created_at, format: :default) %></p>
+          <p class="text-vdc-secondary">Por: <%= v.whodunnit&.truncate(20) || "sistema" %></p>
+        </div>
+      <% end %>
+    </div>
+  </div>
+<% end %>

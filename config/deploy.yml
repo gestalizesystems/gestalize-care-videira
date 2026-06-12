@@ -1,0 +1,71 @@
+# config/deploy.yml — Kamal 2
+# Docs: https://kamal-deploy.org
+#
+# Antes do primeiro deploy:
+#   1. Preencha SEU_USUARIO_DOCKERHUB e SEU_IP_DO_SERVIDOR abaixo
+#   2. Preencha .kamal/secrets com os valores reais
+#   3. kamal setup   (primeira vez)
+#   4. kamal deploy  (deploys subsequentes)
+
+service: videira-dental
+image: SEU_USUARIO_DOCKERHUB/videira-dental
+
+servers:
+  web:
+    - SEU_IP_DO_SERVIDOR
+  job:
+    hosts:
+      - SEU_IP_DO_SERVIDOR
+    cmd: bundle exec sidekiq -C config/sidekiq.yml
+
+registry:
+  username: SEU_USUARIO_DOCKERHUB
+  password:
+    - KAMAL_REGISTRY_PASSWORD
+
+env:
+  clear:
+    RAILS_ENV: production
+    REDIS_URL: redis://videira-dental-redis:6379/0
+    CANCELLATION_LEAD_HOURS: "48"
+    PAYMENT_EXPIRY_MINUTES: "30"
+  secret:
+    - SECRET_KEY_BASE
+    - DATABASE_URL
+    - GOOGLE_CLIENT_ID
+    - GOOGLE_CLIENT_SECRET
+    - INFINITEPAY_HANDLE
+    - OWNER_PASSWORD
+    - SMTP_HOST
+    - SMTP_PORT
+    - SMTP_USERNAME
+    - SMTP_PASSWORD
+    - APP_HOST
+
+# Volume persistente para uploads do Active Storage (avatares e logo).
+# Sem isto, as imagens enviadas seriam perdidas a cada `kamal deploy`.
+volumes:
+  - "videira_dental_storage:/rails/storage"
+
+accessories:
+  db:
+    image: postgres:16-alpine
+    host: SEU_IP_DO_SERVIDOR
+    env:
+      secret:
+        - POSTGRES_PASSWORD
+    directories:
+      - postgres_data:/var/lib/postgresql/data
+  redis:
+    image: redis:7-alpine
+    host: SEU_IP_DO_SERVIDOR
+    cmd: redis-server --appendonly yes
+    directories:
+      - redis_data:/data
+
+proxy:
+  ssl: true
+  host: SEU_DOMINIO.com.br
+  # O Dockerfile expõe a porta 3000 (rails server). O kamal-proxy roteia
+  # para a 80 por padrão, então precisamos apontar explicitamente para a 3000.
+  app_port: 3000

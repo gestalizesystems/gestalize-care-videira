@@ -1,0 +1,205 @@
+@import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-vdc-background:        #fef8e1;
+  --color-vdc-foreground:        #3E2723;
+  --color-vdc-primary:           #5D4037;
+  --color-vdc-primary-fg:        #ffffff;
+  --color-vdc-secondary:         #8D6E63;
+  --color-vdc-accent:            #C9B8A8;
+  --color-vdc-accent-fg:         #3E2723;
+  --color-vdc-card:              #ffffff;
+  --color-vdc-border:            #E0E0E0;
+  --color-vdc-destructive:       #d4183d;
+  --color-vdc-success:           #388E3C;
+  --color-vdc-success-bg:        #E8F5E9;
+}
+
+:root {
+  --background:        #fef8e1;
+  --foreground:        #3E2723;
+  --primary:           #5D4037;
+  --primary-foreground:#ffffff;
+  --secondary:         #8D6E63;
+  --accent:            #C9B8A8;
+  --accent-foreground: #3E2723;
+  --card:              #ffffff;
+  --card-foreground:   #3E2723;
+  --border:            rgba(0, 0, 0, 0.1);
+  --border-color:      #E0E0E0;
+  --destructive:       #d4183d;
+  --success:           #388E3C;
+  --success-bg:        #E8F5E9;
+}
+
+* { box-sizing: border-box; }
+
+/* Ocultar scrollbars (mantém scroll funcional) — padrão do Figma */
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+*::-webkit-scrollbar { display: none; }
+
+dialog,
+dialog:modal {
+  border: none;
+  border-radius: 1.5rem;
+  padding: 0;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  width: min(22rem, calc(100vw - 2rem));
+  max-height: 90dvh;
+  overflow-y: auto;
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  margin: auto;
+  height: fit-content;
+}
+dialog::backdrop {
+  background-color: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(2px);
+}
+dialog[open] {
+  animation: dialog-pop 0.18s cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+@keyframes dialog-pop {
+  from { opacity: 0; scale: 0.93; }
+  to   { opacity: 1; scale: 1; }
+}
+
+html, body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: 'Prompt', sans-serif;
+  font-size: 16px;
+  overflow-x: hidden;
+}
+
+/* Tipografia base — alinhada ao Figma */
+h1 { font-size: 1.5rem;   font-weight: 500; line-height: 1.5; }
+h2 { font-size: 1.25rem;  font-weight: 500; line-height: 1.5; }
+h3 { font-size: 1.125rem; font-weight: 500; line-height: 1.5; }
+h4 { font-size: 1rem;     font-weight: 500; line-height: 1.5; }
+button { font-size: 1rem; font-weight: 500; line-height: 1.5; }
+
+/* Anti-zoom em inputs no iOS */
+input, select, textarea {
+  font-size: 16px !important;
+  font-weight: 400;
+  line-height: 1.5;
+}
+@media screen and (max-width: 768px) {
+  input, select, textarea { font-size: 16px !important; }
+}
+
+/* Helpers de paleta */
+.text-vdc-primary      { color: #5D4037; }
+.text-vdc-secondary    { color: #8D6E63; }
+.text-vdc-foreground   { color: #3E2723; }
+.text-vdc-success      { color: #388E3C; }
+.text-vdc-warning      { color: #F57F17; }
+.bg-vdc-background     { background-color: #fef8e1; }
+.bg-vdc-primary        { background-color: #5D4037; }
+.bg-vdc-accent         { background-color: #C9B8A8; }
+.bg-vdc-card           { background-color: #ffffff; }
+.bg-vdc-success-light  { background-color: #E8F5E9; }
+.bg-vdc-warning-light  { background-color: #FFF9C4; }
+.border-vdc-default    { border-color: #E0E0E0; }
+.border-vdc-accent     { border-color: #C9B8A8; }
+
+/* Componentes reutilizáveis */
+@layer components {
+  /* Cards */
+  .card        { @apply bg-white rounded-3xl shadow-lg p-6; }
+  .card-sm     { @apply bg-white rounded-2xl shadow-sm p-4; }
+  .card-md     { @apply bg-white rounded-2xl shadow-sm p-5; }
+
+  /* Card clicável (link_to/button_to com hover) — usado em listagens */
+  .card-link   { @apply block bg-white rounded-2xl shadow-sm p-4 hover:shadow-md transition-all active:scale-[0.98]; }
+
+  /* Botões */
+  .btn-primary {
+    @apply py-3 px-6 rounded-full text-white text-sm font-medium border border-transparent transition-all active:scale-[0.98];
+    background-color: #5D4037;
+  }
+  .btn-primary:hover { background-color: #4E342E; }
+
+  .btn-outline {
+    @apply py-3 px-6 rounded-full text-sm font-medium border transition-all active:scale-[0.98] text-center;
+    border-color: #5D4037;
+    color: #5D4037;
+  }
+
+  /* CTA principal full-width (pill marrom largura total) */
+  .btn-cta {
+    @apply block w-full py-3 rounded-full text-white text-sm font-medium text-center cursor-pointer transition-all active:scale-[0.98];
+    background-color: #5D4037;
+  }
+  .btn-cta:hover { background-color: #4E342E; }
+
+  .btn-danger {
+    @apply py-1 px-3 rounded-full text-xs border transition-all;
+    border-color: #d4183d;
+    color: #d4183d;
+  }
+
+  /* Ação destrutiva preenchida (vermelho sólido) — modais de confirmar exclusão */
+  .btn-danger-filled {
+    @apply py-3 px-4 rounded-full text-white text-sm font-medium border border-transparent cursor-pointer transition-all active:scale-[0.98];
+    background-color: #d4183d;
+  }
+
+  .btn-sm-primary {
+    @apply text-xs px-4 py-2 rounded-full text-white font-medium border border-transparent;
+    background-color: #5D4037;
+  }
+
+  .btn-sm-outline {
+    @apply text-xs px-4 py-2 rounded-full border font-medium;
+    border-color: #5D4037;
+    color: #5D4037;
+  }
+
+  .btn-xs-outline {
+    @apply text-xs px-3 py-1 rounded-full border;
+    border-color: #5D4037;
+    color: #5D4037;
+  }
+
+  .btn-xs-danger {
+    @apply text-xs px-3 py-1 rounded-full border;
+    border-color: #d4183d;
+    color: #d4183d;
+  }
+
+  /* Inputs */
+  .input-field {
+    @apply w-full px-4 py-3 rounded-2xl border text-sm bg-white;
+    border-color: #E0E0E0;
+    color: #3E2723;
+  }
+
+  /* Labels */
+  .label { @apply block text-xs font-medium mb-1; color: #5D4037; }
+
+  /* Badges de status */
+  .badge-success { @apply text-xs px-2 py-1 rounded-full; background-color: #E8F5E9; color: #388E3C; }
+  .badge-warning { @apply text-xs px-2 py-1 rounded-full; background-color: #FFF9C4; color: #F57F17; }
+  .badge-danger  { @apply text-xs px-2 py-1 rounded-full; background-color: #FFEBEE; color: #d4183d; }
+  .badge-neutral { @apply text-xs px-2 py-1 rounded-full; background-color: #F5F5F5; color: #757575; }
+
+  /* Erros de formulário */
+  .form-errors {
+    @apply rounded-xl p-4 text-sm;
+    background-color: #FFEBEE;
+    color: #d4183d;
+  }
+
+  /* Página vazia */
+  .empty-state { @apply text-center py-12; }
+  .empty-state p { @apply text-sm; color: #8D6E63; }
+}

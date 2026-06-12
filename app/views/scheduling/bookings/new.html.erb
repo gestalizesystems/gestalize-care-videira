@@ -1,0 +1,150 @@
+<% content_for :title, "Confirmar reserva" %>
+<% content_for :hide_app_chrome, true %>
+
+<%= render "shared/page_header", path: carrinho_path, title: "Confirmar reserva" %>
+
+<%# ── Resumo ─────────────────────────────────────────────────────────────── %>
+<div class="bg-white rounded-2xl shadow-sm p-4 mb-4">
+  <p class="text-xs font-medium mb-3" style="color: #8D6E63">Resumo</p>
+
+  <div class="flex items-start gap-3 pb-3 border-b" style="border-color: #E0E0E0">
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24"
+         stroke="currentColor" stroke-width="1.5" style="color: #8D6E63">
+      <path stroke-linecap="round" stroke-linejoin="round"
+            d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+    </svg>
+    <div>
+      <p class="text-sm font-medium" style="color: #3E2723"><%= current_user.name %></p>
+      <p class="text-xs" style="color: #8D6E63"><%= current_user.email %></p>
+      <% if current_user.phone.present? %>
+        <p class="text-xs" style="color: #8D6E63"><%= current_user.phone %></p>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="flex items-start gap-3 pt-3">
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24"
+         stroke="currentColor" stroke-width="1.5" style="color: #8D6E63">
+      <path stroke-linecap="round" stroke-linejoin="round"
+            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+    </svg>
+    <div>
+      <p class="text-xs font-medium mb-1" style="color: #8D6E63">Itens</p>
+      <% @pricing[:availabilities].each do |av| %>
+        <p class="text-xs" style="color: #3E2723">
+          <%= l(av.date, format: "%d/%m") %> <%= av.label %>
+          <%= av.starts_at.strftime("%H:%M") %>h às <%= av.ends_at.strftime("%H:%M") %>h
+          – R$ <%= money(av.price_cents) %>
+        </p>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<%# ── Forma de pagamento ──────────────────────────────────────────────────── %>
+<% credit_balance = Credit.balance_for(user: current_user, clinic: current_user.clinic) %>
+<% credit_applied = [credit_balance, @pricing[:total_cents]].min %>
+<% amount_due = @pricing[:total_cents] - credit_applied %>
+
+<%= form_with url: confirmar_reservas_path, method: :post, class: "flex flex-col gap-4",
+      data: { turbo: false, controller: "credit-split",
+              "credit-split-total-value": @pricing[:total_cents],
+              "credit-split-balance-value": credit_balance } do |f| %>
+
+  <div>
+    <p class="text-xs font-medium mb-3" style="color: #8D6E63">Forma de pagamento</p>
+
+    <% if credit_balance > 0 %>
+      <label class="bg-white rounded-2xl shadow-sm p-4 mb-3 border-2 flex items-center gap-3 cursor-pointer" style="border-color: #5D4037">
+        <div class="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
+             style="background-color: #fef8e1">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24"
+               stroke="currentColor" stroke-width="1.5" style="color: #5D4037">
+            <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M21 12V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2h14a2 2 0 002-2v-5z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16 12a1 1 0 100 2 1 1 0 000-2z"/>
+          </svg>
+        </div>
+        <div class="flex-1">
+          <p class="text-sm font-medium" style="color: #3E2723">Usar meus créditos</p>
+          <p class="text-xs" style="color: #8D6E63">Disponível: R$ <%= money(credit_balance) %></p>
+        </div>
+        <input type="checkbox" name="use_credit" value="1" checked class="sr-only"
+               data-credit-split-target="toggle" data-action="change->credit-split#recompute">
+        <span class="w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center" style="border-color: #5D4037">
+          <span class="w-2.5 h-2.5 rounded-full transition-opacity" data-credit-split-target="dot" style="background-color: #5D4037"></span>
+        </span>
+      </label>
+
+      <div class="bg-white rounded-2xl shadow-sm p-4 mb-3" data-credit-split-target="amountWrap">
+        <p class="text-xs mb-1" style="color: #8D6E63">
+          Quanto usar? (deixe vazio para usar todo o crédito)
+        </p>
+        <div class="bg-[#fef8e1] rounded-2xl px-4 py-1">
+          <%= f.number_field :credit_amount,
+                value: (credit_applied / 100.0).round(2),
+                min: 0, max: (credit_balance / 100.0).round(2),
+                step: "0.01",
+                placeholder: "R$ 0,00 (opcional)",
+                class: "w-full bg-transparent border-none outline-none py-3 text-sm",
+                style: "color: #3E2723",
+                data: { "credit-split-target": "input", action: "input->credit-split#recompute" } %>
+        </div>
+        <p class="text-xs mt-1" style="color: #8D6E63">
+          Será usado <span data-credit-split-target="usedField">R$ <%= money(credit_applied) %></span>
+        </p>
+      </div>
+    <% end %>
+
+      <div class="bg-white rounded-2xl shadow-sm p-4 border-2" data-credit-split-target="pix"
+           style="border-color: #5D4037<%= '; display:none' if amount_due.zero? %>">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
+               style="background-color: #E0F7FA">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24"
+                 stroke="currentColor" stroke-width="1.5" style="color: #00ACC1">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0 0V4m0 16v-4"/>
+            </svg>
+          </div>
+          <div class="flex-1">
+            <p class="text-sm font-medium" style="color: #3E2723">PIX</p>
+            <p class="text-xs" style="color: #8D6E63">Pagamento instantâneo</p>
+          </div>
+          <span class="w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center" style="border-color: #5D4037">
+            <span class="w-2.5 h-2.5 rounded-full" style="background-color: #5D4037"></span>
+          </span>
+        </div>
+      </div>
+  </div>
+
+  <%# Breakdown %>
+  <div class="rounded-2xl px-4 py-3" style="background-color: #E8F5E9">
+    <div class="flex justify-between text-xs mb-1" style="color: #388E3C">
+      <span>Valor total</span>
+      <span>R$ <%= money(@pricing[:total_cents]) %></span>
+    </div>
+    <div class="flex justify-between text-xs" data-credit-split-target="usedRow"
+         style="color: #388E3C<%= '; display:none' if credit_applied.zero? %>">
+      <span>Créditos utilizados</span>
+      <span>– <span data-credit-split-target="usedAmount">R$ <%= money(credit_applied) %></span></span>
+    </div>
+  </div>
+
+  <div class="flex justify-between items-center px-1">
+    <span class="text-sm" style="color: #3E2723">A pagar</span>
+    <span class="text-2xl font-medium" style="color: #5D4037" data-credit-split-target="due">
+      R$ <%= money(amount_due) %>
+    </span>
+  </div>
+
+  <%= f.submit(amount_due.zero? ? "Confirmar reserva" : "Pagar",
+        class: "btn-primary w-full cursor-pointer py-4 text-sm",
+        data: { "credit-split-target": "submit" }) %>
+
+  <p class="text-xs text-center" style="color: #8D6E63">
+    Ao confirmar, você concorda com os Termos e condições da clínica.
+  </p>
+
+
+<% end %>

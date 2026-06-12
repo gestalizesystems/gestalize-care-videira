@@ -1,0 +1,11 @@
+<%# Submit + cancel row inside a form modal %>
+<%# Locals: label (String, default "Salvar") %>
+<div class="flex gap-3 mt-4">
+  <button type="button" onclick="this.closest('dialog').close()"
+          class="btn-outline flex-1 cursor-pointer">
+    Cancelar
+  </button>
+  <button type="submit" class="btn-primary flex-1 cursor-pointer">
+    <%= local_assigns.fetch(:label, "Salvar") %>
+  </button>
+</div>

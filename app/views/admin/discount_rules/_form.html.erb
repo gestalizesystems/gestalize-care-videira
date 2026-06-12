@@ -1,0 +1,16 @@
+<%= form_with model: [:admin, rule], class: "flex flex-col gap-4", builder: VdcFormBuilder do |f| %>
+  <%= render "shared/form_errors", object: rule %>
+
+  <div>
+    <%= f.vdc_field :min_slots, "Mínimo de horários", :number_field, min: 2 %>
+    <p class="text-xs mt-1 text-vdc-secondary">A partir de quantos horários o desconto é aplicado.</p>
+  </div>
+
+  <%= f.vdc_field :discount_percent, "Desconto (%)", :number_field, min: 1, max: 100 %>
+
+  <div class="flex gap-3 pt-2">
+    <%= f.submit rule.persisted? ? "Salvar alterações" : "Criar regra",
+          class: "btn-primary flex-1 cursor-pointer" %>
+    <%= link_to "Cancelar", admin_discount_rules_path, class: "btn-outline flex-1" %>
+  </div>
+<% end %>

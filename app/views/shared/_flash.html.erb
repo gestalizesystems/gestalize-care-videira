@@ -1,0 +1,10 @@
+<% flash.each do |type, message| %>
+  <% bg = type == "alert" ? "#d4183d" : "#5D4037" %>
+  <div class="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-3 rounded-2xl text-white text-sm shadow-lg w-max max-w-xs text-center"
+       style="background-color: <%= bg %>"
+       data-controller="flash"
+       data-flash-timeout-value="3000"
+       data-action="click->flash#dismiss">
+    <%= message %>
+  </div>
+<% end %>

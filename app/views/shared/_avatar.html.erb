@@ -1,0 +1,23 @@
+<%# Uso: <%= render 'shared/avatar', user: current_user, size: 'md' %>
+<% size_classes = { "sm" => "w-8 h-8 text-xs", "md" => "w-10 h-10 text-sm", "lg" => "w-24 h-24 text-3xl" } %>
+<% css = size_classes[size || "md"] %>
+
+<% if user&.avatar_url.present? %>
+  <img src="<%= user.avatar_url %>"
+       alt="<%= user.name %>"
+       class="<%= css %> rounded-full object-cover" />
+<% elsif user&.name.present? %>
+  <% initials = user.name.split(" ").then { |p| p.length >= 2 ? "#{p.first[0]}#{p.last[0]}" : user.name[0..1] }.upcase %>
+  <div class="<%= css %> rounded-full flex items-center justify-center text-white font-medium"
+       style="background-color: #8D6E63">
+    <%= initials %>
+  </div>
+<% else %>
+  <div class="<%= css %> rounded-full flex items-center justify-center" style="background-color: #E0E0E0">
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-1/2 h-1/2" fill="none" viewBox="0 0 24 24"
+         stroke="currentColor" stroke-width="2" style="color: #8D6E63">
+      <path stroke-linecap="round" stroke-linejoin="round"
+            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+    </svg>
+  </div>
+<% end %>

@@ -1,0 +1,19 @@
+<%# Diálogo de calendário padrão — deve ficar dentro de um elemento data-controller="calendar".
+    Usa o calendar_controller.js (alvos: dialog, label, grid). %>
+<dialog data-calendar-target="dialog"
+        data-action="click->calendar#backdropClose"
+        class="p-5">
+  <div class="flex items-center justify-between">
+    <button type="button" data-action="click->calendar#prev"
+            class="px-4 py-2 rounded-full hover:bg-[#fef8e1] cursor-pointer" style="color:#8D6E63">‹</button>
+    <span data-calendar-target="label" class="text-sm font-medium" style="color:#5D4037"></span>
+    <button type="button" data-action="click->calendar#next"
+            class="px-4 py-2 rounded-full hover:bg-[#fef8e1] cursor-pointer" style="color:#8D6E63">›</button>
+  </div>
+  <div data-calendar-target="grid"></div>
+  <button type="button" data-action="click->calendar#close"
+          class="mt-4 w-full text-xs py-2 rounded-full border text-center cursor-pointer"
+          style="border-color:#E0E0E0; color:#8D6E63">
+    Fechar
+  </button>
+</dialog>

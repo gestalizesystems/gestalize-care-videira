@@ -1,0 +1,60 @@
+<% content_for :title, "Pagamento" %>
+
+<%= render "shared/back_button", path: admin_payments_path %>
+
+<div class="card mb-4">
+  <div class="flex items-center justify-between mb-5">
+    <h1 class="text-xl font-medium text-vdc-primary">Pagamento</h1>
+    <span class="<%= payment_status_badge(@payment.status) %>">
+      <%= t("payment.status.#{@payment.status}") %>
+    </span>
+  </div>
+
+  <div class="flex flex-col gap-2 text-sm mb-5 text-vdc-secondary">
+    <p><strong class="text-vdc-foreground">Dentista:</strong> <%= @payment.booking_group.dentist.name %></p>
+    <p><strong class="text-vdc-foreground">Valor:</strong>
+      <span class="font-medium text-vdc-primary">R$ <%= money(@payment.amount_cents) %></span>
+    </p>
+    <p><strong class="text-vdc-foreground">Gateway ID:</strong>
+      <span class="font-mono text-xs text-vdc-foreground"><%= @payment.gateway_id %></span>
+    </p>
+    <% if @payment.paid_at %>
+      <p><strong class="text-vdc-foreground">Pago em:</strong> <%= l(@payment.paid_at, format: :default) %></p>
+    <% end %>
+    <% if @payment.expires_at %>
+      <p><strong class="text-vdc-foreground">Expira em:</strong> <%= l(@payment.expires_at, format: :default) %></p>
+    <% end %>
+    <p><strong class="text-vdc-foreground">Criado em:</strong> <%= l(@payment.created_at, format: :default) %></p>
+  </div>
+
+</div>
+
+<h2 class="font-medium mb-3 text-vdc-primary">Horários reservados</h2>
+<div class="flex flex-col gap-3 mb-4">
+  <% @payment.booking_group.bookings.includes(:availability => :service).each do |b| %>
+    <div class="bg-white rounded-2xl shadow-sm p-4 flex justify-between items-start">
+      <div>
+        <p class="font-medium text-sm text-vdc-foreground"><%= b.availability.label %></p>
+        <p class="text-xs mt-1 text-vdc-secondary">
+          <%= l(b.availability.date, format: :default) %> · <%= b.availability.starts_at.strftime("%H:%M") %>
+        </p>
+      </div>
+      <span class="text-sm font-medium text-vdc-primary">R$ <%= money(b.price_cents) %></span>
+    </div>
+  <% end %>
+</div>
+
+<% unless @versions.empty? %>
+  <div class="card-md">
+    <h2 class="font-medium mb-4 text-vdc-primary">Histórico</h2>
+    <div class="flex flex-col gap-3">
+      <% @versions.each do |v| %>
+        <div class="text-xs border-l-2 pl-3 border-vdc-accent">
+          <p class="font-medium text-vdc-foreground"><%= v.event %></p>
+          <p class="text-vdc-secondary"><%= l(v.created_at, format: :default) %></p>
+          <p class="text-vdc-secondary">Por: <%= v.whodunnit || "sistema" %></p>
+        </div>
+      <% end %>
+    </div>
+  </div>
+<% end %>

@@ -1,0 +1,17 @@
+<% content_for :title, "Recuperar senha" %>
+
+<div class="mb-6">
+  <%= render "shared/back_button", path: new_user_session_path %>
+</div>
+
+<h1 class="text-2xl mb-2" style="color: #5D4037">Recuperar senha</h1>
+<p class="text-sm mb-8" style="color: #8D6E63">Enviaremos um link de redefinição para o seu e-mail.</p>
+
+<%= form_for(resource, as: resource_name, url: password_path(resource_name), html: { method: :post, class: "flex flex-col gap-4" }) do |f| %>
+  <%= f.email_field :email, autofocus: true, autocomplete: "email",
+        placeholder: "E-mail*",
+        class: "w-full px-4 py-3 rounded-2xl border text-sm bg-white",
+        style: "border-color: #E0E0E0; color: #3E2723" %>
+
+  <%= f.submit "Enviar instruções", class: "btn-cta" %>
+<% end %>

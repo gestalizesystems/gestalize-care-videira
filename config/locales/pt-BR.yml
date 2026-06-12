@@ -1,0 +1,90 @@
+pt-BR:
+  date:
+    formats:
+      default: "%d/%m/%Y"
+      short: "%d/%m"
+      long: "%d de %B de %Y"
+    day_names: [Domingo, Segunda-feira, Terça-feira, Quarta-feira, Quinta-feira, Sexta-feira, Sábado]
+    abbr_day_names: [Dom, Seg, Ter, Qua, Qui, Sex, Sáb]
+    month_names: [~, Janeiro, Fevereiro, Março, Abril, Maio, Junho, Julho, Agosto, Setembro, Outubro, Novembro, Dezembro]
+    abbr_month_names: [~, Jan, Fev, Mar, Abr, Mai, Jun, Jul, Ago, Set, Out, Nov, Dez]
+  time:
+    formats:
+      default: "%d/%m/%Y %H:%M"
+      short: "%H:%M"
+      long: "%d de %B de %Y, %H:%M"
+  number:
+    currency:
+      format:
+        unit: "R$"
+        delimiter: "."
+        separator: ","
+        precision: 2
+        format: "%u %n"
+  activerecord:
+    errors:
+      messages:
+        record_invalid: "Validação falhou: %{errors}"
+        restrict_dependent_destroy:
+          has_one: "Não é possível excluir o registro porque existe um %{record} dependente"
+          has_many: "Não é possível excluir o registro porque existem %{record} dependentes"
+  errors:
+    messages:
+      blank: "não pode ficar em branco"
+      taken: "já está em uso"
+      invalid: "não é válido"
+      too_short: "é muito curto (mínimo: %{count} caracteres)"
+      too_long: "é muito longo (máximo: %{count} caracteres)"
+      not_a_number: "não é um número"
+      greater_than: "deve ser maior que %{count}"
+      greater_than_or_equal_to: "deve ser maior ou igual a %{count}"
+      less_than: "deve ser menor que %{count}"
+      inclusion: "não está incluído na lista"
+  devise:
+    sessions:
+      signed_in: "Bem-vindo!"
+      signed_out: "Até logo!"
+    registrations:
+      signed_up: "Bem-vindo! Sua conta foi criada com sucesso."
+      updated: "Sua conta foi atualizada com sucesso."
+      destroyed: "Conta encerrada. Até logo!"
+    passwords:
+      send_instructions: "Se o e-mail existir, você receberá um link para redefinir sua senha."
+      updated: "Sua senha foi alterada com sucesso."
+    confirmations:
+      send_instructions: "Você receberá um e-mail com instruções de confirmação em breve."
+      confirmed: "Sua conta foi confirmada com sucesso."
+    failure:
+      unauthenticated: "Você precisa fazer login para continuar."
+      unconfirmed: "Você precisa confirmar sua conta de e-mail."
+      locked: "Sua conta está bloqueada."
+      invalid: "E-mail ou senha inválidos."
+      not_found_in_database: "E-mail ou senha inválidos."
+  user:
+    role:
+      owner: "Proprietário"
+      dentist: "Dentista"
+  booking_group:
+    status:
+      pending: "Aguardando pagamento"
+      confirmed: "Confirmado"
+      cancelled: "Cancelado"
+      expired: "Expirado"
+  booking:
+    status:
+      pending: "Pendente"
+      confirmed: "Confirmado"
+      cancelled: "Cancelado"
+  payment:
+    status:
+      pending: "Aguardando pagamento"
+      paid: "Pago"
+      failed: "Falhou"
+      cancelled: "Cancelado"
+      expired: "Expirado"
+  availability:
+    status:
+      available: "Disponível"
+      booked: "Reservado"
+      cancelled: "Cancelado"
+      blocked: "Bloqueado"

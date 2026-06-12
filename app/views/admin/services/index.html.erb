@@ -1,0 +1,39 @@
+<% content_for :title, "Serviços" %>
+
+<div class="flex items-center justify-between mb-4">
+  <h1 class="text-2xl font-medium" style="color: #5D4037">Serviços</h1>
+  <%= link_to "+ Novo", new_admin_service_path, class: "btn-sm-primary" %>
+</div>
+
+<% if @services.empty? %>
+  <div class="text-center py-12">
+    <p class="text-sm mb-4" style="color: #8D6E63">Nenhum serviço cadastrado.</p>
+    <%= link_to "+ Criar o primeiro serviço", new_admin_service_path,
+          class: "text-xs px-5 py-3 rounded-full text-white",
+          style: "background-color: #5D4037" %>
+  </div>
+<% else %>
+  <div class="flex flex-col gap-3">
+    <% @services.each do |service| %>
+      <div class="bg-white rounded-2xl shadow-sm p-4 flex items-center justify-between <%= 'opacity-50' unless service.active? %>">
+        <div>
+          <p class="font-medium text-sm" style="color: #3E2723"><%= service.name %></p>
+          <p class="text-xs mt-1" style="color: #8D6E63">
+            <%= service.duration_minutes %> min · R$ <%= money(service.price_cents) %>
+          </p>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="<%= service.active? ? 'badge-success' : 'badge-neutral' %>">
+            <%= service.active? ? "Ativo" : "Inativo" %>
+          </span>
+          <%= link_to "Editar", edit_admin_service_path(service), class: "btn-xs-outline" %>
+          <% if service.active? %>
+            <%= button_to "✕", admin_service_path(service), method: :delete,
+                  class: "btn-xs-danger",
+                  data: { turbo_confirm: "Desativar este serviço? Horários futuros não serão afetados." } %>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+<% end %>

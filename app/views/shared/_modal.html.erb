@@ -1,0 +1,10 @@
+<%# Layout partial — use with: render layout: "shared/modal", locals: { id:, title: } do ... end %>
+<%# Locals: id (String), title (String) %>
+<dialog id="<%= id %>" onclick="if(event.target===this)this.close()">
+  <div class="p-6">
+    <% if title.present? %>
+      <h2 class="text-center font-medium text-sm mb-5" style="color: #5D4037"><%= title %></h2>
+    <% end %>
+    <%= yield %>
+  </div>
+</dialog>

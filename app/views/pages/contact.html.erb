@@ -1,0 +1,22 @@
+<% content_for :title, "Contato — Videira Dental" %>
+
+<%= render "shared/back_button", path: root_path %>
+
+<h1 class="text-2xl font-medium mb-4 text-vdc-primary">Contato</h1>
+
+<div class="card-md mb-4">
+  <h2 class="text-base font-medium mb-3 text-vdc-primary">Fale conosco</h2>
+  <div class="flex flex-col gap-2 text-sm text-vdc-foreground">
+    <p>📞 (XX) XXXXX-XXXX</p>
+    <p>✉️ contato@videiradental.com.br</p>
+    <p>📍 Rua Exemplo, 123 — Videira, SC</p>
+  </div>
+</div>
+
+<div class="card-md">
+  <h2 class="text-base font-medium mb-3 text-vdc-primary">Agendar consulta</h2>
+  <p class="text-sm mb-4 text-vdc-secondary">
+    Reserve diretamente pelo sistema ou entre em contato para mais informações.
+  </p>
+  <%= link_to "Ver horários disponíveis →", root_path, class: "btn-sm-primary inline-block px-5 py-3" %>
+</div>

@@ -1,0 +1,46 @@
+<% in_cart    = Array(session[:cart_ids]).include?(availability.id) %>
+<% unavailable = availability.booked? || availability.cancelled? || availability.blocked? %>
+<% time_range  = "(#{availability.starts_at.strftime('%Hh%M')} às #{availability.ends_at.strftime('%Hh%M')})" %>
+
+<div id="slot-<%= availability.id %>">
+  <% if unavailable %>
+    <div class="w-full px-5 py-4 rounded-2xl opacity-50 cursor-not-allowed"
+         style="background-color: #F5F5F5">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="font-medium text-sm" style="color: #BDBDBD"><%= availability.label %></p>
+          <p class="text-xs mt-0.5" style="color: #BDBDBD"><%= time_range %> · Reservado</p>
+        </div>
+        <p class="text-sm font-medium" style="color: #BDBDBD">R$ <%= money(availability.price_cents) %></p>
+      </div>
+    </div>
+
+  <% elsif in_cart %>
+    <%= button_to remove_from_carrinho_path(availability_id: availability.id),
+          method: :delete, data: { turbo_stream: true },
+          class: "w-full text-left px-5 py-4 rounded-2xl transition-all active:scale-[0.98]",
+          style: "background-color: #C9B8A8" do %>
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="font-medium text-sm" style="color: #3E2723"><%= availability.label %></p>
+          <p class="text-xs mt-0.5" style="color: #5D4037"><%= time_range %> · Toque para remover</p>
+        </div>
+        <p class="text-sm font-medium" style="color: #5D4037">R$ <%= money(availability.price_cents) %></p>
+      </div>
+    <% end %>
+
+  <% else %>
+    <%= button_to add_to_carrinho_path(availability_id: availability.id),
+          method: :post, data: { turbo_stream: true },
+          class: "w-full text-left px-5 py-4 rounded-2xl transition-all active:scale-[0.98] hover:shadow-sm",
+          style: "background-color: #ffffff" do %>
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="font-medium text-sm" style="color: #3E2723"><%= availability.label %></p>
+          <p class="text-xs mt-0.5" style="color: #8D6E63"><%= time_range %></p>
+        </div>
+        <p class="text-sm font-medium" style="color: #5D4037">R$ <%= money(availability.price_cents) %></p>
+      </div>
+    <% end %>
+  <% end %>
+</div>

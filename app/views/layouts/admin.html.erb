@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <title>Admin — <%= content_for(:title) || "Videira Dental" %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+    <%= yield :head %>
+    <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
+    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+  </head>
+  <body style="background-color: #fef8e1; font-family: 'Prompt', sans-serif">
+    <div class="min-h-screen overflow-x-hidden">
+      <div class="max-w-md mx-auto px-4 py-6">
+
+        <% unless content_for?(:hide_admin_chrome) %>
+        <div class="flex justify-center mb-6 relative">
+          <%= link_to admin_root_path, class: "block" do %>
+            <%= render "shared/logo", size: "full" %>
+          <% end %>
+
+          <div class="absolute right-0 top-0">
+            <button type="button" onclick="<%= open_modal('logout-modal') %>"
+                    class="p-2 cursor-pointer rounded-full hover:bg-white/50"
+                    title="Sair">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" style="color: #5D4037"
+                   fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <%= render "shared/confirm_modal", id: "logout-modal",
+              message: "Tem certeza que deseja sair?",
+              confirm_path: destroy_user_session_path, confirm_method: :delete,
+              confirm_label: "Sair" %>
+
+        <%= render "shared/flash" %>
+
+        <div class="grid grid-cols-3 gap-3 mb-8">
+          <% [
+               { label: "Dashboard", path: admin_root_path },
+               { label: "Reservas",  path: admin_bookings_path },
+               { label: "Turnos",    path: admin_availabilities_path },
+               { label: "Descontos", path: admin_discount_rules_path },
+               { label: "Clientes",  path: admin_users_path },
+               { label: "Videira Shop", path: "#", disabled: true },
+             ].each do |item| %>
+            <% if item[:disabled] %>
+              <div class="rounded-2xl p-4 shadow-sm flex flex-col items-center justify-center text-center opacity-50 cursor-not-allowed"
+                   style="background-color: #ffffff">
+                <span class="text-xs font-medium uppercase tracking-wide" style="color: #5D4037">
+                  <%= item[:label] %>
+                </span>
+                <span class="text-[9px] font-medium uppercase tracking-wide mt-1" style="color: #8D6E63">Em breve</span>
+              </div>
+            <% else %>
+              <% active = current_page?(item[:path]) %>
+              <%= link_to item[:path],
+                    class: "rounded-2xl p-4 shadow-sm hover:shadow-md transition-all active:scale-[0.98] flex items-center justify-center text-center min-h-[72px]",
+                    style: "background-color: #{active ? '#C9B8A8' : '#ffffff'}" do %>
+                <span class="text-xs font-medium uppercase tracking-wide" style="color: #5D4037">
+                  <%= item[:label] %>
+                </span>
+              <% end %>
+            <% end %>
+          <% end %>
+        </div>
+        <% end %>
+
+        <main>
+          <%= yield %>
+        </main>
+
+      </div>
+    </div>
+  </body>
+</html>

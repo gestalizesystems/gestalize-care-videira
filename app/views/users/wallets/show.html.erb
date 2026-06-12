@@ -1,0 +1,55 @@
+<% content_for :title, "Carteira" %>
+<% content_for :hide_app_chrome, true %>
+
+<%= render "shared/page_header", path: root_path, title: "Carteira" %>
+
+<div class="bg-white rounded-2xl shadow-sm p-6 mb-4 flex flex-col items-center">
+  <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10 mb-3" fill="none" viewBox="0 0 24 24"
+       stroke="currentColor" stroke-width="1.5" style="color: #8D6E63">
+    <path stroke-linecap="round" stroke-linejoin="round"
+          d="M21 12V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2h14a2 2 0 002-2v-5z"/>
+    <path stroke-linecap="round" stroke-linejoin="round"
+          d="M16 12a1 1 0 100 2 1 1 0 000-2z"/>
+  </svg>
+  <p class="text-sm mb-1" style="color: #8D6E63">Saldo disponível</p>
+  <p class="text-3xl font-medium" style="color: #5D4037">
+    R$ <%= money(@credit_cents || 0) %>
+  </p>
+</div>
+
+<button type="button" onclick="<%= open_modal('add-credit-modal') %>"
+        class="w-full bg-white rounded-2xl shadow-sm p-4 mb-4 flex items-center gap-4 cursor-pointer active:scale-[0.98] transition-all text-left">
+  <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
+       style="background-color: #E0E0E0">
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24"
+         stroke="currentColor" stroke-width="2" style="color: #5D4037">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+    </svg>
+  </div>
+  <div>
+    <p class="text-sm font-medium" style="color: #3E2723">Adicionar crédito</p>
+    <p class="text-xs" style="color: #8D6E63">Adicione saldo via PIX</p>
+  </div>
+</button>
+
+<%= render layout: "shared/modal", locals: { id: "add-credit-modal", title: "Adicionar crédito" } do %>
+  <%= form_with url: recargas_path, method: :post, data: { turbo: false }, class: "flex flex-col gap-4" do %>
+    <div>
+      <label class="label">Valor</label>
+      <div class="bg-[#fef8e1] rounded-2xl px-4 py-1">
+        <input type="text" inputmode="numeric" name="amount" placeholder="R$ 0,00"
+               data-controller="input-mask" data-input-mask-pattern-value="money"
+               class="w-full bg-transparent border-none outline-none py-3 text-sm"
+               style="color: #3E2723" required>
+      </div>
+    </div>
+    <p class="text-xs" style="color: #8D6E63">Você será direcionado ao checkout Pix do InfinitePay para concluir o pagamento.</p>
+    <%= render "shared/modal_actions", label: "Continuar para o Pix" %>
+  <% end %>
+<% end %>
+
+<div class="bg-white rounded-2xl shadow-sm p-4">
+  <p class="text-xs leading-relaxed" style="color: #8D6E63">
+    Seus créditos podem ser utilizados para reservar turnos. Quando você altera uma reserva para um turno mais barato, a diferença é adicionada aos seus créditos automaticamente.
+  </p>
+</div>

@@ -1,0 +1,9 @@
+<% content_for :title, "Nova regra de desconto" %>
+
+<%= render "shared/back_button", path: admin_discount_rules_path %>
+
+<h1 class="text-xl font-medium mb-6" style="color: #5D4037">Nova regra de desconto</h1>
+
+<div class="bg-white rounded-2xl shadow-sm p-5">
+  <%= render "form", rule: @rule %>
+</div>

@@ -1,0 +1,38 @@
+<% content_for :title, "Pagamentos" %>
+
+<h1 class="text-2xl font-medium mb-4 text-vdc-primary">Pagamentos</h1>
+
+<div class="card-sm mb-4">
+  <%= form_with url: admin_payments_path, method: :get, data: { turbo: false }, class: "flex gap-2" do |f| %>
+    <%= f.select :status,
+          options_for_select([["Todos", ""], ["Pendente", "pending"], ["Pago", "paid"],
+                              ["Expirado", "expired"], ["Cancelado", "cancelled"]], params[:status]),
+          {}, class: "input-field flex-1" %>
+    <%= f.submit "Filtrar", class: "btn-primary cursor-pointer" %>
+  <% end %>
+</div>
+
+<% if @payments.empty? %>
+  <div class="empty-state">
+    <p>Nenhum pagamento encontrado.</p>
+  </div>
+<% else %>
+  <div class="flex flex-col gap-3">
+    <% @payments.each do |p| %>
+      <%= link_to admin_payment_path(p),
+            class: "block bg-white rounded-2xl shadow-sm p-4 hover:shadow-md transition-all active:scale-[0.98]" do %>
+        <div class="flex items-center justify-between mb-2">
+          <span class="<%= payment_status_badge(p.status) %>">
+            <%= t("payment.status.#{p.status}") %>
+          </span>
+        </div>
+        <p class="font-medium text-sm mb-3" style="color: #3E2723"><%= p.booking_group.dentist.name %></p>
+        <div class="flex justify-between items-center border-t pt-3" style="border-color: #E0E0E0">
+          <span class="text-xs" style="color: #8D6E63"><%= l(p.created_at, format: :default) %></span>
+          <span class="text-sm font-medium" style="color: #5D4037">R$ <%= money(p.amount_cents) %></span>
+        </div>
+      <% end %>
+    <% end %>
+  </div>
+  <%== pagy_nav(@pagy) if @pagy.pages > 1 %>
+<% end %>

@@ -1,0 +1,47 @@
+<div class="bg-white rounded-2xl border p-6 text-center" style="border-color: #E0E0E0">
+  <div class="mb-4">
+    <span class="inline-block text-xs px-3 py-1 rounded-full font-medium"
+          style="background-color: #fef8e1; color: #5D4037">
+      Aguardando pagamento
+    </span>
+  </div>
+
+  <%# Ícone Pix %>
+  <div class="w-20 h-20 mx-auto mb-5 rounded-full flex items-center justify-center"
+       style="background-color: #E8F5E9">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+         class="w-10 h-10" stroke="#32BCAD" stroke-width="1.5">
+      <path stroke-linecap="round" stroke-linejoin="round"
+            d="M12 4v16m8-8H4"/>
+      <rect x="3" y="3" width="18" height="18" rx="4"
+            stroke="#32BCAD" stroke-width="1.5" fill="none"/>
+    </svg>
+  </div>
+
+  <h2 class="text-lg font-medium mb-2 text-vdc-foreground">Pagar via Pix</h2>
+  <p class="text-sm mb-6 text-vdc-secondary">
+    Clique abaixo para ir ao checkout do InfinitePay e finalizar o pagamento via Pix.
+    Após pagar, você será redirecionado automaticamente para a confirmação.
+  </p>
+
+  <% if payment.checkout_url.present? %>
+    <%= link_to payment.checkout_url,
+          class: "block w-full py-4 rounded-full text-white text-sm font-medium text-center mb-4",
+          style: "background-color: #32BCAD",
+          target: "_blank",
+          rel: "noopener" do %>
+      Pagar via Pix no InfinitePay →
+    <% end %>
+  <% end %>
+
+  <p class="text-xs mb-5 text-vdc-secondary">
+    Após o pagamento aprovado, sua reserva é confirmada automaticamente.
+  </p>
+
+  <%= button_to cancelar_pagamento_path(payment), method: :post,
+        class: "text-xs underline cursor-pointer",
+        style: "color: #d4183d",
+        data: { turbo_confirm: "Cancelar esta reserva e liberar os horários?" } do %>
+    Cancelar reserva
+  <% end %>
+</div>

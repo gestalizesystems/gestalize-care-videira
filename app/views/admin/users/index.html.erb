@@ -1,0 +1,118 @@
+<% content_for :title, "Clientes" %>
+
+<div class="flex items-center justify-between mb-4">
+  <h1 class="text-xl font-medium" style="color: #5D4037">Clientes</h1>
+  <button type="button" onclick="<%= open_modal('add-client-modal') %>"
+          class="flex items-center gap-1 text-xs font-medium px-4 py-2 rounded-full cursor-pointer"
+          style="background-color: #E0E0E0; color: #5D4037">
+    Adicionar +
+  </button>
+</div>
+
+<% if @users.empty? %>
+  <div class="empty-state"><p>Nenhum cliente encontrado.</p></div>
+<% else %>
+  <div class="bg-white rounded-2xl shadow-sm overflow-hidden mb-4">
+    <% @users.each_with_index do |u, i| %>
+      <%= link_to admin_user_path(u),
+            class: "flex items-center gap-3 px-4 py-4 #{i > 0 ? 'border-t' : ''}",
+            style: "border-color: #F5F5F5" do %>
+        <%= render "shared/avatar", user: u, size: "md" %>
+        <div class="flex-1 min-w-0">
+          <p class="font-medium text-sm" style="color: #3E2723"><%= u.name %></p>
+          <p class="text-xs truncate" style="color: #8D6E63"><%= u.email %></p>
+          <p class="text-xs mt-0.5" style="color: #8D6E63">
+            <%= pluralize(u.booking_groups.count, "reserva", "reservas") %>
+          </p>
+        </div>
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24"
+             stroke="currentColor" stroke-width="2" style="color: #C9B8A8">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+        </svg>
+      <% end %>
+    <% end %>
+  </div>
+  <%== pagy_nav(@pagy) if @pagy.pages > 1 %>
+<% end %>
+
+<%# Modal: Adicionar cliente %>
+<%= render layout: "shared/modal", locals: { id: "add-client-modal", title: "Adicionar cliente" } do %>
+  <%= form_with url: admin_users_path, method: :post, data: { turbo: false }, class: "flex flex-col gap-4" do |f| %>
+
+    <div class="flex justify-center mb-2">
+      <div class="relative">
+        <div class="w-16 h-16 rounded-full flex items-center justify-center"
+             style="background-color: #E0E0E0">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8" fill="none" viewBox="0 0 24 24"
+               stroke="currentColor" stroke-width="1.5" style="color: #8D6E63">
+            <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </div>
+        <div class="absolute bottom-0 right-0 w-6 h-6 rounded-full flex items-center justify-center"
+             style="background-color: #5D4037">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24"
+               stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <label class="label">Nome completo</label>
+      <div class="bg-[#fef8e1] rounded-2xl px-4 py-1">
+        <%= f.text_field "user[name]", placeholder: "Digite o nome completo",
+              class: "w-full bg-transparent border-none outline-none py-3 text-sm",
+              style: "color: #3E2723" %>
+      </div>
+    </div>
+
+    <div class="bg-[#fef8e1] rounded-2xl px-4 py-1">
+      <%= f.text_field "user[cro]", placeholder: "CRO-XX 00000",
+            class: "w-full bg-transparent border-none outline-none py-3 text-sm",
+            style: "color: #3E2723",
+            data: { controller: "input-mask", "input-mask-pattern-value": "cro" } %>
+    </div>
+
+    <div class="bg-[#fef8e1] rounded-2xl px-4 py-1">
+      <%= f.text_field "user[specialty]", placeholder: "Área de atuação*",
+            class: "w-full bg-transparent border-none outline-none py-3 text-sm",
+            style: "color: #3E2723" %>
+    </div>
+
+    <div class="bg-[#fef8e1] rounded-2xl px-4 py-1">
+      <%= f.text_field "user[cpf]", placeholder: "CPF (000.000.000-00)",
+            class: "w-full bg-transparent border-none outline-none py-3 text-sm",
+            style: "color: #3E2723",
+            data: { controller: "input-mask", "input-mask-pattern-value": "cpf" } %>
+    </div>
+
+    <div class="grid grid-cols-2 gap-3">
+      <div class="bg-[#fef8e1] rounded-2xl px-4 py-1">
+        <%= f.date_field "user[birth_date]", placeholder: "dd/mm/aaaa",
+              class: "w-full bg-transparent border-none outline-none py-3 text-sm",
+              style: "color: #3E2723" %>
+      </div>
+      <div class="bg-[#fef8e1] rounded-2xl px-4 py-1">
+        <%= f.telephone_field "user[phone]", placeholder: "(00) 00000-0000",
+              class: "w-full bg-transparent border-none outline-none py-3 text-sm",
+              style: "color: #3E2723",
+              data: { controller: "input-mask", "input-mask-pattern-value": "phone" } %>
+      </div>
+    </div>
+
+    <div>
+      <label class="label">E-mail</label>
+      <div class="bg-[#fef8e1] rounded-2xl px-4 py-1">
+        <%= f.email_field "user[email]", placeholder: "Digite o e-mail",
+              class: "w-full bg-transparent border-none outline-none py-3 text-sm",
+              style: "color: #3E2723" %>
+      </div>
+    </div>
+
+    <%= render "shared/modal_actions", label: "Adicionar cliente" %>
+  <% end %>
+<% end %>

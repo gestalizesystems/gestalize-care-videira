@@ -1,0 +1,9 @@
+<% content_for :title, "Editar Horário" %>
+
+<%= render "shared/back_button", path: admin_availabilities_path %>
+
+<h1 class="text-xl font-medium mb-6" style="color: #5D4037">Editar horário</h1>
+
+<div class="bg-white rounded-2xl shadow-sm p-5">
+  <%= render "form", availability: @availability %>
+</div>

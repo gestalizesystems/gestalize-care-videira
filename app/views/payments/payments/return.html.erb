@@ -1,0 +1,24 @@
+<% content_for :title, "Confirmação de pagamento" %>
+
+<% if @payment.paid? %>
+  <%= render "payments/payments/paid", payment: @payment %>
+<% elsif @payment.expired? || @payment.cancelled? %>
+  <%= render "payments/payments/expired", payment: @payment %>
+<% else %>
+  <%# Pagamento ainda pendente — webhook pode chegar em instantes %>
+  <div class="card-md text-center py-10">
+    <div class="w-14 h-14 mx-auto mb-4 rounded-full flex items-center justify-center"
+         style="background-color: #fef8e1">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 animate-spin" fill="none"
+           viewBox="0 0 24 24" stroke="#5D4037" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round"
+              d="M12 3v3m0 12v3M3 12h3m12 0h3M5.636 5.636l2.122 2.122m8.485 8.485l2.121 2.121M5.636 18.364l2.122-2.121m8.485-8.486l2.121-2.121"/>
+      </svg>
+    </div>
+    <h2 class="text-lg font-medium mb-2 text-vdc-primary">Verificando pagamento…</h2>
+    <p class="text-sm mb-6 text-vdc-secondary">
+      Aguarde alguns instantes. A confirmação é automática após o Pix ser processado.
+    </p>
+    <%= link_to "Ver minhas reservas", reservas_path, class: "btn-outline" %>
+  </div>
+<% end %>

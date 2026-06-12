@@ -1,0 +1,6 @@
+:concurrency: 5
+:queues:
+  - [critical, 3]
+  - [default, 2]
+  - [mailers, 1]
+  - [low, 1]

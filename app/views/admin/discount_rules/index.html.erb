@@ -1,0 +1,93 @@
+<% content_for :title, "Descontos" %>
+
+<div class="flex items-center justify-between mb-4">
+  <h1 class="text-xl font-medium" style="color: #5D4037">Descontos</h1>
+  <button type="button" onclick="<%= open_modal('new-rule-modal') %>"
+          class="btn-sm-primary cursor-pointer flex items-center gap-1">
+    + Nova regra
+  </button>
+</div>
+
+<p class="text-sm mb-5" style="color: #8D6E63">
+  Quanto mais horários reservados de uma vez, maior o desconto aplicado automaticamente.
+</p>
+
+<% if @rules.empty? %>
+  <div class="empty-state"><p>Nenhuma regra cadastrada.</p></div>
+<% else %>
+  <div class="flex flex-col gap-3">
+    <% @rules.each do |rule| %>
+      <div class="bg-white rounded-2xl shadow-sm p-4 flex items-center justify-between <%= 'opacity-50' unless rule.active? %>">
+        <div>
+          <p class="font-medium text-sm" style="color: #3E2723">
+            <%= rule.min_slots %> ou mais horários
+          </p>
+          <p class="text-xl font-medium mt-1" style="color: #388E3C">
+            <%= rule.discount_percent %>% de desconto
+          </p>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="<%= rule.active? ? 'badge-success' : 'badge-neutral' %>">
+            <%= rule.active? ? "Ativa" : "Inativa" %>
+          </span>
+          <button type="button" onclick="<%= open_modal("edit-rule-#{rule.id}") %>"
+                  class="btn-xs-outline cursor-pointer">
+            Editar
+          </button>
+          <% if rule.active? %>
+            <button type="button" onclick="<%= open_modal("delete-rule-#{rule.id}") %>"
+                    class="btn-xs-danger cursor-pointer">
+              ✕
+            </button>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+<% end %>
+
+<%# ── Modal: Nova regra ──────────────────────────────────────────────────── %>
+<%= render layout: "shared/modal", locals: { id: "new-rule-modal", title: "Nova regra de desconto" } do %>
+  <%= form_with url: admin_discount_rules_path, method: :post, data: { turbo: false }, class: "flex flex-col gap-4" do %>
+    <div>
+      <label class="label">Mínimo de horários</label>
+      <input type="number" name="discount_rule[min_slots]" min="2" required
+             placeholder="2" class="input-field">
+      <p class="text-xs mt-1" style="color:#8D6E63">A partir de quantos horários o desconto é aplicado.</p>
+    </div>
+    <div>
+      <label class="label">Desconto (%)</label>
+      <input type="number" name="discount_rule[discount_percent]" min="1" max="100" required
+             placeholder="10" class="input-field">
+    </div>
+    <%= render "shared/modal_actions", label: "Criar regra" %>
+  <% end %>
+<% end %>
+
+<%# ── Modais por regra ────────────────────────────────────────────────────── %>
+<% @rules.each do |rule| %>
+  <%= render layout: "shared/modal", locals: { id: "edit-rule-#{rule.id}", title: "Editar regra de desconto" } do %>
+    <%= form_with url: admin_discount_rule_path(rule), method: :patch, data: { turbo: false }, class: "flex flex-col gap-4" do %>
+      <div>
+        <label class="label">Mínimo de horários</label>
+        <input type="number" name="discount_rule[min_slots]" min="2" required
+               value="<%= rule.min_slots %>" class="input-field">
+        <p class="text-xs mt-1" style="color:#8D6E63">A partir de quantos horários o desconto é aplicado.</p>
+      </div>
+      <div>
+        <label class="label">Desconto (%)</label>
+        <input type="number" name="discount_rule[discount_percent]" min="1" max="100" required
+               value="<%= rule.discount_percent %>" class="input-field">
+      </div>
+      <%= render "shared/modal_actions", label: "Salvar alterações" %>
+    <% end %>
+  <% end %>
+
+  <% if rule.active? %>
+    <%= render "shared/confirm_modal", id: "delete-rule-#{rule.id}",
+          message: "Desativar regra?",
+          detail: "#{rule.min_slots} horários → #{rule.discount_percent}% de desconto",
+          confirm_path: admin_discount_rule_path(rule), confirm_method: :delete,
+          confirm_label: "Desativar", danger: true %>
+  <% end %>
+<% end %>

@@ -1,0 +1,126 @@
+<% content_for :title, "Videira Dental — Agende sua sala" %>
+
+<%# ── Menu 2x2 ─────────────────────────────────────────────────────────────── %>
+<% if user_signed_in? %>
+  <div class="grid grid-cols-2 gap-3 mb-6">
+    <%= link_to edit_perfil_path,
+          class: "bg-white rounded-2xl shadow-sm p-5 flex items-center justify-center active:scale-[0.98] transition-all" do %>
+      <span class="text-sm font-medium uppercase tracking-wide" style="color: #5D4037">Cadastro</span>
+    <% end %>
+    <%= link_to reservas_path,
+          class: "bg-white rounded-2xl shadow-sm p-5 flex items-center justify-center active:scale-[0.98] transition-all" do %>
+      <span class="text-sm font-medium uppercase tracking-wide" style="color: #5D4037">Reservas</span>
+    <% end %>
+    <%= link_to carteira_path,
+          class: "bg-white rounded-2xl shadow-sm p-5 flex items-center justify-center active:scale-[0.98] transition-all" do %>
+      <span class="text-sm font-medium uppercase tracking-wide" style="color: #5D4037">Carteira</span>
+    <% end %>
+    <div class="bg-white rounded-2xl shadow-sm p-5 flex items-center justify-center opacity-50 cursor-not-allowed"
+         title="Em breve">
+      <span class="text-sm font-medium uppercase tracking-wide" style="color: #5D4037">Videira Shop</span>
+    </div>
+  </div>
+<% end %>
+
+<% min_date = Date.tomorrow %>
+<% max_date = Date.current + 3.months %>
+
+<%# ── Header: SALA + date badge (opens calendar) ───────────────────────── %>
+<div class="flex items-center justify-between mb-4"
+     data-controller="calendar"
+     data-calendar-selected-value="<%= @date %>"
+     data-calendar-min-value="<%= min_date %>"
+     data-calendar-max-value="<%= max_date %>"
+     data-calendar-base-value="/">
+
+  <span class="text-sm font-medium uppercase tracking-widest" style="color: #5D4037">Sala</span>
+
+  <%# Date badge — click opens calendar dialog %>
+  <button type="button"
+          data-action="click->calendar#open"
+          class="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full bg-white shadow-sm">
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24"
+         stroke="currentColor" stroke-width="2" style="color:#8D6E63">
+      <path stroke-linecap="round" stroke-linejoin="round"
+            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+    </svg>
+    <span style="color:#5D4037"><%= l(@date, format: :long).downcase %></span>
+  </button>
+
+  <%# Calendar dialog %>
+  <%= render "shared/calendar_dialog" %>
+</div>
+
+<%# ── Week strip ─────────────────────────────────────────────────────────── %>
+<% week_start = @date.beginning_of_week(:sunday) %>
+<div class="bg-white rounded-2xl shadow-sm px-2 py-2 mb-4 flex items-center gap-1">
+  <% prev_date = [(@date - 7), min_date].max %>
+  <% can_prev  = @date - 7 >= min_date || (week_start - 7 + 6) >= min_date %>
+  <% if can_prev %>
+    <%= link_to root_path(date: prev_date.to_s),
+          class: "shrink-0 w-7 h-7 flex items-center justify-center rounded-full text-base hover:bg-[#fef8e1] transition-colors",
+          style: "color: #8D6E63" do %>‹<% end %>
+  <% else %>
+    <span class="shrink-0 w-7 h-7 flex items-center justify-center text-base opacity-20" style="color:#8D6E63">‹</span>
+  <% end %>
+
+  <div class="flex-1 flex justify-between">
+    <% 7.times do |i| %>
+      <% day      = week_start + i %>
+      <% active   = day == @date %>
+      <% disabled = day < min_date || day > max_date %>
+      <% if disabled %>
+        <span class="flex flex-col items-center px-2 py-1.5 rounded-2xl opacity-25">
+          <span class="text-xs font-medium" style="color:#8D6E63"><%= %w[DOM SEG TER QUA QUI SEX SÁB][day.wday] %></span>
+          <span class="text-xs font-medium" style="color:#5D4037"><%= day.day %></span>
+        </span>
+      <% elsif active %>
+        <span class="flex flex-col items-center px-2 py-1.5 rounded-2xl"
+              style="background-color:#5D4037">
+          <span class="text-xs font-medium text-white"><%= %w[DOM SEG TER QUA QUI SEX SÁB][day.wday] %></span>
+          <span class="text-xs font-medium text-white"><%= day.day %></span>
+        </span>
+      <% else %>
+        <%= link_to root_path(date: day.to_s),
+              class: "flex flex-col items-center px-2 py-1.5 rounded-2xl transition-all" do %>
+          <span class="text-xs font-medium" style="color:#8D6E63"><%= %w[DOM SEG TER QUA QUI SEX SÁB][day.wday] %></span>
+          <span class="text-xs font-medium" style="color:#5D4037"><%= day.day %></span>
+        <% end %>
+      <% end %>
+    <% end %>
+  </div>
+
+  <% if @date + 7 <= max_date %>
+    <%= link_to root_path(date: (@date + 7).to_s),
+          class: "shrink-0 w-7 h-7 flex items-center justify-center rounded-full text-base hover:bg-[#fef8e1] transition-colors",
+          style: "color: #8D6E63" do %>›<% end %>
+  <% else %>
+    <span class="shrink-0 w-7 h-7 flex items-center justify-center text-base opacity-20" style="color:#8D6E63">›</span>
+  <% end %>
+</div>
+
+<%# ── Day header ─────────────────────────────────────────────────────────── %>
+<div class="bg-white rounded-2xl shadow-sm px-4 py-4 mb-4">
+  <h2 class="text-sm font-medium uppercase tracking-wide mb-4" style="color: #5D4037">
+    <%= l(@date, format: "%A, %d/%m").upcase %>
+  </h2>
+
+  <%# ── Slot list ─────────────────────────────────────────────────────────── %>
+  <% if @availabilities.empty? %>
+    <div class="empty-state">
+      <p>Nenhum horário disponível para esta data.</p>
+      <p class="mt-1">Tente outro dia no calendário.</p>
+    </div>
+  <% else %>
+    <div id="availability-grid" class="flex flex-col gap-3">
+      <% @availabilities.each do |av| %>
+        <%= render "shared/slot_card", availability: av %>
+      <% end %>
+    </div>
+  <% end %>
+</div>
+
+<%# ── Cart footer (Turbo Frame) ───────────────────────────────────────────── %>
+<%= turbo_frame_tag "cart-summary" do %>
+  <%= render "shared/cart_summary" %>
+<% end %>

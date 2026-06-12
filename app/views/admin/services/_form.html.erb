@@ -1,0 +1,23 @@
+<%= form_with model: [:admin, service], class: "flex flex-col gap-4", builder: VdcFormBuilder do |f| %>
+  <%= render "shared/form_errors", object: service %>
+
+  <%= f.vdc_field :name, "Nome do serviço", placeholder: "Ex: Consulta odontológica" %>
+
+  <div class="grid grid-cols-2 gap-3">
+    <%= f.vdc_field :duration_minutes, "Duração (min)", :number_field, min: 15, step: 15 %>
+    <%= f.vdc_field :price,            "Preço (R$)",    :number_field, value: service.price, min: 0, step: 0.01 %>
+  </div>
+
+  <% if service.persisted? %>
+    <div class="flex items-center gap-3 py-1">
+      <%= f.check_box :active, style: "accent-color: #5D4037; width: 18px; height: 18px" %>
+      <%= f.label :active, "Serviço ativo", class: "text-sm text-vdc-foreground" %>
+    </div>
+  <% end %>
+
+  <div class="flex gap-3 pt-2">
+    <%= f.submit service.persisted? ? "Salvar alterações" : "Criar serviço",
+          class: "btn-primary flex-1 cursor-pointer" %>
+    <%= link_to "Cancelar", admin_services_path, class: "btn-outline flex-1" %>
+  </div>
+<% end %>

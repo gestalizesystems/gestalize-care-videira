@@ -1,0 +1,293 @@
+<% content_for :title, "Turnos" %>
+
+<div class="flex items-center justify-between mb-4">
+  <h1 class="text-xl font-medium" style="color: #5D4037">Turnos</h1>
+  <button type="button" onclick="<%= open_modal('add-turno-modal') %>"
+          class="btn-sm-primary cursor-pointer flex items-center gap-1">
+    + Adicionar
+  </button>
+</div>
+
+<% min_date = Date.current %>
+<% max_date = Date.current + 3.months %>
+
+<%# ── Date badge (calendário padrão) ─────────────────────────────────────── %>
+<div class="mb-3 flex justify-end"
+     data-controller="calendar"
+     data-calendar-selected-value="<%= @date %>"
+     data-calendar-min-value="<%= min_date %>"
+     data-calendar-max-value="<%= max_date %>"
+     data-calendar-base-value="<%= admin_availabilities_path %>">
+  <button type="button" data-action="click->calendar#open"
+          class="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full bg-white shadow-sm cursor-pointer">
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24"
+         stroke="currentColor" stroke-width="2" style="color:#8D6E63">
+      <path stroke-linecap="round" stroke-linejoin="round"
+            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+    </svg>
+    <span style="color:#5D4037"><%= l(@date, format: :long).downcase %></span>
+  </button>
+
+  <%= render "shared/calendar_dialog" %>
+</div>
+
+<%# ── Week strip (hoje → 3 meses) ─────────────────────────────────────────── %>
+<% week_start = @date.beginning_of_week(:sunday) %>
+<% wdays = %w[DOM SEG TER QUA QUI SEX SÁB] %>
+<div class="bg-white rounded-2xl shadow-sm px-2 py-2 mb-5 flex items-center gap-1">
+  <% if (week_start - 1) >= min_date %>
+    <%= link_to admin_availabilities_path(date: [@date - 7, min_date].max.to_s),
+          class: "shrink-0 w-7 h-7 flex items-center justify-center rounded-full text-base hover:bg-[#fef8e1]",
+          style: "color: #8D6E63" do %>‹<% end %>
+  <% else %>
+    <span class="shrink-0 w-7 h-7 flex items-center justify-center text-base opacity-20" style="color:#8D6E63">‹</span>
+  <% end %>
+
+  <div class="flex-1 flex justify-between">
+    <% 7.times do |i| %>
+      <% day = week_start + i %>
+      <% active = day == @date %>
+      <% disabled = day < min_date || day > max_date %>
+      <% if disabled %>
+        <span class="flex flex-col items-center px-2 py-1.5 rounded-2xl opacity-25">
+          <span class="text-xs font-medium" style="color:#8D6E63"><%= wdays[day.wday] %></span>
+          <span class="text-xs font-medium" style="color:#5D4037"><%= day.day %></span>
+        </span>
+      <% elsif active %>
+        <span class="flex flex-col items-center px-2 py-1.5 rounded-2xl" style="background-color:#5D4037">
+          <span class="text-xs font-medium text-white"><%= wdays[day.wday] %></span>
+          <span class="text-xs font-medium text-white"><%= day.day %></span>
+        </span>
+      <% else %>
+        <%= link_to admin_availabilities_path(date: day.to_s),
+              class: "flex flex-col items-center px-2 py-1.5 rounded-2xl transition-all" do %>
+          <span class="text-xs font-medium" style="color:#8D6E63"><%= wdays[day.wday] %></span>
+          <span class="text-xs font-medium" style="color:#5D4037"><%= day.day %></span>
+        <% end %>
+      <% end %>
+    <% end %>
+  </div>
+
+  <% if (week_start + 7) <= max_date %>
+    <%= link_to admin_availabilities_path(date: [@date + 7, max_date].min.to_s),
+          class: "shrink-0 w-7 h-7 flex items-center justify-center rounded-full text-base hover:bg-[#fef8e1]",
+          style: "color: #8D6E63" do %>›<% end %>
+  <% else %>
+    <span class="shrink-0 w-7 h-7 flex items-center justify-center text-base opacity-20" style="color:#8D6E63">›</span>
+  <% end %>
+</div>
+
+<%# ── Lista de turnos + modais de reserva ────────────────────────────────── %>
+<div data-controller="book-slot">
+
+<% if @availabilities.empty? %>
+  <div class="empty-state">
+    <p>Nenhum turno cadastrado para este dia.</p>
+  </div>
+<% else %>
+  <div class="flex flex-col gap-3">
+    <% @availabilities.each do |av| %>
+      <div class="bg-white rounded-2xl shadow-sm p-4 flex items-center gap-3">
+
+        <%# Toggle switch %>
+        <% if av.booked? %>
+          <button type="button" onclick="<%= open_modal('turno-reservado-modal') %>"
+                  class="shrink-0 inline-flex h-6 w-11 items-center rounded-full"
+                  style="background-color: #E0E0E0">
+            <span class="inline-block h-4 w-4 rounded-full bg-white shadow" style="margin-left:4px"></span>
+          </button>
+        <% elsif av.past? %>
+          <span class="shrink-0 inline-flex h-6 w-11 items-center rounded-full opacity-40 cursor-not-allowed"
+                style="background-color: #E0E0E0" title="Turno já passou">
+            <span class="inline-block h-4 w-4 rounded-full bg-white shadow" style="margin-left:4px"></span>
+          </span>
+        <% else %>
+          <%= button_to toggle_admin_availability_path(av), method: :patch,
+                class: "shrink-0 inline-flex h-6 w-11 items-center rounded-full transition-colors",
+                style: "background-color: #{av.available? ? '#5D4037' : '#E0E0E0'}" do %>
+            <span class="inline-block h-4 w-4 rounded-full bg-white shadow transition-transform"
+                  style="margin-left:<%= av.available? ? '18px' : '4px' %>"></span>
+          <% end %>
+        <% end %>
+
+        <%# Info %>
+        <div class="flex-1 min-w-0">
+          <p class="font-medium text-sm" style="color: #3E2723"><%= av.label %></p>
+          <p class="text-xs mt-0.5" style="color: #8D6E63">
+            (<%= av.starts_at.strftime("%H:%M") %> às <%= av.ends_at.strftime("%H:%M") %>)
+          </p>
+          <p class="text-sm font-medium mt-1" style="color: #5D4037">R$ <%= money(av.price_cents) %></p>
+        </div>
+
+        <%# Actions %>
+        <div class="flex items-center gap-1 shrink-0">
+          <% if av.booked? %>
+            <span class="badge-warning">Reservado</span>
+          <% else %>
+            <% if av.available? && !av.past? %>
+              <button type="button"
+                      data-action="click->book-slot#open"
+                      data-book-slot-id-param="<%= av.id %>"
+                      data-book-slot-date-param="<%= l(av.date, format: '%d/%m') %>"
+                      data-book-slot-label-param="<%= av.label %>"
+                      data-book-slot-time-param="<%= av.starts_at.strftime('%H:%M') %> às <%= av.ends_at.strftime('%H:%M') %>"
+                      class="p-2 rounded-full hover:bg-[#fef8e1] transition-colors cursor-pointer"
+                      aria-label="Reservar para cliente">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24"
+                     stroke="currentColor" stroke-width="2" style="color:#5D4037">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                </svg>
+              </button>
+            <% end %>
+            <button type="button" onclick="<%= open_modal("delete-av-#{av.id}") %>"
+                    class="p-2 rounded-full hover:bg-[#FFEBEE] transition-colors cursor-pointer"
+                    aria-label="Excluir turno">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
+                   stroke="currentColor" stroke-width="2" style="color:#d4183d">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+              </svg>
+            </button>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+<% end %>
+
+<%# ── Modal: Reservar turno (busca de cliente) ───────────────────────────── %>
+<dialog id="book-slot-modal" onclick="if(event.target===this)this.close()">
+  <div class="p-6">
+    <div class="relative flex items-center justify-center mb-4">
+      <h2 class="font-medium text-sm" style="color: #5D4037">Reservar</h2>
+      <button type="button" onclick="this.closest('dialog').close()"
+              class="absolute right-0 p-1 rounded-full hover:bg-[#fef8e1] cursor-pointer shrink-0" aria-label="Fechar">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" style="color:#8D6E63">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="bg-[#fef8e1] rounded-2xl px-4 flex items-center gap-2">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24"
+           stroke="currentColor" stroke-width="2" style="color:#8D6E63">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z"/>
+      </svg>
+      <input type="text" placeholder="Buscar cliente..."
+             class="w-full bg-transparent border-none outline-none py-3 text-sm"
+             style="color:#3E2723"
+             data-book-slot-target="search"
+             data-action="input->book-slot#filter"
+             autocomplete="off">
+    </div>
+
+    <ul data-book-slot-target="results" class="mt-3 space-y-1 overflow-y-auto" style="max-height: 9.75rem"></ul>
+    <p data-book-slot-target="empty" class="hidden text-center text-sm py-6" style="color:#8D6E63">
+      Nenhum cliente encontrado.
+    </p>
+
+    <script type="application/json" data-book-slot-target="data"><%= raw @dentists.map { |d| { id: d.id, name: d.name } }.to_json %></script>
+  </div>
+</dialog>
+
+<%# ── Modal: Confirmar reserva ───────────────────────────────────────────── %>
+<dialog id="confirm-booking-modal" onclick="if(event.target===this)this.close()">
+  <div class="p-6">
+    <p class="text-center font-medium mb-5" style="color:#3E2723" data-book-slot-target="confirmText"></p>
+    <div class="flex gap-3">
+      <button type="button" onclick="this.closest('dialog').close()"
+              class="btn-outline flex-1 cursor-pointer">Cancelar</button>
+      <%= form_with url: admin_bookings_path, method: :post, data: { turbo: false }, class: "flex-1" do %>
+        <%= hidden_field_tag :availability_id, nil, data: { "book-slot-target": "availabilityId" } %>
+        <%= hidden_field_tag :dentist_id, nil, data: { "book-slot-target": "dentistId" } %>
+        <button type="submit" class="btn-primary w-full cursor-pointer">Adicionar</button>
+      <% end %>
+    </div>
+  </div>
+</dialog>
+
+</div><%# /data-controller="book-slot" %>
+
+<%# ── Modal: Turno reservado (aviso) ─────────────────────────────────────── %>
+<dialog id="turno-reservado-modal" onclick="if(event.target===this)this.close()">
+  <div class="p-7 text-center">
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 mx-auto mb-4" fill="none" viewBox="0 0 24 24"
+         stroke="currentColor" stroke-width="1.5" style="color:#F59E0B">
+      <path stroke-linecap="round" stroke-linejoin="round"
+            d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
+    </svg>
+    <p class="font-medium mb-6" style="color:#3E2723">Turno Reservado</p>
+    <button type="button" onclick="this.closest('dialog').close()" class="btn-primary w-full cursor-pointer">
+      Entendi
+    </button>
+  </div>
+</dialog>
+
+<%# ── Modal: Adicionar turno ─────────────────────────────────────────────── %>
+<%= render layout: "shared/modal", locals: { id: "add-turno-modal", title: "Adicionar turno" } do %>
+  <%= form_with url: admin_availabilities_path, method: :post, data: { turbo: false }, class: "flex flex-col gap-4" do %>
+    <%= hidden_field_tag "availability[date]", @date %>
+    <div>
+      <label class="label">Período</label>
+      <div class="bg-[#fef8e1] rounded-2xl px-4 py-1">
+        <select name="availability[period]"
+                class="w-full bg-transparent border-none outline-none py-3 text-sm cursor-pointer"
+                style="color: #3E2723"
+                onchange="
+                  const presets = {
+                    morning:   ['07:00','12:00'],
+                    afternoon: ['13:00','18:00'],
+                    night:     ['18:00','23:00'],
+                    avulsa:    ['13:00','14:00']
+                  };
+                  const p = presets[this.value];
+                  if (p) {
+                    this.closest('form').querySelector('[name=\'availability[starts_at]\']').value = p[0];
+                    this.closest('form').querySelector('[name=\'availability[ends_at]\']').value = p[1];
+                  }
+                ">
+          <option value="">Selecione um período</option>
+          <option value="morning">Turno Manhã</option>
+          <option value="afternoon">Turno Tarde</option>
+          <option value="night">Turno Noite</option>
+          <option value="avulsa">Hora Avulsa</option>
+        </select>
+      </div>
+    </div>
+    <div>
+      <label class="label">Início e Fim</label>
+      <div class="flex items-center gap-2">
+        <div class="bg-[#fef8e1] rounded-2xl px-4 py-1 flex-1">
+          <input type="time" name="availability[starts_at]" value="07:00"
+                 class="w-full bg-transparent border-none outline-none py-3 text-sm"
+                 style="color: #3E2723" required>
+        </div>
+        <span class="text-sm" style="color:#8D6E63">-</span>
+        <div class="bg-[#fef8e1] rounded-2xl px-4 py-1 flex-1">
+          <input type="time" name="availability[ends_at]" value="12:00"
+                 class="w-full bg-transparent border-none outline-none py-3 text-sm"
+                 style="color: #3E2723" required>
+        </div>
+      </div>
+    </div>
+    <div>
+      <label class="label">Valor</label>
+      <div class="bg-[#fef8e1] rounded-2xl px-4 py-1">
+        <input type="text" inputmode="numeric" name="availability[price]"
+               placeholder="R$ 0,00"
+               data-controller="input-mask" data-input-mask-pattern-value="money"
+               class="w-full bg-transparent border-none outline-none py-3 text-sm"
+               style="color: #3E2723" required>
+      </div>
+    </div>
+    <%= render "shared/modal_actions", label: "Salvar" %>
+  <% end %>
+<% end %>
+
+<%# ── Modais por turno: Excluir ──────────────────────────────────────────── %>
+<% @availabilities.reject(&:booked?).each do |av| %>
+  <%= render "shared/confirm_modal", id: "delete-av-#{av.id}",
+        message: "Tem certeza que deseja excluir esse item?",
+        confirm_path: admin_availability_path(av), confirm_method: :delete,
+        confirm_label: "Excluir", danger: true, large: true %>
+<% end %>

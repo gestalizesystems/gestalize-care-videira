@@ -1,0 +1,21 @@
+<%= form_with model: [:admin, availability], data: { turbo: false }, class: "flex flex-col gap-4", builder: VdcFormBuilder do |f| %>
+  <%= render "shared/form_errors", object: availability %>
+
+  <%= f.vdc_field :date, "Data", :date_field %>
+
+  <div class="grid grid-cols-2 gap-3">
+    <%= f.vdc_field :starts_at, "Início", :time_field %>
+    <%= f.vdc_field :ends_at,   "Fim",    :time_field %>
+  </div>
+
+  <%= f.vdc_field :price, "Valor (R$)", :number_field,
+        value: availability.persisted? ? availability.price : nil,
+        step: 0.01, min: 0, placeholder: "170,00" %>
+
+  <div class="flex gap-3 pt-2">
+    <%= f.submit availability.persisted? ? "Salvar alterações" : "Criar turno",
+          class: "btn-primary flex-1 cursor-pointer" %>
+    <%= link_to "Cancelar", admin_availabilities_path(date: availability.date),
+          class: "btn-outline flex-1 text-center" %>
+  </div>
+<% end %>
