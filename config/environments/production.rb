@@ -79,8 +79,9 @@ Rails.application.configure do
   config.action_mailer.perform_caching = false
 
   config.action_mailer.raise_delivery_errors = true
-  config.action_mailer.delivery_method      = :smtp
-  config.action_mailer.default_url_options  = { host: ENV.fetch("APP_HOST", "videiradental.com.br"), protocol: "https" }
+  # Railway bloqueia portas SMTP de saída — envio é feito via API HTTP do Resend.
+  config.action_mailer.delivery_method      = :resend
+  config.action_mailer.default_url_options  = { host: ENV.fetch("APP_HOST", "www.videiraclinic.com.br"), protocol: "https" }
   config.action_mailer.smtp_settings = {
     address:              ENV.fetch("SMTP_HOST", "smtp.example.com"),
     port:                 ENV.fetch("SMTP_PORT", 587).to_i,

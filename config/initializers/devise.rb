@@ -1,5 +1,5 @@
 Devise.setup do |config|
-  config.mailer_sender = ENV.fetch("MAILER_FROM", "videiraclinic@gmail.com")
+  config.mailer_sender = ENV.fetch("MAILER_FROM", "Videira Clinic <nao-responda@videiraclinic.com.br>")
 
   require "devise/orm/active_record"
 
