@@ -1,7 +1,22 @@
-<p>Hello <%= @resource.email %>!</p>
+<div style="font-family: Arial, Helvetica, sans-serif; max-width: 480px; margin: 0 auto; padding: 8px; color: #3E2723;">
+  <h1 style="color: #5D4037; font-size: 20px; margin: 0 0 20px;">Videira Clinic</h1>
 
-<p>Your account has been locked due to an excessive number of unsuccessful sign in attempts.</p>
+  <p style="font-size: 15px; line-height: 1.6;">Olá,</p>
 
-<p>Click the link below to unlock your account:</p>
+  <p style="font-size: 15px; line-height: 1.6;">
+    Sua conta foi bloqueada após um número excessivo de tentativas de login malsucedidas.
+    Clique no botão abaixo para desbloqueá-la:
+  </p>
 
-<p><%= link_to 'Unlock my account', unlock_url(@resource, unlock_token: @token) %></p>
+  <p style="text-align: center; margin: 28px 0;">
+    <a href="<%= unlock_url(@resource, unlock_token: @token) %>"
+       style="background-color: #5D4037; color: #ffffff; text-decoration: none;
+              padding: 13px 30px; border-radius: 9999px; font-size: 15px; display: inline-block;">
+      Desbloquear minha conta
+    </a>
+  </p>
+
+  <hr style="border: none; border-top: 1px solid #E0E0E0; margin: 24px 0;">
+
+  <p style="font-size: 12px; color: #8D6E63; margin: 0;">Videira Clinic</p>
+</div>

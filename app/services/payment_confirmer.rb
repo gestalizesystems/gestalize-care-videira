@@ -6,7 +6,10 @@ class PaymentConfirmer < ApplicationService
   def call
     group = BookingGroup.find_by(id: @external_reference)
     return success(:not_found) if group.nil?
-    return success(:already_processed) if group.confirmed? || group.expired?
+    return success(:already_processed) if group.confirmed?
+    # Pagamento chegou após a reserva expirar (vaga já liberada):
+    # converte o valor pago em crédito na conta, sem confirmar a reserva.
+    return credit_late_payment(group) if group.expired?
 
     ActiveRecord::Base.transaction do
       payment = group.payment
@@ -25,6 +28,33 @@ class PaymentConfirmer < ApplicationService
   end
 
   private
+
+  # Pix pago depois da expiração: vira crédito na conta da pessoa.
+  # Idempotente — não credita duas vezes se o webhook repetir.
+  def credit_late_payment(group)
+    payment = group.payment
+    if payment.nil? || payment.paid? || Credit.exists?(source_booking_group: group)
+      return success(:already_processed)
+    end
+
+    credit = ActiveRecord::Base.transaction do
+      payment.update!(status: "paid", paid_at: Time.current)
+      result = CreditIssuer.call(
+        booking_group: group,
+        reason: "Pagamento Pix recebido após expiração da reserva — convertido em crédito"
+      )
+      raise ActiveRecord::Rollback unless result.success? && result.value
+      result.value
+    end
+
+    return success(:already_processed) unless credit
+
+    BookingMailer.credit_issued(group.dentist, credit).deliver_later
+    success(:credited)
+  rescue ActiveRecord::RecordInvalid => e
+    log_error("late credit ref=#{@external_reference} error=#{e.message}")
+    failure(e.message)
+  end
 
   def broadcast_confirmed(payment)
     Turbo::StreamsChannel.broadcast_replace_to(

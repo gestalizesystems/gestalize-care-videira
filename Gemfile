@@ -55,3 +55,5 @@ group :test do
   gem "webmock"
   gem "capybara"
 end
+
+gem "resend", "~> 1.3"

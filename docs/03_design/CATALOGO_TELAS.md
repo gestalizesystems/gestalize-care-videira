@@ -19,6 +19,7 @@
 | Home (escolher horários) | `pages/home.html.erb` | **B** | Calendário + lista de `_slot_card`. Tem date filter, week strip e turbo frame de carrinho. |
 | Sobre | `pages/about.html.erb` | **E** | Textos institucionais em cards. |
 | Contato | `pages/contact.html.erb` | **E** | Cards com informações de contato. |
+| Termos e Política de Privacidade | `pages/terms.html.erb` | **E** | Conteúdo dos termos em card único com seções. Linkado em login, cadastro e reserva. |
 
 ## Auth (Devise customizado)
 

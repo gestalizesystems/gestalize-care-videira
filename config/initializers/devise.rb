@@ -1,5 +1,5 @@
 Devise.setup do |config|
-  config.mailer_sender = "no-reply@videiradental.com.br"
+  config.mailer_sender = ENV.fetch("MAILER_FROM", "Videira Clinic <nao-responda@videiraclinic.com.br>")
 
   require "devise/orm/active_record"
 
@@ -7,7 +7,9 @@ Devise.setup do |config|
   config.strip_whitespace_keys = [:email]
   config.skip_session_storage = [:http_auth]
   config.stretches = Rails.env.test? ? 1 : 12
-  config.reconfirmable = false
+  config.reconfirmable = true
+  # Confirmação estrita: não permite acesso enquanto o e-mail não for confirmado.
+  config.allow_unconfirmed_access_for = 0.days
   config.expire_all_remember_me_on_sign_out = true
   config.password_length = 8..128
   config.email_regexp = /\A[^@\s]+@[^@\s]+\z/

@@ -9,13 +9,15 @@ end
 puts "  Clínica: #{clinic.name}"
 
 # ── Users ───────────────────────────────────────────────────────────────────
-senha = ENV.fetch("OWNER_PASSWORD", "Owner@Videira2024!")
+senha       = ENV.fetch("OWNER_PASSWORD", "Owner@Videira2024!")
+owner_email = ENV.fetch("OWNER_EMAIL", "owner@videiradental.com.br")
 
-owner = User.find_or_create_by!(email: "owner@videiradental.com.br") do |u|
+owner = User.find_or_create_by!(email: owner_email) do |u|
   u.name     = "Proprietário Videira"
   u.password = senha
   u.role     = "owner"
   u.clinic   = clinic
+  u.skip_confirmation!
 end
 puts "  Owner: #{owner.email}"
 
@@ -24,6 +26,7 @@ User.find_or_create_by!(email: "dentista@videiradental.com.br") do |u|
   u.password = senha
   u.role     = "dentist"
   u.clinic   = clinic
+  u.skip_confirmation!
 end
 puts "  Dentist: dentista@videiradental.com.br"
 
@@ -84,5 +87,5 @@ if dentist && Credit.where(user: dentist, clinic: clinic).none?
 end
 
 puts "\nSeed concluído!"
-puts "  owner:   owner@videiradental.com.br | #{senha}"
+puts "  owner:   #{owner_email} | #{senha}"
 puts "  dentist: dentista@videiradental.com.br | #{senha}"

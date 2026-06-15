@@ -126,14 +126,24 @@
     </div>
 
     <label class="flex items-start gap-3 text-xs cursor-pointer mt-1" style="color: #8D6E63">
-      <input type="checkbox" required class="mt-0.5 w-4 h-4 rounded shrink-0 accent-[#5D4037]">
+      <%= f.check_box :terms_accepted, required: true,
+            class: "mt-0.5 w-4 h-4 rounded shrink-0 accent-[#5D4037]" %>
       <span>
         Aceito os
-        <a href="#" class="underline" style="color: #5D4037">termos de uso</a>
+        <%= link_to "termos de uso e política de privacidade", terms_path,
+              target: "_blank", class: "underline", style: "color: #5D4037" %>
       </span>
     </label>
 
     <%= f.submit "Cadastrar", class: "btn-primary w-full cursor-pointer mt-2" %>
 
   <% end %>
+
+  <div class="flex items-center gap-3 my-3">
+    <div class="flex-1 h-px" style="background-color: #E0E0E0"></div>
+    <span class="text-xs" style="color: #8D6E63">ou</span>
+    <div class="flex-1 h-px" style="background-color: #E0E0E0"></div>
+  </div>
+
+  <%= render "shared/google_button", label: "Cadastrar com Google" %>
 </div>

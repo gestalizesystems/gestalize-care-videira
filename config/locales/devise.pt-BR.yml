@@ -1,0 +1,13 @@
+pt-BR:
+  devise:
+    mailer:
+      confirmation_instructions:
+        subject: "Confirme seu e-mail — Videira Clinic"
+      reset_password_instructions:
+        subject: "Redefinição de senha — Videira Clinic"
+      unlock_instructions:
+        subject: "Instruções de desbloqueio — Videira Clinic"
+      email_changed:
+        subject: "Seu e-mail foi alterado — Videira Clinic"
+      password_change:
+        subject: "Sua senha foi alterada — Videira Clinic"

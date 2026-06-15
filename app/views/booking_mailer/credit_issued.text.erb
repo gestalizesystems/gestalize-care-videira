@@ -2,7 +2,7 @@ Você tem um novo crédito disponível
 
 Olá <%= @user.name %>,
 
-Um crédito de R$ <%= "%.2f" % (@credit.amount_cents / 100.0) %> foi adicionado à sua conta na Videira Dental.
+Um crédito de R$ <%= "%.2f" % (@credit.amount_cents / 100.0) %> foi adicionado à sua conta na Videira Clinic.
 
 <% if @credit.reason.present? %>
 <%= @credit.reason %>
@@ -10,4 +10,4 @@ Um crédito de R$ <%= "%.2f" % (@credit.amount_cents / 100.0) %> foi adicionado 
 
 O valor será aplicado automaticamente na sua próxima reserva.
 
-Equipe Videira Dental
+Equipe Videira Clinic

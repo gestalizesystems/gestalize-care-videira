@@ -1,0 +1,11 @@
+# Configuração de deploy do Railway.
+# O Railway usa o Dockerfile existente para o build.
+
+[build]
+builder = "DOCKERFILE"
+
+[deploy]
+# Sobe migrations + seed + Sidekiq + Puma num único serviço (ver bin/railway-start.sh)
+startCommand = "bash bin/railway-start.sh"
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3

@@ -3,7 +3,7 @@
 <p>Olá <%= @user.name %>,</p>
 
 <p>Um crédito de <strong>R$ <%= "%.2f" % (@credit.amount_cents / 100.0) %></strong>
-   foi adicionado à sua conta na Videira Dental.</p>
+   foi adicionado à sua conta na Videira Clinic.</p>
 
 <% if @credit.reason.present? %>
   <p><em><%= @credit.reason %></em></p>
@@ -11,4 +11,4 @@
 
 <p>O valor será aplicado automaticamente na sua próxima reserva.</p>
 
-<p>Equipe Videira Dental</p>
+<p>Equipe Videira Clinic</p>

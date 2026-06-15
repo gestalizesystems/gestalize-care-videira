@@ -85,9 +85,9 @@
 
   <% if rule.active? %>
     <%= render "shared/confirm_modal", id: "delete-rule-#{rule.id}",
-          message: "Desativar regra?",
+          message: "Excluir desconto?",
           detail: "#{rule.min_slots} horários → #{rule.discount_percent}% de desconto",
           confirm_path: admin_discount_rule_path(rule), confirm_method: :delete,
-          confirm_label: "Desativar", danger: true %>
+          confirm_label: "Excluir", danger: true %>
   <% end %>
 <% end %>

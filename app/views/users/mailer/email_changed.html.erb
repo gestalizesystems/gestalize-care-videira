@@ -1,7 +1,25 @@
-<p>Hello <%= @email %>!</p>
+<div style="font-family: Arial, Helvetica, sans-serif; max-width: 480px; margin: 0 auto; padding: 8px; color: #3E2723;">
+  <h1 style="color: #5D4037; font-size: 20px; margin: 0 0 20px;">Videira Clinic</h1>
 
-<% if @resource.try(:unconfirmed_email?) %>
-  <p>We're contacting you to notify you that your email is being changed to <%= @resource.unconfirmed_email %>.</p>
-<% else %>
-  <p>We're contacting you to notify you that your email has been changed to <%= @resource.email %>.</p>
-<% end %>
+  <p style="font-size: 15px; line-height: 1.6;">Olá,</p>
+
+  <% if @resource.try(:unconfirmed_email?) %>
+    <p style="font-size: 15px; line-height: 1.6;">
+      Estamos avisando que o e-mail da sua conta está sendo alterado para
+      <strong><%= @resource.unconfirmed_email %></strong>.
+    </p>
+  <% else %>
+    <p style="font-size: 15px; line-height: 1.6;">
+      Estamos avisando que o e-mail da sua conta foi alterado para
+      <strong><%= @resource.email %></strong>.
+    </p>
+  <% end %>
+
+  <p style="font-size: 13px; line-height: 1.6; color: #8D6E63;">
+    Se você não fez essa alteração, entre em contato conosco imediatamente.
+  </p>
+
+  <hr style="border: none; border-top: 1px solid #E0E0E0; margin: 24px 0;">
+
+  <p style="font-size: 12px; color: #8D6E63; margin: 0;">Videira Clinic</p>
+</div>
