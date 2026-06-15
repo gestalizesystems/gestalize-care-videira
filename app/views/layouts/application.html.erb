@@ -6,6 +6,24 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
+
+    <%# Preview ao compartilhar o link (WhatsApp, redes sociais, Google) %>
+    <% og_title = content_for(:title) || "Videira Dental — Agende sua sala" %>
+    <% og_description = content_for(:meta_description) || "Agende sua consulta na Videira Dental de forma rápida e online." %>
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Videira Dental">
+    <meta property="og:locale" content="pt_BR">
+    <meta property="og:title" content="<%= og_title %>">
+    <meta property="og:description" content="<%= og_description %>">
+    <meta property="og:url" content="<%= request.original_url %>">
+    <meta property="og:image" content="<%= image_url("logo.jpeg") %>">
+    <meta property="og:image:width" content="1600">
+    <meta property="og:image:height" content="900">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="<%= og_title %>">
+    <meta name="twitter:description" content="<%= og_description %>">
+    <meta name="twitter:image" content="<%= image_url("logo.jpeg") %>">
+
     <%= yield :head %>
     <link rel="manifest" href="/manifest.json">
     <link rel="icon" href="/icon.png" type="image/png">
