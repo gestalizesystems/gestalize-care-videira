@@ -129,7 +129,8 @@
       <input type="checkbox" required class="mt-0.5 w-4 h-4 rounded shrink-0 accent-[#5D4037]">
       <span>
         Aceito os
-        <a href="#" class="underline" style="color: #5D4037">termos de uso</a>
+        <%= link_to "termos de uso e política de privacidade", terms_path,
+              target: "_blank", class: "underline", style: "color: #5D4037" %>
       </span>
     </label>
 

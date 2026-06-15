@@ -143,7 +143,9 @@
         data: { "credit-split-target": "submit" }) %>
 
   <p class="text-xs text-center" style="color: #8D6E63">
-    Ao confirmar, você concorda com os Termos e condições da clínica.
+    Ao confirmar, você concorda com os
+    <%= link_to "Termos e condições", terms_path, target: "_blank",
+          class: "underline", style: "color: #5D4037" %> da clínica.
   </p>
 
 

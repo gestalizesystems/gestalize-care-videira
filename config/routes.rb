@@ -17,6 +17,7 @@ Rails.application.routes.draw do
   root "pages#home"
   get "sobre",   to: "pages#about",   as: :about
   get "contato", to: "pages#contact", as: :contact
+  get "termos",  to: "pages#terms",   as: :terms
 
   # ---- Perfil do usuário ------------------------------------
   resource :perfil, only: [:edit, :update], controller: "users/profiles",
