@@ -17,6 +17,7 @@ owner = User.find_or_create_by!(email: owner_email) do |u|
   u.password = senha
   u.role     = "owner"
   u.clinic   = clinic
+  u.skip_confirmation!
 end
 puts "  Owner: #{owner.email}"
 
@@ -25,6 +26,7 @@ User.find_or_create_by!(email: "dentista@videiradental.com.br") do |u|
   u.password = senha
   u.role     = "dentist"
   u.clinic   = clinic
+  u.skip_confirmation!
 end
 puts "  Dentist: dentista@videiradental.com.br"
 

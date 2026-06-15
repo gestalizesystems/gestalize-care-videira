@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_06_11_120000) do
+ActiveRecord::Schema[7.2].define(version: 2026_06_15_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -210,7 +210,12 @@ ActiveRecord::Schema[7.2].define(version: 2026_06_11_120000) do
     t.datetime "updated_at", null: false
     t.string "cro"
     t.string "specialty"
+    t.string "confirmation_token"
+    t.datetime "confirmed_at"
+    t.datetime "confirmation_sent_at"
+    t.string "unconfirmed_email"
     t.index ["clinic_id"], name: "index_users_on_clinic_id"
+    t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["cpf"], name: "index_users_on_cpf", unique: true, where: "(cpf IS NOT NULL)"
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["provider", "uid"], name: "index_users_on_provider_and_uid", unique: true, where: "(provider IS NOT NULL)"

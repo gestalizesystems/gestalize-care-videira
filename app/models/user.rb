@@ -1,6 +1,6 @@
 class User < ApplicationRecord
   devise :database_authenticatable, :registerable,
-         :recoverable, :rememberable, :validatable,
+         :recoverable, :rememberable, :validatable, :confirmable,
          :omniauthable, omniauth_providers: [:google_oauth2]
 
   has_paper_trail
@@ -33,6 +33,7 @@ class User < ApplicationRecord
       u.email    = auth.info.email
       u.name     = auth.info.name.presence || auth.info.email.split("@").first
       u.password = Devise.friendly_token[0, 20]
+      u.skip_confirmation! # e-mail já é verificado pela Google
     end.tap(&:save)
   end
 

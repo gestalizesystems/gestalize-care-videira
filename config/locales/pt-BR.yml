@@ -46,7 +46,9 @@ pt-BR:
       signed_out: "Até logo!"
     registrations:
       signed_up: "Bem-vindo! Sua conta foi criada com sucesso."
+      signed_up_but_unconfirmed: "Enviamos um link de confirmação para o seu e-mail. Confirme sua conta para poder entrar."
       updated: "Sua conta foi atualizada com sucesso."
+      update_needs_confirmation: "Conta atualizada. Confirme o novo e-mail pelo link que enviamos para concluir a alteração."
       destroyed: "Conta encerrada. Até logo!"
     passwords:
       send_instructions: "Se o e-mail existir, você receberá um link para redefinir sua senha."
