@@ -70,6 +70,14 @@
           style: "color: #8D6E63" %>
   <% end %>
 
+  <div class="flex items-center gap-3 my-1">
+    <div class="flex-1 h-px" style="background-color: #E0E0E0"></div>
+    <span class="text-xs" style="color: #8D6E63">ou</span>
+    <div class="flex-1 h-px" style="background-color: #E0E0E0"></div>
+  </div>
+
+  <%= render "shared/google_button", label: "Entrar com Google" %>
+
 </div>
 
 <%= link_to "Termos e política de privacidade", terms_path,

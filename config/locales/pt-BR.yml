@@ -44,6 +44,9 @@ pt-BR:
     sessions:
       signed_in: "Bem-vindo!"
       signed_out: "Até logo!"
+    omniauth_callbacks:
+      success: "Autenticado com sucesso via %{kind}."
+      failure: "Não foi possível autenticar via %{kind}. %{reason}."
     registrations:
       signed_up: "Bem-vindo! Sua conta foi criada com sucesso."
       signed_up_but_unconfirmed: "Enviamos um link de confirmação para o seu e-mail. Confirme sua conta para poder entrar."
