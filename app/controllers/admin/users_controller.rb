@@ -66,16 +66,25 @@ class Admin::UsersController < Admin::BaseController
 
   def destroy
     if @user == current_user
-      redirect_to admin_users_path, alert: "Não é possível excluir seu próprio usuário."
-    else
-      @user.destroy!
-      redirect_to admin_users_path, notice: "Cliente removido."
+      return redirect_to admin_users_path, alert: "Não é possível excluir seu próprio usuário."
     end
+
+    if client_has_history?(@user)
+      return redirect_to admin_users_path,
+        alert: "Não é possível excluir um cliente com pagamentos ou créditos no histórico."
+    end
+
+    ActiveRecord::Base.transaction do
+      # Reservas abandonadas (pendentes/expiradas/canceladas, sem pagamento) saem junto
+      @user.booking_groups.destroy_all
+      @user.destroy!
+    end
+    redirect_to admin_users_path, notice: "Cliente removido."
   rescue ActiveRecord::InvalidForeignKey,
          ActiveRecord::RecordNotDestroyed,
          ActiveRecord::DeleteRestrictionError
     redirect_to admin_users_path,
-      alert: "Não é possível excluir um cliente com histórico de reservas ou pagamentos."
+      alert: "Não foi possível excluir este cliente."
   end
 
   def add_credit
@@ -109,6 +118,15 @@ class Admin::UsersController < Admin::BaseController
   end
 
   private
+
+  # Histórico que impede exclusão: pagamento efetivado ou crédito.
+  # Reservas apenas pendentes/expiradas/canceladas (sem pagamento) NÃO contam.
+  def client_has_history?(user)
+    Payment.joins(:booking_group)
+           .where(booking_groups: { dentist_id: user.id }, status: "paid").exists? ||
+      Credit.where(user: user).exists? ||
+      CreditPurchase.where(user: user).exists?
+  end
 
   def set_user
     @user = policy_scope(User).find(params[:id])

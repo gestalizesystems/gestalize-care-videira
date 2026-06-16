@@ -9,8 +9,9 @@ class Admin::BookingsController < Admin::BaseController
     if params[:status].present?
       scope = scope.where(status: params[:status])
     else
-      # Canceladas somem da listagem por padrão
-      scope = scope.where.not(status: "cancelled")
+      # Por padrão a listagem mostra apenas reservas pagas/confirmadas.
+      # Expiradas, pendentes e canceladas não aparecem como reserva.
+      scope = scope.where(status: "confirmed")
     end
 
     if params[:date].present?

@@ -1,11 +1,19 @@
 <% content_for :title, "Termos e Política de Privacidade — Videira Clinic" %>
+<% content_for :hide_app_chrome, true %>
 
-<%= render "shared/back_button", path: root_path %>
-
-<h1 class="text-2xl font-medium mb-1 text-vdc-primary">
-  Termos de Uso, Locação e Política de Privacidade
-</h1>
-<p class="text-sm mb-5" style="color: #8D6E63">Videira Clinic</p>
+<%# Header: voltar (esq) + título e subtítulo centralizados %>
+<div class="relative mb-5">
+  <%= link_to root_path, class: "absolute left-0 top-0 z-10 p-2 -ml-2 hover:bg-white/50 rounded-full inline-block" do %>
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" style="color: #5D4037"
+         fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+    </svg>
+  <% end %>
+  <div class="text-center px-10">
+    <h1 class="text-lg font-medium text-vdc-primary">Termos de Uso, Locação e Política de Privacidade</h1>
+    <p class="text-sm mt-1" style="color: #8D6E63">Videira Clinic</p>
+  </div>
+</div>
 
 <div class="card-md flex flex-col gap-5 text-sm leading-relaxed text-vdc-foreground">
 
