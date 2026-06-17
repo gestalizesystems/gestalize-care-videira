@@ -1,0 +1,11 @@
+Olá,
+
+<% if @resource.try(:unconfirmed_email?) %>
+Estamos avisando que o e-mail da sua conta está sendo alterado para <%= @resource.unconfirmed_email %>.
+<% else %>
+Estamos avisando que o e-mail da sua conta foi alterado para <%= @resource.email %>.
+<% end %>
+
+Se você não fez essa alteração, entre em contato conosco imediatamente.
+
+Videira Clinic
