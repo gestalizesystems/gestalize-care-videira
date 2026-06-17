@@ -32,7 +32,7 @@ gem "connection_pool", "~> 2.5"
 gem "image_processing", "~> 1.2"
 
 # Pagination
-gem "pagy", "~> 8.0"
+gem "pagy", "~> 43.4"
 
 # Env vars
 gem "dotenv-rails"
