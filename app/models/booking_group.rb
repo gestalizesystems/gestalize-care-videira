@@ -20,6 +20,9 @@ class BookingGroup < ApplicationRecord
     expired:   "expired"
   }
 
+  # Ao confirmar, cria os eventos na Google Agenda da owner (assíncrono).
+  after_update_commit :sync_google_calendar_on_confirm
+
   def expire!
     return unless pending?
     release_bookings!(final_status: "expired")
@@ -31,6 +34,10 @@ class BookingGroup < ApplicationRecord
   end
 
   private
+
+  def sync_google_calendar_on_confirm
+    GoogleCalendarSyncJob.perform_later("create", id) if saved_change_to_status? && confirmed?
+  end
 
   def release_bookings!(final_status:)
     transaction do

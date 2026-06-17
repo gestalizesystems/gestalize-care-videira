@@ -36,3 +36,28 @@
     </svg>
   </div>
 </div>
+
+<%# ── Google Agenda ───────────────────────────────────────────────────────── %>
+<div class="card-md">
+  <div class="flex items-center justify-between gap-3">
+    <div>
+      <p class="font-medium text-sm text-vdc-primary">Google Agenda</p>
+      <% if current_user.google_refresh_token.present? %>
+        <p class="text-xs mt-0.5" style="color: #388E3C">
+          Conectada — reservas confirmadas viram eventos automaticamente.
+        </p>
+      <% else %>
+        <p class="text-xs mt-0.5" style="color: #8D6E63">
+          Conecte para criar eventos das reservas confirmadas na sua agenda.
+        </p>
+      <% end %>
+    </div>
+    <% if current_user.google_refresh_token.present? %>
+      <%= button_to "Desconectar", admin_google_calendar_path, method: :delete,
+            class: "btn-sm-outline shrink-0",
+            form: { data: { turbo_confirm: "Desconectar a Google Agenda?" } } %>
+    <% else %>
+      <%= link_to "Conectar", admin_connect_google_calendar_path, class: "btn-sm-primary shrink-0" %>
+    <% end %>
+  </div>
+</div>

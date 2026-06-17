@@ -71,6 +71,11 @@ Rails.application.routes.draw do
   namespace :admin do
     root to: "dashboard#index"
 
+    # Integração Google Agenda (owner conecta a própria agenda)
+    get    "google_calendar/connect",  to: "google_calendar#connect",    as: :connect_google_calendar
+    get    "google_calendar/callback", to: "google_calendar#callback",   as: :callback_google_calendar
+    delete "google_calendar",          to: "google_calendar#disconnect", as: :google_calendar
+
     resources :clinics,        only: [:show, :update]
     resources :users, only: [:index, :show, :new, :create, :edit, :update, :destroy] do
       member do

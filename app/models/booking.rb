@@ -17,4 +17,14 @@ class Booking < ApplicationRecord
     cancelled: "cancelled"
   }
 
+  # Ao cancelar um turno que já tinha evento na agenda, remove o evento.
+  after_update_commit :remove_google_calendar_event
+
+  private
+
+  def remove_google_calendar_event
+    return unless saved_change_to_status? && cancelled? && google_event_id.present?
+
+    GoogleCalendarSyncJob.perform_later("remove", id)
+  end
 end
