@@ -27,7 +27,9 @@ class Admin::UsersController < Admin::BaseController
   end
 
   def show
+    # Histórico mostra só transações reais (confirmadas/canceladas) — sem expiradas/pendentes
     @booking_groups = @user.booking_groups
+      .where(status: ["confirmed", "cancelled"])
       .includes(:payments, bookings: :availability)
       .order(created_at: :desc)
       .limit(10)
@@ -69,13 +71,16 @@ class Admin::UsersController < Admin::BaseController
       return redirect_to admin_users_path, alert: "Não é possível excluir seu próprio usuário."
     end
 
-    if client_has_history?(@user)
+    if client_has_paid_history?(@user)
       return redirect_to admin_users_path,
-        alert: "Não é possível excluir um cliente com pagamentos ou créditos no histórico."
+        alert: "Não é possível excluir um cliente com reservas pagas."
     end
 
     ActiveRecord::Base.transaction do
-      # Reservas abandonadas (pendentes/expiradas/canceladas, sem pagamento) saem junto
+      # Remove dados sem pagamento confirmado: compras de crédito, créditos (demo/usados)
+      # e reservas abandonadas (pendentes/expiradas/canceladas).
+      CreditPurchase.where(user: @user).delete_all
+      Credit.where(user: @user).delete_all
       @user.booking_groups.destroy_all
       @user.destroy!
     end
@@ -119,13 +124,11 @@ class Admin::UsersController < Admin::BaseController
 
   private
 
-  # Histórico que impede exclusão: pagamento efetivado ou crédito.
-  # Reservas apenas pendentes/expiradas/canceladas (sem pagamento) NÃO contam.
-  def client_has_history?(user)
+  # Só um PAGAMENTO confirmado (dinheiro recebido) impede a exclusão.
+  # Créditos (demo/usados) e reservas pendentes/expiradas/canceladas NÃO contam.
+  def client_has_paid_history?(user)
     Payment.joins(:booking_group)
-           .where(booking_groups: { dentist_id: user.id }, status: "paid").exists? ||
-      Credit.where(user: user).exists? ||
-      CreditPurchase.where(user: user).exists?
+           .where(booking_groups: { dentist_id: user.id }, status: "paid").exists?
   end
 
   def set_user
