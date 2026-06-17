@@ -44,6 +44,7 @@ class User < ApplicationRecord
       u.email    = auth.info.email
       u.name     = auth.info.name.presence || auth.info.email.split("@").first
       u.password = Devise.friendly_token[0, 20]
+      u.clinic ||= Clinic.first # sem clínica, o usuário some da listagem admin
       u.skip_confirmation! # e-mail já é verificado pela Google
     end.tap(&:save)
   end
