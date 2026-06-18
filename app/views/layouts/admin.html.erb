@@ -54,9 +54,9 @@
                { label: "Videira Shop", path: "#", disabled: true },
              ].each do |item| %>
             <% if item[:disabled] %>
-              <div class="rounded-2xl p-4 shadow-sm flex flex-col items-center justify-center text-center min-h-[72px] opacity-50 cursor-not-allowed"
+              <div class="rounded-2xl px-2 py-4 shadow-sm flex flex-col items-center justify-center text-center min-w-0 min-h-[72px] opacity-50 cursor-not-allowed"
                    style="background-color: #ffffff">
-                <span class="text-xs font-medium uppercase tracking-wide" style="color: #5D4037">
+                <span class="text-xs font-medium uppercase tracking-wide leading-tight" style="color: #5D4037">
                   <%= item[:label] %>
                 </span>
                 <span class="text-[9px] font-medium uppercase tracking-wide mt-1" style="color: #8D6E63">Em breve</span>
@@ -64,9 +64,9 @@
             <% else %>
               <% active = current_page?(item[:path]) %>
               <%= link_to item[:path],
-                    class: "rounded-2xl p-4 shadow-sm hover:shadow-md transition-all active:scale-[0.98] flex flex-col items-center justify-center text-center min-h-[72px]",
+                    class: "rounded-2xl px-2 py-4 shadow-sm hover:shadow-md transition-all active:scale-[0.98] flex flex-col items-center justify-center text-center min-w-0 min-h-[72px]",
                     style: "background-color: #{active ? '#C9B8A8' : '#ffffff'}" do %>
-                <span class="text-xs font-medium uppercase tracking-wide" style="color: #5D4037">
+                <span class="text-xs font-medium uppercase tracking-wide leading-tight" style="color: #5D4037">
                   <%= item[:label] %>
                 </span>
               <% end %>
