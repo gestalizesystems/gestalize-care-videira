@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_06_17_130000) do
+ActiveRecord::Schema[7.2].define(version: 2026_06_18_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -151,10 +151,11 @@ ActiveRecord::Schema[7.2].define(version: 2026_06_17_130000) do
   create_table "discount_rules", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.uuid "clinic_id", null: false
     t.integer "min_slots", null: false
-    t.integer "discount_percent", null: false
+    t.integer "discount_percent"
     t.boolean "active", default: true, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "discount_cents", default: 0, null: false
     t.index ["clinic_id", "min_slots"], name: "idx_discount_rules_unique_active", unique: true, where: "(active = true)"
     t.index ["clinic_id"], name: "index_discount_rules_on_clinic_id"
     t.check_constraint "discount_percent >= 1 AND discount_percent <= 100", name: "discount_rules_percent_range"

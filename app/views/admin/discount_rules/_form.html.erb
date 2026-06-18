@@ -2,11 +2,14 @@
   <%= render "shared/form_errors", object: rule %>
 
   <div>
-    <%= f.vdc_field :min_slots, "Mínimo de horários", :number_field, min: 2 %>
-    <p class="text-xs mt-1 text-vdc-secondary">A partir de quantos horários o desconto é aplicado.</p>
+    <%= f.vdc_field :min_slots, "Mínimo de turnos", :number_field, min: 2 %>
+    <p class="text-xs mt-1 text-vdc-secondary">A partir de quantos turnos o desconto é aplicado.</p>
   </div>
 
-  <%= f.vdc_field :discount_percent, "Desconto (%)", :number_field, min: 1, max: 100 %>
+  <div>
+    <%= f.vdc_field :discount, "Desconto por turno (R$)", :text_field %>
+    <p class="text-xs mt-1 text-vdc-secondary">Valor descontado de cada turno da reserva.</p>
+  </div>
 
   <div class="flex gap-3 pt-2">
     <%= f.submit rule.persisted? ? "Salvar alterações" : "Criar regra",

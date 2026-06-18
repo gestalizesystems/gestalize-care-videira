@@ -10,7 +10,8 @@ class DiscountCalculator < ApplicationService
     availabilities = Availability.where(id: @availability_ids, clinic: @clinic, status: "available")
     subtotal_cents  = availabilities.sum(&:price_cents)
     rule            = DiscountRule.best_for(@clinic.id, availabilities.size)
-    discount_cents  = rule ? (subtotal_cents * rule.discount_percent / 100.0).floor : 0
+    # Desconto é por turno: valor fixo × quantidade de turnos (limitado ao subtotal).
+    discount_cents  = rule ? [rule.discount_cents * availabilities.size, subtotal_cents].min : 0
     total_cents     = subtotal_cents - discount_cents
 
     success({
@@ -18,8 +19,7 @@ class DiscountCalculator < ApplicationService
       subtotal_cents:  subtotal_cents,
       discount_cents:  discount_cents,
       total_cents:     total_cents,
-      discount_rule:   rule,
-      discount_percent: rule&.discount_percent || 0
+      discount_rule:   rule
     })
   end
 end

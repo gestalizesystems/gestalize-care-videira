@@ -8,14 +8,6 @@
   </button>
 </div>
 
-<div class="mb-4">
-  <%= link_to admin_shift_templates_path,
-        class: "inline-flex items-center gap-1 text-xs font-medium underline",
-        style: "color: #8D6E63" do %>
-    ⚙ Turnos padrão (repetem todos os dias automaticamente)
-  <% end %>
-</div>
-
 <% min_date = Date.current %>
 <% max_date = Date.current + 3.months %>
 
@@ -163,6 +155,14 @@
   </div>
 <% end %>
 
+<%# ── Botão: Turnos padrão (centralizado, abaixo da lista) ────────────────── %>
+<div class="mt-8 flex justify-center">
+  <%= link_to admin_shift_templates_path,
+        class: "btn-sm-outline inline-flex items-center gap-1.5 cursor-pointer" do %>
+    ⚙ Turnos padrão
+  <% end %>
+</div>
+
 <%# ── Modal: Reservar turno (busca de cliente) ───────────────────────────── %>
 <dialog id="book-slot-modal" onclick="if(event.target===this)this.close()">
   <div class="p-6">
@@ -243,6 +243,7 @@
                 style="color: #3E2723"
                 onchange="
                   const presets = {
+                    dawn:      ['00:00','06:00'],
                     morning:   ['07:00','12:00'],
                     afternoon: ['13:00','18:00'],
                     night:     ['18:00','23:00'],
@@ -255,6 +256,7 @@
                   }
                 ">
           <option value="">Selecione um período</option>
+          <option value="dawn">Turno Madrugada</option>
           <option value="morning">Turno Manhã</option>
           <option value="afternoon">Turno Tarde</option>
           <option value="night">Turno Noite</option>
