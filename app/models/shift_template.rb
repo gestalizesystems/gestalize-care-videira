@@ -14,6 +14,7 @@ class ShiftTemplate < ApplicationRecord
   def label
     return "Aluguel de Sala" unless starts_at
     return "Hora Avulsa" if avulsa?
+    return "Diária" if diaria?
     case starts_at.hour
     when  0..5  then "Turno Madrugada"
     when  6..11 then "Turno Manhã"
@@ -24,10 +25,20 @@ class ShiftTemplate < ApplicationRecord
 
   def avulsa?
     return false unless starts_at && ends_at
+    (slot_minutes_duration) <= 60
+  end
+
+  # Diária — turno longo (8h ou mais), ex.: 08:00–18:00
+  def diaria?
+    return false unless starts_at && ends_at
+    (slot_minutes_duration) >= 480
+  end
+
+  def slot_minutes_duration
     s = starts_at.hour * 60 + starts_at.min
     e = ends_at.hour * 60 + ends_at.min
     e += 1440 if e <= s
-    (e - s) <= 60
+    e - s
   end
 
   def time_range

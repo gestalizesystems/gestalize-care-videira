@@ -34,6 +34,7 @@ class Availability < ApplicationRecord
   def label
     return "Aluguel de Sala" unless starts_at
     return "Hora Avulsa" if avulsa?
+    return "Diária" if diaria?
     case starts_at.hour
     when  0..5  then "Turno Madrugada"
     when  6..11 then "Turno Manhã"
@@ -47,6 +48,13 @@ class Availability < ApplicationRecord
     return false unless starts_at && ends_at
     s, e = slot_minutes
     (e - s) <= 60
+  end
+
+  # Diária — turno longo (8h ou mais), ex.: 08:00–18:00
+  def diaria?
+    return false unless starts_at && ends_at
+    s, e = slot_minutes
+    (e - s) >= 480
   end
 
   # [início, fim] em minutos no dia; fim ≤ início significa que cruza a meia-noite.

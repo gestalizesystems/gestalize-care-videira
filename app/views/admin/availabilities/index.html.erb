@@ -247,7 +247,8 @@
                     morning:   ['07:00','12:00'],
                     afternoon: ['13:00','18:00'],
                     night:     ['18:00','23:00'],
-                    avulsa:    ['13:00','14:00']
+                    avulsa:    ['13:00','14:00'],
+                    daily:     ['08:00','18:00']
                   };
                   const p = presets[this.value];
                   if (p) {
@@ -261,6 +262,7 @@
           <option value="night">Turno Noite</option>
           <option value="dawn">Turno Madrugada</option>
           <option value="avulsa">Hora Avulsa</option>
+          <option value="daily">Diária</option>
         </select>
       </div>
     </div>
