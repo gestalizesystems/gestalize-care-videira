@@ -34,16 +34,23 @@
     <% end %>
   </div>
 
-  <% subtotal_cents = cart_availabilities.sum(&:price_cents) %>
+  <% clinic = cart_availabilities.first&.clinic %>
+  <% pricing = DiscountCalculator.call(availability_ids: cart_availabilities.map(&:id), clinic: clinic).value %>
   <div class="rounded-2xl p-4 mb-6" style="background-color: #fef8e1">
     <div class="flex justify-between text-sm mb-2" style="color: #8D6E63">
       <span>Subtotal</span>
-      <span>R$ <%= money(subtotal_cents) %></span>
+      <span>R$ <%= money(pricing[:subtotal_cents]) %></span>
     </div>
+    <% if pricing[:discount_cents] > 0 %>
+      <div class="flex justify-between text-sm mb-2" style="color: #388E3C">
+        <span>Desconto</span>
+        <span>− R$ <%= money(pricing[:discount_cents]) %></span>
+      </div>
+    <% end %>
     <div class="flex justify-between font-medium border-t pt-3" style="border-color: #E0D5C0">
       <span style="color: #3E2723">TOTAL</span>
       <span class="text-lg font-medium" style="color: #5D4037">
-        R$ <%= money(subtotal_cents) %>
+        R$ <%= money(pricing[:total_cents]) %>
       </span>
     </div>
   </div>

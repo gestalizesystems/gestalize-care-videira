@@ -120,7 +120,17 @@
 
   <%# Breakdown %>
   <div class="rounded-2xl px-4 py-3" style="background-color: #E8F5E9">
-    <div class="flex justify-between text-xs mb-1" style="color: #388E3C">
+    <% if @pricing[:discount_cents] > 0 %>
+      <div class="flex justify-between text-xs mb-1" style="color: #388E3C">
+        <span>Subtotal</span>
+        <span>R$ <%= money(@pricing[:subtotal_cents]) %></span>
+      </div>
+      <div class="flex justify-between text-xs mb-1" style="color: #388E3C">
+        <span>Desconto</span>
+        <span>− R$ <%= money(@pricing[:discount_cents]) %></span>
+      </div>
+    <% end %>
+    <div class="flex justify-between text-xs mb-1 font-medium" style="color: #388E3C">
       <span>Valor total</span>
       <span>R$ <%= money(@pricing[:total_cents]) %></span>
     </div>
