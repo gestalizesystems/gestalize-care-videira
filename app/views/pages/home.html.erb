@@ -26,14 +26,12 @@
 <% max_date = Date.current + 3.months %>
 
 <%# ── Header: SALA + date badge (opens calendar) ───────────────────────── %>
-<div class="flex items-center justify-between mb-4"
+<div class="flex items-center justify-end mb-4"
      data-controller="calendar"
      data-calendar-selected-value="<%= @date %>"
      data-calendar-min-value="<%= min_date %>"
      data-calendar-max-value="<%= max_date %>"
      data-calendar-base-value="/">
-
-  <span class="text-sm font-medium uppercase tracking-widest" style="color: #5D4037">Sala</span>
 
   <%# Date badge — click opens calendar dialog %>
   <button type="button"

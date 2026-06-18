@@ -32,12 +32,12 @@ puts "  Dentist: dentista@videiradental.com.br"
 
 # ── Discount rules ───────────────────────────────────────────────────────────
 [
-  { min_slots: 2, discount_percent: 5  },
-  { min_slots: 3, discount_percent: 10 },
+  { min_slots: 2, discount_cents: 500  },
+  { min_slots: 3, discount_cents: 1000 },
 ].each do |attrs|
   DiscountRule.find_or_create_by!(clinic: clinic, min_slots: attrs[:min_slots]) do |d|
-    d.discount_percent = attrs[:discount_percent]
-    d.active           = true
+    d.discount_cents = attrs[:discount_cents]
+    d.active         = true
   end
 end
 puts "  Desconto: 2 regras criadas"

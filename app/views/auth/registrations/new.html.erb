@@ -1,5 +1,7 @@
 <% content_for :title, "Criar conta" %>
 
+<%= render "shared/back_button", path: root_path %>
+
 <%# Tabs Login / Cadastro %>
 <div class="bg-white rounded-2xl shadow-sm flex p-1 mb-6">
   <%= link_to new_user_session_path,
