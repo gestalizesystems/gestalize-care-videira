@@ -1,5 +1,5 @@
 <% av = Availability.find_by(id: params[:availability_id]) %>
-<% updated_cart = Availability.where(id: Array(session[:cart_ids])).includes(:service, :dentist).order(:date, :starts_at) %>
+<% updated_cart = Availability.where(id: Array(session[:cart_ids])).includes(:service, :dentist).to_a.sort_by { |a| [a.date, a.starts_at.strftime("%H:%M")] } %>
 
 <%# Na home/servicos: restaura o slot card para o estado "disponível para adicionar" %>
 <% if av %>

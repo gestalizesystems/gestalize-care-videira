@@ -2,7 +2,8 @@ class Admin::ShiftTemplatesController < Admin::BaseController
   before_action :set_template, only: [:destroy, :toggle]
 
   def index
-    @templates = current_clinic.shift_templates.ordered
+    @templates = current_clinic.shift_templates.to_a
+      .sort_by { |t| t.starts_at.strftime("%H:%M") } # ordena pelo horário local exibido
   end
 
   def create

@@ -5,7 +5,8 @@ class Admin::AvailabilitiesController < Admin::BaseController
     @date = params[:date].present? ? Date.parse(params[:date]) : Date.current
     @availabilities = current_clinic.availabilities
       .where(date: @date)
-      .order(:starts_at)
+      .to_a
+      .sort_by { |a| a.starts_at.strftime("%H:%M") } # ordena pelo horário local exibido
     @dentists = User.dentists.where(clinic: current_clinic).order(:name)
   rescue Date::Error
     redirect_to admin_availabilities_path, alert: "Data inválida."
