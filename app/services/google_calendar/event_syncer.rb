@@ -33,7 +33,7 @@ module GoogleCalendar
         next if booking.google_event_id.present?
         next if booking.availability.past?
 
-        result = service.insert_event(calendar_id, build_event(group, booking))
+        result = service.insert_event(calendar_id, build_event(group, booking), send_updates: "all")
         booking.update_column(:google_event_id, result.id)
         Rails.logger.info("[GoogleCalendar] evento criado event=#{result.id} booking=#{booking.id}")
       end
@@ -60,7 +60,7 @@ module GoogleCalendar
       return if booking.google_event_id.blank?
 
       begin
-        service.delete_event(calendar_id, booking.google_event_id)
+        service.delete_event(calendar_id, booking.google_event_id, send_updates: "all")
       rescue Google::Apis::ClientError => e
         raise unless e.status_code == 404 # já não existe — ok
       end
@@ -106,12 +106,18 @@ module GoogleCalendar
       starts = zone.local(av.date.year, av.date.month, av.date.day, av.starts_at.hour, av.starts_at.min)
       ends   = zone.local(av.date.year, av.date.month, av.date.day, av.ends_at.hour, av.ends_at.min)
 
+      attendees = []
+      if group.dentist.email.present?
+        attendees << Google::Apis::CalendarV3::EventAttendee.new(email: group.dentist.email)
+      end
+
       Google::Apis::CalendarV3::Event.new(
         summary:     "Aluguel — #{group.dentist.name} — #{sala}",
         description: "Reserva confirmada na Videira Clinic.\n" \
                      "Dentista: #{group.dentist.name}\nSala: #{sala}",
-        start: Google::Apis::CalendarV3::EventDateTime.new(date_time: starts.iso8601, time_zone: TIME_ZONE),
-        end:   Google::Apis::CalendarV3::EventDateTime.new(date_time: ends.iso8601,   time_zone: TIME_ZONE)
+        start:     Google::Apis::CalendarV3::EventDateTime.new(date_time: starts.iso8601, time_zone: TIME_ZONE),
+        end:       Google::Apis::CalendarV3::EventDateTime.new(date_time: ends.iso8601,   time_zone: TIME_ZONE),
+        attendees: attendees
       )
     end
   end
