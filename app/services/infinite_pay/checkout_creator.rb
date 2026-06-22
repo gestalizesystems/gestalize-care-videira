@@ -49,7 +49,7 @@ module InfinitePay
         items << {
           quantity:    extra["quantity"].to_i,
           price:       extra["price_cents"].to_i,
-          description: "Extra: #{extra["name"]}"
+          description: "Insumo: #{extra["name"]}"
         }
       end
 

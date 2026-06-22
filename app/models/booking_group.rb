@@ -23,6 +23,11 @@ class BookingGroup < ApplicationRecord
   # Ao confirmar, cria os eventos na Google Agenda da owner (assíncrono).
   after_update_commit :sync_google_calendar_on_confirm
 
+  # Valor total dos insumos (Videira Shop) deste pedido, em centavos.
+  def extras_total_cents
+    Array(extras).sum { |e| e["price_cents"].to_i * e["quantity"].to_i }
+  end
+
   def expire!
     return unless pending?
     release_bookings!(final_status: "expired")

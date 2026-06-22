@@ -39,7 +39,7 @@
       <% end %>
       <% @extras.each do |extra, qty| %>
         <p class="text-xs" style="color: #3E2723">
-          <%= extra.name %><%= " ×#{qty}" if qty > 1 %> (extra) – R$ <%= money(extra.price_cents * qty) %>
+          <%= extra.name %><%= " ×#{qty}" if qty > 1 %> (insumo) – R$ <%= money(extra.price_cents * qty) %>
         </p>
       <% end %>
     </div>
@@ -139,7 +139,7 @@
     <% end %>
     <% if @extras_total > 0 %>
       <div class="flex justify-between text-xs mb-1" style="color: #388E3C">
-        <span>Extras</span>
+        <span>Insumos</span>
         <span>R$ <%= money(@extras_total) %></span>
       </div>
     <% end %>

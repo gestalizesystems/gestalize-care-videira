@@ -28,11 +28,11 @@
 </div>
 
 <p class="text-sm mb-5" style="color: #8D6E63">
-  Adicione serviços extras ao seu carrinho:
+  Adicione insumos ao seu carrinho:
 </p>
 
 <% if @extras.empty? %>
-  <div class="empty-state"><p>Nenhum serviço disponível no momento.</p></div>
+  <div class="empty-state"><p>Nenhum insumo disponível no momento.</p></div>
 <% else %>
   <div class="flex flex-col gap-3">
     <% @extras.each do |extra| %>

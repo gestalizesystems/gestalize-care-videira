@@ -8,7 +8,7 @@ class Admin::ExtrasController < Admin::BaseController
   def create
     @extra = current_clinic.extras.new(extra_params)
     if @extra.save
-      redirect_to admin_extras_path, notice: "Serviço extra criado."
+      redirect_to admin_extras_path, notice: "Insumo criado."
     else
       redirect_to admin_extras_path, alert: @extra.errors.full_messages.to_sentence
     end
@@ -16,7 +16,7 @@ class Admin::ExtrasController < Admin::BaseController
 
   def destroy
     @extra.destroy!
-    redirect_to admin_extras_path, notice: "Serviço extra removido."
+    redirect_to admin_extras_path, notice: "Insumo removido."
   end
 
   private

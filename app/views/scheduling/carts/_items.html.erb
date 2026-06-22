@@ -62,11 +62,11 @@
     <% end %>
   </div>
 
-  <%# Botão: adicionar extras %>
+  <%# Botão: adicionar insumos %>
   <button type="button" onclick="<%= open_modal('extras-modal') %>"
           class="w-full mb-6 py-3 rounded-full text-sm font-medium cursor-pointer border flex items-center justify-center gap-1"
           style="border-color: #5D4037; color: #5D4037; background: transparent">
-    + Adicionar extras
+    + Adicionar insumos
   </button>
 
   <% clinic = cart_availabilities.first&.clinic %>
@@ -86,7 +86,7 @@
     <% end %>
     <% if extras_total > 0 %>
       <div class="flex justify-between text-sm mb-2" style="color: #8D6E63">
-        <span>Extras</span>
+        <span>Insumos</span>
         <span>R$ <%= money(extras_total) %></span>
       </div>
     <% end %>

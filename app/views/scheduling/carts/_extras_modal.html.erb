@@ -1,7 +1,7 @@
-<%= render layout: "shared/modal", locals: { id: "extras-modal", title: "Extras", closable: true } do %>
+<%= render layout: "shared/modal", locals: { id: "extras-modal", title: "Insumos", closable: true } do %>
   <% extras = (Current.clinic&.extras&.active&.ordered || []) %>
   <% if extras.empty? %>
-    <p class="text-sm text-center py-2" style="color:#8D6E63">Nenhum serviço extra disponível.</p>
+    <p class="text-sm text-center py-2" style="color:#8D6E63">Nenhum insumo disponível.</p>
   <% else %>
   <div class="flex flex-col gap-3">
     <% extras.each do |extra| %>
