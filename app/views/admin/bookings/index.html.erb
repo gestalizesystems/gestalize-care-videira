@@ -14,7 +14,7 @@
 
   <%# Dia (abre calendário) %>
   <button type="button" data-action="click->calendar#open"
-          class="flex-1 flex items-center justify-center gap-1 text-[10px] font-medium px-2.5 py-2 rounded-full shadow-sm cursor-pointer whitespace-nowrap"
+          class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium leading-none px-3 py-2 rounded-full shadow-sm cursor-pointer whitespace-nowrap"
           style="<%= @view == 'day' ? 'background-color:#5D4037;color:#ffffff' : 'background-color:#ffffff;color:#5D4037' %>">
     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24"
          stroke="currentColor" stroke-width="2">
@@ -25,7 +25,7 @@
   </button>
 
   <%# Mês (select) %>
-  <div class="flex-1 relative flex items-center justify-center gap-1 text-[10px] font-medium px-2.5 py-2 rounded-full shadow-sm whitespace-nowrap"
+  <div class="flex-1 relative flex items-center justify-center gap-1.5 text-xs font-medium leading-none px-3 py-2 rounded-full shadow-sm whitespace-nowrap"
        style="<%= @view == 'month' ? 'background-color:#5D4037;color:#ffffff' : 'background-color:#ffffff;color:#5D4037' %>">
     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24"
          stroke="currentColor" stroke-width="2">
@@ -45,7 +45,7 @@
 
   <%# Ver todos %>
   <%= link_to admin_bookings_path(view: "all"),
-        class: "flex-1 flex items-center justify-center gap-1 text-[10px] font-medium px-2.5 py-2 rounded-full shadow-sm cursor-pointer whitespace-nowrap",
+        class: "flex-1 flex items-center justify-center gap-1.5 text-xs font-medium leading-none px-3 py-2 rounded-full shadow-sm cursor-pointer whitespace-nowrap",
         style: (@view == "all" ? "background-color:#5D4037;color:#ffffff" : "background-color:#ffffff;color:#5D4037") do %>
     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24"
          stroke="currentColor" stroke-width="2">
