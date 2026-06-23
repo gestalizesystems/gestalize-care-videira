@@ -41,6 +41,13 @@
               <%= l(b.availability.date, format: "%-d de %B") %> –
               <%= b.availability.starts_at.strftime("%Hh%M") %> às <%= b.availability.ends_at.strftime("%Hh%M") %>
             </p>
+            <% if b == group.bookings.first %>
+              <% Array(group.extras).each do |ins| %>
+                <p class="text-[11px] mt-0.5" style="color: #8D6E63">
+                  + <%= ins["name"] %><%= " ×#{ins["quantity"]}" if ins["quantity"].to_i > 1 %> (insumo) — R$ <%= money(ins["price_cents"].to_i * ins["quantity"].to_i) %>
+                </p>
+              <% end %>
+            <% end %>
             <p class="text-sm font-medium mt-0.5" style="color: #5D4037">
               R$ <%= money(b.price_cents) %>
             </p>
