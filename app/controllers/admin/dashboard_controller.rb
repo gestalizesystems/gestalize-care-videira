@@ -2,34 +2,37 @@ class Admin::DashboardController < Admin::BaseController
   def index
     clinic = current_user.clinic
 
-    # Reservas confirmadas para hoje
-    @todays_bookings = Booking.where(clinic: clinic, status: "confirmed")
-      .joins(:availability)
-      .where(availabilities: { date: Date.current }).count
+    # Mês selecionado (padrão: mês atual).
+    @month = parse_month(params[:month]) || Date.current.beginning_of_month
+    range  = @month..@month.end_of_month
 
-    # Saldo de crédito disponível nas carteiras que ENTRA na receita (in_revenue).
-    # Exclui crédito promocional e os marcados para não entrar na receita.
-    @available_credits = Credit.available.where(clinic: clinic, in_revenue: true)
-      .where.not("reason ILIKE ?", "%promocional%")
-      .sum(:amount_cents)
+    # Créditos TOTAIS: saldo de crédito (dinheiro real) ainda não usado em todas
+    # as carteiras. Snapshot — NÃO muda ao trocar o mês; sobe ao comprar crédito
+    # e baixa quando o cliente usa numa reserva.
+    @total_credits = available_real_credits(clinic).sum(:amount_cents)
 
-    # Receita das reservas CONFIRMADAS no mês, contada uma vez por reserva
-    # (turnos = total − insumos). Reservas pagas com crédito também contam (o
-    # crédito vira receita ao ser usado). Canceladas/expiradas não entram.
-    range = Date.current.beginning_of_month..Date.current.end_of_month
+    # Por mês:
     @monthly_turnos, @monthly_insumos = revenue_split(clinic, range)
+    # Crédito comprado no mês e ainda não usado (vira receita quando usado).
+    @monthly_credits = available_real_credits(clinic).where(created_at: range).sum(:amount_cents)
+    @monthly_revenue = @monthly_turnos + @monthly_insumos + @monthly_credits
 
-    # Total do mês = tudo que entrou na conta: turnos + insumos + créditos.
-    @monthly_revenue = @monthly_turnos + @monthly_insumos + @available_credits
-
-    @monthly_series = build_monthly_series(clinic, months: 6)
+    # Meses com histórico (para o select) e série do gráfico (últimos 6 meses).
+    @available_months = months_with_history(clinic)
+    @monthly_series   = build_monthly_series(clinic, months: 6)
   end
 
   private
 
+  # Créditos disponíveis (não usados) que representam dinheiro real: exclui
+  # promocional e os marcados para não entrar na receita (in_revenue: false).
+  def available_real_credits(clinic)
+    Credit.available.where(clinic: clinic, in_revenue: true)
+      .where.not("reason ILIKE ?", "%promocional%")
+  end
+
   def revenue_split(clinic, range)
     groups = confirmed_groups(clinic).select { |g| range.cover?(group_paid_at(g)) }
-    # Crédito "fora da receita" usado na reserva é abatido do valor que conta.
     off_books = Credit.where(used_on_booking_group: groups.map(&:id), in_revenue: false)
                       .group(:used_on_booking_group_id).sum(:amount_cents)
 
@@ -37,7 +40,7 @@ class Admin::DashboardController < Admin::BaseController
     groups.each do |g|
       ins       = extras_cents(g.extras)
       countable = [g.total_cents.to_i - off_books[g.id].to_i, 0].max
-      g_insumos = [ins, countable].min   # off-books reduz turnos primeiro
+      g_insumos = [ins, countable].min
       insumos  += g_insumos
       turnos   += countable - g_insumos
     end
@@ -48,7 +51,6 @@ class Admin::DashboardController < Admin::BaseController
     @confirmed_groups ||= BookingGroup.where(clinic: clinic, status: "confirmed").includes(:payments).to_a
   end
 
-  # Mês da receita: data do 1º pagamento confirmado (fallback: criação).
   def group_paid_at(group)
     group.payments.select(&:paid?).filter_map(&:paid_at).min || group.created_at
   end
@@ -57,13 +59,29 @@ class Admin::DashboardController < Admin::BaseController
     Array(extras).sum { |e| e["price_cents"].to_i * e["quantity"].to_i }
   end
 
+  def parse_month(value)
+    return nil if value.blank?
+    Date.strptime(value, "%Y-%m").beginning_of_month
+  rescue ArgumentError
+    nil
+  end
+
+  # Meses (início do mês) que têm reserva confirmada ou crédito — do mais recente
+  # ao mais antigo. Inclui sempre o mês atual.
+  def months_with_history(clinic)
+    g = confirmed_groups(clinic).map { |bg| group_paid_at(bg).to_date.beginning_of_month }
+    c = available_real_credits(clinic).pluck(:created_at).map { |d| d.to_date.beginning_of_month }
+    (g + c + [Date.current.beginning_of_month]).uniq.sort.reverse
+  end
+
+  # Série dos últimos N meses para o gráfico empilhado (turnos/insumos/crédito).
   def build_monthly_series(clinic, months:)
-    groups = confirmed_groups(clinic)
-    today  = Date.current
+    today = Date.current
     (0...months).map { |i| (today << i).beginning_of_month }.reverse.map do |start|
       range = start..start.end_of_month
-      cents = groups.sum { |g| range.cover?(group_paid_at(g)) ? g.total_cents.to_i : 0 }
-      { month: start, cents: cents }
+      t, i  = revenue_split(clinic, range)
+      cr    = available_real_credits(clinic).where(created_at: range).sum(:amount_cents)
+      { month: start, turnos: t, insumos: i, credito: cr, total: t + i + cr }
     end
   end
 end
