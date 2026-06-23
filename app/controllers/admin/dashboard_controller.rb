@@ -14,7 +14,7 @@ class Admin::DashboardController < Admin::BaseController
     # Por mês:
     @monthly_turnos, @monthly_insumos = revenue_split(clinic, range)
     # Crédito comprado no mês e ainda não usado (vira receita quando usado).
-    @monthly_credits = available_real_credits(clinic).where(created_at: range).sum(:amount_cents)
+    @monthly_credits = credits_in_month(clinic, @month)
     @monthly_revenue = @monthly_turnos + @monthly_insumos + @monthly_credits
 
     # Meses com histórico (para o select) e série do gráfico (últimos 6 meses).
@@ -31,8 +31,15 @@ class Admin::DashboardController < Admin::BaseController
       .where.not("reason ILIKE ?", "%promocional%")
   end
 
+  # Crédito real comprado/criado no mês e ainda disponível (não usado).
+  def credits_in_month(clinic, month)
+    available_real_credits(clinic)
+      .where(created_at: month.beginning_of_month.beginning_of_day..month.end_of_month.end_of_day)
+      .sum(:amount_cents)
+  end
+
   def revenue_split(clinic, range)
-    groups = confirmed_groups(clinic).select { |g| range.cover?(group_paid_at(g)) }
+    groups = confirmed_groups(clinic).select { |g| range.cover?(group_paid_at(g).to_date) }
     off_books = Credit.where(used_on_booking_group: groups.map(&:id), in_revenue: false)
                       .group(:used_on_booking_group_id).sum(:amount_cents)
 
@@ -80,7 +87,7 @@ class Admin::DashboardController < Admin::BaseController
     (0...months).map { |i| (today << i).beginning_of_month }.reverse.map do |start|
       range = start..start.end_of_month
       t, i  = revenue_split(clinic, range)
-      cr    = available_real_credits(clinic).where(created_at: range).sum(:amount_cents)
+      cr    = credits_in_month(clinic, start)
       { month: start, turnos: t, insumos: i, credito: cr, total: t + i + cr }
     end
   end
