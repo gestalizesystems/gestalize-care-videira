@@ -7,9 +7,12 @@ class Admin::DashboardController < Admin::BaseController
       .joins(:availability)
       .where(availabilities: { date: Date.current }).count
 
-    # Saldo de crédito disponível nas carteiras dos clientes (dinheiro que entrou
-    # e ainda não virou reserva). Cancelamento devolve valor para cá.
-    @available_credits = Credit.available.where(clinic: clinic).sum(:amount_cents)
+    # Saldo de crédito disponível nas carteiras (dinheiro real que entrou e ainda
+    # não virou reserva). Inclui recarga e reembolso de cancelamento; exclui
+    # crédito promocional (não é dinheiro que entrou na conta).
+    @available_credits = Credit.available.where(clinic: clinic)
+      .where.not("reason ILIKE ?", "%promocional%")
+      .sum(:amount_cents)
 
     # Receita das reservas CONFIRMADAS no mês, contada uma vez por reserva
     # (turnos = total − insumos). Reservas pagas com crédito também contam (o
