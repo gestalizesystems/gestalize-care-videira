@@ -105,7 +105,7 @@ end
 begin
   isadora = User.find_by("email ILIKE ?", "%isadora.monteiro.melo%")
   if isadora
-    Credit.where(user: isadora, in_revenue: true)
+    Credit.where(user: isadora, amount_cents: 32000, in_revenue: true)
           .where("reason ILIKE ?", "%admin%")
           .update_all(in_revenue: false)
   end
