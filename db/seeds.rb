@@ -81,38 +81,6 @@ rescue => e
   puts "  [aviso] geração de turnos padrão pulada: #{e.class}: #{e.message}"
 end
 
-# ── Crédito da Cibele (restauração pontual) ─────────────────────────────────
-# Garante o crédito de R$ 5,00 da cliente Cibele (perdido por um bug já
-# corrigido). Idempotente: só cria se ela ainda não tiver saldo. Tolerante a
-# falha para não derrubar o deploy.
-begin
-  cibele = User.find_by("email ILIKE ?", "%cibeleabreu%")
-  if cibele
-    cibele.update_column(:clinic_id, clinic.id) if cibele.clinic_id.nil?
-    if Credit.balance_for(user: cibele, clinic: clinic) < 500
-      Credit.create!(user: cibele, clinic: clinic, amount_cents: 500,
-                     reason: "Recarga via Pix")
-      puts "  Crédito R$ 5,00 restaurado para #{cibele.email}"
-    end
-  end
-rescue => e
-  puts "  [aviso] restauração de crédito da Cibele pulada: #{e.class}: #{e.message}"
-end
-
-# ── Correção pontual: crédito da Isadora é "fora da receita" ────────────────
-# Esse crédito foi pago antes e adicionado pelo admin; deveria estar marcado
-# para não entrar na receita (bug: ficou in_revenue true). Idempotente.
-begin
-  isadora = User.find_by("email ILIKE ?", "%isadora.monteiro.melo%")
-  if isadora
-    n = Credit.where(user: isadora, amount_cents: 32000, in_revenue: true)
-              .update_all(in_revenue: false)
-    puts "  Crédito Isadora corrigido (fora da receita): #{n} registro(s)"
-  end
-rescue => e
-  puts "  [aviso] correção do crédito da Isadora pulada: #{e.class}: #{e.message}"
-end
-
 puts "\nSeed concluído!"
 puts "  owner:   #{owner_email} | #{senha}"
 puts "  dentist: dentista@videiradental.com.br | #{senha}"
