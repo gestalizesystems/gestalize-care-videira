@@ -60,10 +60,46 @@
 
 ---
 
+## 2026-06 — Preparação para produção (go-live)
+
+Sistema publicado em produção (Railway + domínio `www.videiraclinic.com.br`).
+Guia de infraestrutura: [[DEPLOY_PRODUCAO]].
+
+### Deploy & infraestrutura
+- `8.1` Deploy no **Railway** via `railway.toml` + `bin/railway-start.sh` (Puma + Sidekiq + migrations no mesmo serviço).
+- `8.2` E-mail migrado de **SMTP → Resend** (Railway bloqueia portas SMTP). `delivery_method = :resend`.
+- `8.3` Domínio próprio `www.videiraclinic.com.br` (registro.br) + HTTPS automático.
+
+### Autenticação & conta
+- `8.4` **Confirmação de conta por e-mail** (`:confirmable`, estrito) — login Google e seed auto-confirmados; migração confirma usuários já existentes.
+- `8.5` **Login/Cadastro com Google** (botão com `button_to` por causa do CSRF do omniauth).
+- `8.6` **Completar cadastro** após login Google: gate redireciona perfil incompleto para `/completar-cadastro` (CPF, CRO, telefone, termos).
+- `8.7` Link **"Esqueci minha senha"** na tela de login.
+- `8.8` **Aceite dos termos obrigatório** no cadastro (validação `acceptance` no servidor; Google/seed isentos).
+
+### Pagamentos
+- `8.9` Expiração do Pix mais precisa — `ExpirePaymentsJob` roda a cada 1 min (antes 5).
+- `8.10` **Pagamento Pix tardio vira crédito**: webhook para reserva já expirada gera crédito (idempotente) em vez de ignorar. Ver [[INFINITEPAY]].
+
+### Admin & dados
+- `8.11` Listagem de reservas mostra apenas **pagas/confirmadas** (esconde expiradas/pendentes/canceladas por padrão).
+- `8.12` Exclusão de cliente refinada: permite excluir quem **não tem pagamento/crédito** (reservas abandonadas saem junto); bloqueia só histórico financeiro real.
+
+### Conteúdo, e-mails & UI
+- `8.13` Renomeação de exibição **"Videira Dental" → "Videira Clinic"** em todo o sistema.
+- `8.14` E-mails do Devise **traduzidos para pt-BR** + identidade Videira Clinic (`devise.pt-BR.yml`).
+- `8.15` Página **/termos** linkada em login, cadastro e reserva.
+- `8.16` **Open Graph** (preview do link no WhatsApp/redes) com logo, título e descrição.
+- `8.17` **Avatar removido** (sem upload de foto; listas mostram iniciais).
+- `8.18` Ajustes de alinhamento de títulos com ícones (admin e termos).
+
+---
+
 ## Pendências (apenas configuração / decisões externas)
 
-### 🟡 Configurar SMTP em produção
-Definir `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `MAILER_FROM` em produção (Postmark, SES, SendGrid).
+### ✅ SMTP em produção — RESOLVIDO (Resend)
+Resolvido via **Resend** (API HTTP), porque o Railway bloqueia portas SMTP de saída.
+Variáveis: `RESEND_API_KEY` + `MAILER_FROM` (domínio `videiraclinic.com.br` verificado). Ver [[DEPLOY_PRODUCAO]].
 
 ### 🟡 Definir `CLINIC_ID` em produção
 Quando houver mais de uma clínica no banco, definir `ENV["CLINIC_ID"]` no deploy para evitar `Clinic.first`.

@@ -262,7 +262,7 @@ CLINIC_ID=           # opcional; resolve Current.clinic quando houver +1 clínic
 
 ## 10. Deploy
 
-Kamal 2 + Docker (web Rails + job Sidekiq + accessories Postgres 16 e Redis 7 na mesma VPS). Detalhes operacionais e troubleshooting no `README.md`.
+Railway (Docker, serviço único: Puma + Sidekiq no mesmo container, com PostgreSQL e Redis como plugins gerenciados). Detalhes operacionais e troubleshooting no `README.md` e em `docs/05_setup/DEPLOY_PRODUCAO.md`.
 
 ---
 

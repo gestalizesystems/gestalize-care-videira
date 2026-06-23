@@ -36,7 +36,7 @@
 | Autenticação | Devise + OmniAuth Google | Email/senha + OAuth Google |
 | Pagamento | MercadoPago (Pix) | Pix nativo no Brasil |
 | Jobs | Sidekiq + Redis + sidekiq-cron | Expiração de pagamentos |
-| Deploy | Kamal 2 + Docker + Traefik | VPS com SSL automático |
+| Deploy | Railway (Docker, serviço único) | Postgres/Redis gerenciados, SSL automático |
 | CI | GitHub Actions | Brakeman, RuboCop, RSpec |
 | Storage | Active Storage (dev: local, prod: S3) | Avatar e logo |
 | Realtime | Turbo Streams via Action Cable (Redis) | Atualização de tela sem refresh |
@@ -362,7 +362,7 @@ BookingGroup     1 ──── 1    Payment
 | Agendamento em lote | BookingGroup | Um Pix por grupo |
 | Desconto | DiscountRule configurável | Sem hardcode |
 | Auditoria | PaperTrail | Histórico completo nativo |
-| Deploy | Kamal 2 | Docker em VPS com Traefik |
+| Deploy | Railway | Docker em serviço único gerenciado |
 | Cancelamento pago | Crédito em conta | Sem estorno no MP |
 | Enums | string-backed | Legibilidade no banco |
 

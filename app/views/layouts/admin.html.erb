@@ -7,6 +7,9 @@
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
     <%= yield :head %>
+    <link rel="icon" href="/favicon.ico?v=2" sizes="32x32">
+    <link rel="icon" href="/icon.png?v=2" type="image/png">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=2">
     <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
     <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
@@ -48,22 +51,21 @@
                { label: "Turnos",    path: admin_availabilities_path },
                { label: "Descontos", path: admin_discount_rules_path },
                { label: "Clientes",  path: admin_users_path },
-               { label: "Videira Shop", path: "#", disabled: true },
+               { label: "Videira Shop", path: admin_extras_path },
              ].each do |item| %>
             <% if item[:disabled] %>
-              <div class="rounded-2xl p-4 shadow-sm flex flex-col items-center justify-center text-center opacity-50 cursor-not-allowed"
+              <div class="rounded-2xl px-2 py-4 shadow-sm flex flex-col items-center justify-center text-center min-w-0 min-h-[72px] opacity-50 cursor-not-allowed"
                    style="background-color: #ffffff">
-                <span class="text-xs font-medium uppercase tracking-wide" style="color: #5D4037">
+                <span class="text-xs font-medium uppercase tracking-wide leading-tight" style="color: #5D4037">
                   <%= item[:label] %>
                 </span>
-                <span class="text-[9px] font-medium uppercase tracking-wide mt-1" style="color: #8D6E63">Em breve</span>
               </div>
             <% else %>
               <% active = current_page?(item[:path]) %>
               <%= link_to item[:path],
-                    class: "rounded-2xl p-4 shadow-sm hover:shadow-md transition-all active:scale-[0.98] flex items-center justify-center text-center min-h-[72px]",
+                    class: "rounded-2xl px-2 py-4 shadow-sm hover:shadow-md transition-all active:scale-[0.98] flex flex-col items-center justify-center text-center min-w-0 min-h-[72px]",
                     style: "background-color: #{active ? '#C9B8A8' : '#ffffff'}" do %>
-                <span class="text-xs font-medium uppercase tracking-wide" style="color: #5D4037">
+                <span class="text-xs font-medium uppercase tracking-wide leading-tight" style="color: #5D4037">
                   <%= item[:label] %>
                 </span>
               <% end %>

@@ -2,7 +2,9 @@ class Scheduling::BookingsController < ApplicationController
   before_action :authenticate_user!
 
   def index
-    base = policy_scope(BookingGroup).includes(:bookings, :payment)
+    # Só reservas confirmadas (reais). Pendentes/expiradas/canceladas não são
+    # mostradas — uma reserva que não foi paga nunca existiu de fato.
+    base = policy_scope(BookingGroup).where(status: "confirmed").includes(:bookings, :payment)
 
     @months = base.pluck(:created_at).map { |d| d.strftime("%Y-%m") }.uniq.sort.reverse
     @selected_month = params[:month].presence || @months.first
@@ -15,6 +17,14 @@ class Scheduling::BookingsController < ApplicationController
     end
 
     @pagy, @booking_groups = pagy(scope)
+
+    # Turnos livres (futuros) para o cliente trocar a reserva.
+    @available_slots = Availability.available
+      .where(clinic: current_user.clinic)
+      .where("date >= ?", Date.current)
+      .to_a
+      .reject(&:past?)
+      .sort_by { |a| [a.date, a.starts_at.strftime("%H:%M")] }
   end
 
   def show
@@ -33,7 +43,8 @@ class Scheduling::BookingsController < ApplicationController
 
     result = DiscountCalculator.call(
       availability_ids: cart_ids,
-      clinic:           clinic
+      clinic:           clinic,
+      dentist:          current_user
     )
 
     if result.failure?
@@ -41,6 +52,9 @@ class Scheduling::BookingsController < ApplicationController
     end
 
     @pricing  = result.value
+    @extras       = Extra.from_session(session[:cart_extras])
+    @extras_total = @extras.sum { |extra, qty| extra.price_cents * qty }
+    @order_total_cents = @pricing[:total_cents] + @extras_total
     @dentists = User.dentists.where(clinic: clinic).order(:name) if current_user.owner?
   end
 
@@ -83,16 +97,52 @@ class Scheduling::BookingsController < ApplicationController
       result = BookingGroupCreator.call(
         user:             current_user,
         availability_ids: cart_ids,
-        credit_cents:     credit_cents
+        credit_cents:     credit_cents,
+        extras:           session[:cart_extras]
       )
 
       if result.success?
         session.delete(:cart_ids)
+        session.delete(:cart_extras)
         redirect_to pagamento_path(result.value.payment),
           notice: "Reserva criada! Conclua o pagamento via Pix."
       else
         redirect_to confirmar_reservas_path, alert: result.error
       end
+    end
+  end
+
+  def change_slot
+    group   = policy_scope(BookingGroup).find(params[:id])
+    booking = group.bookings.first
+
+    unless group.confirmed? || group.pending?
+      return redirect_to reservas_path, alert: "Esta reserva não pode ser alterada."
+    end
+    if group.bookings.size > 1
+      return redirect_to reservas_path, alert: "Reservas com múltiplos turnos não podem ser trocadas. Cancele e crie novamente."
+    end
+
+    lead = ENV.fetch("CANCELLATION_LEAD_HOURS", 24).to_i
+    unless booking.availability.cancellable?
+      return redirect_to reservas_path, alert: "Alterações só são permitidas com #{lead}h de antecedência."
+    end
+
+    new_av = Availability.available
+      .where(clinic: current_user.clinic)
+      .find_by(id: params[:availability_id])
+
+    result = AdminBookingSlotChanger.call(booking: booking, new_availability: new_av)
+
+    if result.success?
+      if result.value[:charge_created]
+        payment = result.value[:group].payments.order(:created_at).last
+        redirect_to pagamento_path(payment), notice: "Turno alterado! Conclua o pagamento da diferença via Pix."
+      else
+        redirect_to reservas_path, notice: "Turno alterado com sucesso."
+      end
+    else
+      redirect_to reservas_path, alert: result.error
     end
   end
 

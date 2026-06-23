@@ -2,11 +2,7 @@
 <% size_classes = { "sm" => "w-8 h-8 text-xs", "md" => "w-10 h-10 text-sm", "lg" => "w-24 h-24 text-3xl" } %>
 <% css = size_classes[size || "md"] %>
 
-<% if user&.avatar_url.present? %>
-  <img src="<%= user.avatar_url %>"
-       alt="<%= user.name %>"
-       class="<%= css %> rounded-full object-cover" />
-<% elsif user&.name.present? %>
+<% if user&.name.present? %>
   <% initials = user.name.split(" ").then { |p| p.length >= 2 ? "#{p.first[0]}#{p.last[0]}" : user.name[0..1] }.upcase %>
   <div class="<%= css %> rounded-full flex items-center justify-center text-white font-medium"
        style="background-color: #8D6E63">

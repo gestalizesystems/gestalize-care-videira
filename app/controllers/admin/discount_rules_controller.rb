@@ -41,6 +41,8 @@ class Admin::DiscountRulesController < Admin::BaseController
   end
 
   def rule_params
-    params.require(:discount_rule).permit(:min_slots, :discount_percent, :active)
+    p = params.require(:discount_rule).permit(:min_slots, :discount, :active)
+    p[:discount_cents] = price_to_cents(p.delete(:discount)) if p[:discount].present?
+    p
   end
 end

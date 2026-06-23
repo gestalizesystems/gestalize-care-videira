@@ -4,36 +4,34 @@
 <% if user_signed_in? %>
   <div class="grid grid-cols-2 gap-3 mb-6">
     <%= link_to edit_perfil_path,
-          class: "bg-white rounded-2xl shadow-sm p-5 flex items-center justify-center active:scale-[0.98] transition-all" do %>
+          class: "bg-white rounded-2xl shadow-sm p-5 flex items-center justify-center text-center min-w-0 active:scale-[0.98] transition-all" do %>
       <span class="text-sm font-medium uppercase tracking-wide" style="color: #5D4037">Cadastro</span>
     <% end %>
     <%= link_to reservas_path,
-          class: "bg-white rounded-2xl shadow-sm p-5 flex items-center justify-center active:scale-[0.98] transition-all" do %>
+          class: "bg-white rounded-2xl shadow-sm p-5 flex items-center justify-center text-center min-w-0 active:scale-[0.98] transition-all" do %>
       <span class="text-sm font-medium uppercase tracking-wide" style="color: #5D4037">Reservas</span>
     <% end %>
     <%= link_to carteira_path,
-          class: "bg-white rounded-2xl shadow-sm p-5 flex items-center justify-center active:scale-[0.98] transition-all" do %>
+          class: "bg-white rounded-2xl shadow-sm p-5 flex items-center justify-center text-center min-w-0 active:scale-[0.98] transition-all" do %>
       <span class="text-sm font-medium uppercase tracking-wide" style="color: #5D4037">Carteira</span>
     <% end %>
-    <div class="bg-white rounded-2xl shadow-sm p-5 flex items-center justify-center opacity-50 cursor-not-allowed"
-         title="Em breve">
+    <%= link_to videira_shop_path,
+          class: "bg-white rounded-2xl shadow-sm p-5 flex items-center justify-center text-center min-w-0 active:scale-[0.98] transition-all" do %>
       <span class="text-sm font-medium uppercase tracking-wide" style="color: #5D4037">Videira Shop</span>
-    </div>
+    <% end %>
   </div>
 <% end %>
 
-<% min_date = Date.tomorrow %>
+<% min_date = Date.current %>
 <% max_date = Date.current + 3.months %>
 
 <%# ── Header: SALA + date badge (opens calendar) ───────────────────────── %>
-<div class="flex items-center justify-between mb-4"
+<div class="flex items-center justify-end mb-4"
      data-controller="calendar"
      data-calendar-selected-value="<%= @date %>"
      data-calendar-min-value="<%= min_date %>"
      data-calendar-max-value="<%= max_date %>"
      data-calendar-base-value="/">
-
-  <span class="text-sm font-medium uppercase tracking-widest" style="color: #5D4037">Sala</span>
 
   <%# Date badge — click opens calendar dialog %>
   <button type="button"
@@ -124,3 +122,5 @@
 <%= turbo_frame_tag "cart-summary" do %>
   <%= render "shared/cart_summary" %>
 <% end %>
+
+<%= render "shared/clinic_footer" %>

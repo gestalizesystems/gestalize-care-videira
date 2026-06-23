@@ -1,0 +1,3 @@
+<%= turbo_stream.update "cart-items" do %>
+  <%= render "scheduling/carts/items", cart_availabilities: @cart_availabilities %>
+<% end %>

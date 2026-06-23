@@ -61,9 +61,9 @@ A diferença entre júnior e pleno: o júnior faz funcionar no caminho feliz; o 
 Senior não é quem escreve código bonito — é quem **dorme tranquilo com o sistema no ar**. Esta fase só se aprende com o app rodando de verdade.
 
 ### 2.1 Deploy real
-- [ ] Fazer o deploy completo com Kamal numa VPS (o `deploy.yml` já existe — o README documenta o passo a passo).
-- [ ] Provocar e executar um `kamal rollback` de verdade.
-- [ ] Automatizar o deploy no CI (job `deploy` após `test` passar no push para `main`).
+- [x] Fazer o deploy completo na Railway (go-live 2026-06; o README e o `docs/05_setup/DEPLOY_PRODUCAO.md` documentam o passo a passo).
+- [ ] Provocar e executar um rollback de verdade (redeploy de uma versão anterior pelo painel da Railway).
+- [x] Deploy automático no push para `main` (Railway conectada ao GitHub).
 
 ### 2.2 Backups e recuperação
 - [ ] Automatizar `pg_dump` diário + cópia do volume do Active Storage para fora da VPS.

@@ -605,7 +605,7 @@ Após criar, me dê o trecho de README para o badge.
 Tem código rodando local + CI verde, mas produção é outra coisa. Você vai colocar o app no ar, verificar que tudo funciona, e ter um smoke test que roda na sua frente.
 
 #### O que você vai aprender
-- Escolher plataforma (Render, Fly, Railway, VPS com Kamal)
+- Escolher plataforma (Railway, Render, Fly, VPS com Docker)
 - Variáveis de ambiente em produção
 - Migrations + seed em ambiente novo
 - Webhook configurado para apontar para produção

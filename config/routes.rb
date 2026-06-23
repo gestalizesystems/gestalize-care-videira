@@ -18,10 +18,16 @@ Rails.application.routes.draw do
   get "sobre",   to: "pages#about",   as: :about
   get "contato", to: "pages#contact", as: :contact
   get "termos",  to: "pages#terms",   as: :terms
+  get "videira-shop", to: "shop#index", as: :videira_shop
 
   # ---- Perfil do usuário ------------------------------------
   resource :perfil, only: [:edit, :update], controller: "users/profiles",
     path_names: { edit: "editar" }
+
+  # Completar cadastro (ex.: após login com Google)
+  resource :completar_cadastro, only: [:show, :update],
+    controller: "users/profile_completions", path: "completar-cadastro",
+    as: :profile_completion
 
   resource :carteira, only: [:show], controller: "users/wallets"
   resources :recargas, only: [:create], controller: "users/credit_purchases"
@@ -32,6 +38,9 @@ Rails.application.routes.draw do
       controller: "carts" do
       post   "adicionar/:availability_id", to: "carts#add",    as: :add_to
       delete "remover/:availability_id",   to: "carts#remove", as: :remove_from
+      post   "extras/:extra_key",          to: "carts#add_extra",    as: :add_extra_to
+      delete "extras/:extra_key",          to: "carts#remove_extra", as: :remove_extra_from
+      post   "insumos/finalizar",          to: "carts#purchase_extras", as: :purchase_extras
     end
 
     resources :reservas, only: [:index, :show], controller: "bookings" do
@@ -41,6 +50,7 @@ Rails.application.routes.draw do
       end
       member do
         patch "cancelar", to: "bookings#cancel"
+        patch "alterar",  to: "bookings#change_slot"
       end
     end
   end
@@ -66,6 +76,11 @@ Rails.application.routes.draw do
   namespace :admin do
     root to: "dashboard#index"
 
+    # Integração Google Agenda (owner conecta a própria agenda)
+    get    "google_calendar/connect",  to: "google_calendar#connect",    as: :connect_google_calendar
+    get    "google_calendar/callback", to: "google_calendar#callback",   as: :callback_google_calendar
+    delete "google_calendar",          to: "google_calendar#disconnect", as: :google_calendar
+
     resources :clinics,        only: [:show, :update]
     resources :users, only: [:index, :show, :new, :create, :edit, :update, :destroy] do
       member do
@@ -77,6 +92,10 @@ Rails.application.routes.draw do
     resources :availabilities, except: [:show] do
       member { patch :toggle }
     end
+    resources :shift_templates, only: [:index, :create, :destroy], path: "turnos-padrao" do
+      member { patch :toggle }
+    end
+    resources :extras, only: [:index, :create, :destroy], path: "servicos-extra"
     resources :discount_rules, except: [:show]
     resources :bookings,       only: [:index, :show, :create] do
       member do

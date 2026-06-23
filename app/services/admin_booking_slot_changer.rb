@@ -62,7 +62,9 @@ class AdminBookingSlotChanger < ApplicationService
 
       group.payments.create!(**difference_attrs) if difference_attrs
 
-      total = group.bookings.sum(:price_cents)
+      extras_total   = Array(group.extras).sum { |e| e["price_cents"].to_i * e["quantity"].to_i }
+      bookings_total = group.bookings.sum(:price_cents)
+      total          = bookings_total + extras_total
       group.update!(subtotal_cents: total, total_cents: total - group.discount_cents.to_i)
     end
 

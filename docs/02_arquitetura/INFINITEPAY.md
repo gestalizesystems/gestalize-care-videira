@@ -195,6 +195,29 @@ O InfinitePay envia `POST` para o `webhook_url` que você passou ao criar o link
 
 ---
 
+## Expiração do Pix e pagamento tardio
+
+A API de `links` do InfinitePay **não aceita campo de expiração** — o link/Pix fica válido por
+~2 dias do lado deles, e isso **não é configurável** pelo app. A expiração efetiva é controlada
+pelo próprio sistema:
+
+- `PAYMENT_EXPIRY_MINUTES` (default **30**) define o `Payment#expires_at` na criação do checkout.
+- `ExpirePaymentsJob` (Sidekiq Cron, **a cada 1 min**) marca pagamentos vencidos como `expired`
+  e libera a vaga (`BookingGroup#expire!`).
+
+**Pagamento que chega depois da expiração** (`PaymentConfirmer#credit_late_payment`):
+
+1. A reserva já está `expired` (vaga liberada, possivelmente reservada por outra pessoa).
+2. O sistema **não confirma** essa reserva (evita conflito de vaga).
+3. Em vez de ignorar, **converte o valor pago em crédito** na conta do dentista
+   (`CreditIssuer`) e envia o e-mail "Crédito disponível".
+4. É **idempotente** — webhook repetido não credita duas vezes.
+
+> Resultado: ninguém perde dinheiro e não há double-booking, mesmo o link do InfinitePay
+> permanecendo válido por mais tempo do lado deles.
+
+---
+
 ## Redirect de retorno
 
 Após o pagamento, o InfinitePay redireciona o dentista para o `redirect_url` com query params:
@@ -215,7 +238,7 @@ Use `order_nsu` para identificar qual `BookingGroup` confirmar.
 ## Variáveis de ambiente necessárias
 
 ```bash
-# .env e .kamal/secrets
+# .env (local) e variáveis no serviço da Railway (produção)
 INFINITEPAY_HANDLE=seu-handle-sem-cifrao
 ```
 
@@ -249,7 +272,7 @@ MERCADOPAGO_WEBHOOK_SECRET=
 | `app/controllers/payments/payments_controller.rb` | Adaptar tela de retorno |
 | `app/views/payments/payments/` | Remover partials `_pending` (QR code), simplificar `_paid` |
 | `app/models/payment.rb` | Campo `gateway` muda de `"mercadopago"` para `"infinitepay"` |
-| `config/deploy.yml` e `.kamal/secrets` | Trocar vars MP por `INFINITEPAY_HANDLE` |
+| Variáveis no serviço da Railway (e `.env.example`) | Trocar vars MP por `INFINITEPAY_HANDLE` |
 | `README.md` | Atualizar seção de configuração |
 | `.env.example` | Trocar vars MP por InfinitePay |
 

@@ -1,0 +1,58 @@
+<% content_for :title, "Videira Shop" %>
+<% content_for :hide_app_chrome, true %>
+
+<div class="relative flex items-center mb-6 h-10">
+  <%= link_to root_path, class: "relative z-10 p-2 -ml-2 hover:bg-white/50 rounded-full inline-block" do %>
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" style="color: #5D4037"
+         fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+    </svg>
+  <% end %>
+
+  <h1 class="absolute inset-x-0 text-center text-base font-medium" style="color: #5D4037">Videira Shop</h1>
+
+  <% cart_count = Array(session[:cart_ids]).size + Array(session[:cart_extras]&.values).sum(&:to_i) %>
+  <%= link_to carrinho_path, class: "relative z-10 ml-auto p-1 block" do %>
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24"
+         stroke="currentColor" stroke-width="1.8" style="color: #5D4037">
+      <path stroke-linecap="round" stroke-linejoin="round"
+            d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+    </svg>
+    <% if cart_count > 0 %>
+      <span class="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full text-white text-[10px] font-medium flex items-center justify-center"
+            style="background-color: #5D4037">
+        <%= cart_count %>
+      </span>
+    <% end %>
+  <% end %>
+</div>
+
+<p class="text-sm mb-5" style="color: #8D6E63">
+  Adicione insumos ao seu carrinho:
+</p>
+
+<% if @extras.empty? %>
+  <div class="empty-state"><p>Nenhum insumo disponível no momento.</p></div>
+<% else %>
+  <div class="flex flex-col gap-3">
+    <% @extras.each do |extra| %>
+      <div class="bg-white rounded-2xl shadow-sm p-4 flex items-center justify-between gap-3">
+        <div class="min-w-0">
+          <p class="font-medium text-sm" style="color: #3E2723"><%= extra.name %></p>
+          <p class="text-sm font-medium mt-0.5" style="color: #5D4037">R$ <%= money(extra.price_cents) %></p>
+        </div>
+        <%= button_to add_extra_to_carrinho_path(extra_key: extra.id),
+              method: :post,
+              form: { class: "shrink-0", data: { turbo: false } },
+              class: "w-9 h-9 rounded-full flex items-center justify-center cursor-pointer",
+              style: "background-color: #5D4037; color: #ffffff",
+              aria: { label: "Adicionar #{extra.name}" } do %>
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24"
+               stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+          </svg>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+<% end %>

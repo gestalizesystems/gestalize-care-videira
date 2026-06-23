@@ -5,7 +5,10 @@ class Admin::AvailabilitiesController < Admin::BaseController
     @date = params[:date].present? ? Date.parse(params[:date]) : Date.current
     @availabilities = current_clinic.availabilities
       .where(date: @date)
-      .order(:starts_at)
+      .where(eclipsed_by_id: nil) # esconde turnos desativados por colisão de reserva
+      .to_a
+      # Diárias primeiro, depois os demais — cada grupo ordenado por horário local.
+      .sort_by { |a| [a.diaria? ? 0 : 1, a.starts_at.strftime("%H:%M")] }
     @dentists = User.dentists.where(clinic: current_clinic).order(:name)
   rescue Date::Error
     redirect_to admin_availabilities_path, alert: "Data inválida."
@@ -56,13 +59,23 @@ class Admin::AvailabilitiesController < Admin::BaseController
 
   def destroy
     if @availability.booked?
-      redirect_to admin_availabilities_path(date: @availability.date),
+      return redirect_to admin_availabilities_path(date: @availability.date),
         alert: "Turno reservado — não é possível excluir."
-    else
-      @availability.destroy!
-      redirect_to admin_availabilities_path(date: @availability.date),
-        notice: "Turno removido."
     end
+
+    ActiveRecord::Base.transaction do
+      # Remove vínculos mortos (reservas canceladas/expiradas) e libera quem este
+      # turno tenha eclipsado, evitando violação de chave estrangeira.
+      Booking.where(availability_id: @availability.id).delete_all
+      current_clinic.availabilities.where(eclipsed_by_id: @availability.id)
+        .update_all(status: "available", eclipsed_by_id: nil)
+      @availability.destroy!
+    end
+    redirect_to admin_availabilities_path(date: @availability.date), notice: "Turno removido."
+  rescue => e
+    Rails.logger.error("[Availabilities#destroy] #{e.class}: #{e.message}")
+    redirect_to admin_availabilities_path(date: @availability.date),
+      alert: "Não foi possível excluir este turno."
   end
 
   private

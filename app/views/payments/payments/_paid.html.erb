@@ -11,6 +11,7 @@
   </p>
   <p class="text-sm mb-6 text-vdc-secondary">Sua reserva está confirmada. Até lá!</p>
   <%= link_to "Ver minhas reservas →", reservas_path,
+        data: { turbo_frame: "_top" },
         class: "inline-block px-6 py-3 rounded-full text-white text-sm font-medium",
         style: "background-color: #388E3C" %>
 </div>

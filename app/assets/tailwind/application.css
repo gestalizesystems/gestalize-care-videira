@@ -1,6 +1,20 @@
 @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
+/* Remove o anel de foco azul padrão do navegador em elementos interativos
+   (aparece ao abrir modais/dar tap no iOS) e o flash de toque. */
+button:focus, button:focus-visible,
+a:focus, a:focus-visible,
+[role="button"]:focus, [role="button"]:focus-visible,
+summary:focus,
+dialog:focus, dialog:focus-visible,
+[tabindex]:focus, [tabindex]:focus-visible {
+  outline: none;
+}
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+
 @theme {
   --color-vdc-background:        #fef8e1;
   --color-vdc-foreground:        #3E2723;

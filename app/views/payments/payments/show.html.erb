@@ -8,15 +8,33 @@
 
 <div class="card-md mb-4">
   <p class="text-xs font-medium mb-3 text-vdc-secondary">Resumo do pedido</p>
-  <% @payment.booking_group.bookings.includes(:availability).each do |b| %>
-    <div class="flex justify-between text-sm py-1">
-      <span class="text-vdc-foreground">
-        <%= b.availability.label %> ·
-        <%= l(b.availability.date, format: :default) %>
-        <%= b.availability.starts_at.strftime("%H:%M") %>
-      </span>
-      <span class="font-medium text-vdc-primary">R$ <%= money(b.price_cents) %></span>
-    </div>
+  <% if @payment.extras.present? %>
+    <%# Pagamento avulso de insumos (vinculado a uma reserva existente) %>
+    <% @payment.extras.each do |e| %>
+      <div class="flex justify-between text-sm py-1">
+        <span class="text-vdc-foreground">
+          Insumo: <%= e["name"] %><%= " ×#{e["quantity"]}" if e["quantity"].to_i > 1 %>
+        </span>
+        <span class="font-medium text-vdc-primary">R$ <%= money(e["price_cents"].to_i * e["quantity"].to_i) %></span>
+      </div>
+    <% end %>
+  <% else %>
+    <% @payment.booking_group.bookings.includes(:availability).each do |b| %>
+      <div class="flex justify-between text-sm py-1">
+        <span class="text-vdc-foreground">
+          <%= b.availability.label %> ·
+          <%= l(b.availability.date, format: :default) %>
+          <%= b.availability.starts_at.strftime("%H:%M") %>
+        </span>
+        <span class="font-medium text-vdc-primary">R$ <%= money(b.price_cents) %></span>
+      </div>
+    <% end %>
+    <% Array(@payment.booking_group.extras).each do |e| %>
+      <div class="flex justify-between text-sm py-1">
+        <span class="text-vdc-foreground">Insumo: <%= e["name"] %><%= " ×#{e["quantity"]}" if e["quantity"].to_i > 1 %></span>
+        <span class="font-medium text-vdc-primary">R$ <%= money(e["price_cents"].to_i * e["quantity"].to_i) %></span>
+      </div>
+    <% end %>
   <% end %>
   <div class="border-t mt-3 pt-3 flex justify-between font-medium" style="border-color: #E0E0E0">
     <span class="text-vdc-foreground">Total</span>

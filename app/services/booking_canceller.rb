@@ -8,7 +8,7 @@ class BookingCanceller < ApplicationService
     return failure("Reserva já cancelada.") if @booking.cancelled?
 
     unless @booking.availability.cancellable?
-      lead = ENV.fetch("CANCELLATION_LEAD_HOURS", 48).to_i
+      lead = ENV.fetch("CANCELLATION_LEAD_HOURS", 24).to_i
       return failure("Cancelamento deve ser feito com #{lead}h de antecedência.")
     end
 

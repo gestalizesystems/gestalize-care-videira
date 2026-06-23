@@ -45,6 +45,22 @@ module InfinitePay
         }
       end
 
+      Array(@group.extras).each do |extra|
+        items << {
+          quantity:    extra["quantity"].to_i,
+          price:       extra["price_cents"].to_i,
+          description: "Insumo: #{extra["name"]}"
+        }
+      end
+
+      # A InfinitePay cobra a SOMA dos itens. Se há crédito/desconto aplicado
+      # (valor a pagar < soma dos itens), consolida num único item com o valor
+      # a pagar — senão o Pix cobraria o total cheio.
+      items_sum = items.sum { |i| i[:price].to_i * i[:quantity].to_i }
+      if @amount_cents != items_sum
+        items = [{ quantity: 1, price: @amount_cents, description: "Reserva — Videira Clinic" }]
+      end
+
       payload = {
         handle:       ENV.fetch("INFINITEPAY_HANDLE"),
         items:        items,

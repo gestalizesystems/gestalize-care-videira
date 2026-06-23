@@ -18,13 +18,13 @@ Sistema SaaS para aluguel de salas odontológicas. Dentistas buscam horários di
 - [Testes](#testes)
 - [CI — GitHub Actions](#ci--github-actions)
 - [Deploy em produção](#deploy-em-produção)
-  - [Visão geral do plano](#visão-geral-do-plano)
-  - [1. Preparar o servidor VPS](#1-preparar-o-servidor-vps)
-  - [2. Preparar a máquina local](#2-preparar-a-máquina-local)
-  - [3. Preencher `config/deploy.yml`](#3-preencher-configdeployyml)
-  - [4. Preencher `.kamal/secrets`](#4-preencher-kamalsecrets)
-  - [5. Primeiro deploy](#5-primeiro-deploy)
-  - [6. Deploys seguintes e operação](#6-deploys-seguintes-e-operação)
+  - [Visão geral](#visão-geral)
+  - [Arquitetura do deploy (serviço único)](#arquitetura-do-deploy-serviço-único)
+  - [1. Criar o projeto na Railway](#1-criar-o-projeto-na-railway)
+  - [2. Variáveis de ambiente](#2-variáveis-de-ambiente)
+  - [3. Domínio e HTTPS](#3-domínio-e-https)
+  - [4. Deploys seguintes e operação](#4-deploys-seguintes-e-operação)
+  - [Backups](#backups)
 - [Arquitetura resumida](#arquitetura-resumida)
 - [Troubleshooting](#troubleshooting)
 - [Variáveis de ambiente completas](#variáveis-de-ambiente-completas)
@@ -63,7 +63,7 @@ Sistema SaaS para aluguel de salas odontológicas. Dentistas buscam horários di
 | Paginação | Pagy |
 | Testes | RSpec + FactoryBot + Faker + Shoulda-Matchers + WebMock + Capybara |
 | Qualidade | RuboCop (omakase) + Brakeman |
-| Deploy | Kamal 2 + Docker |
+| Deploy | Railway (Docker, serviço único) |
 
 ---
 
@@ -192,9 +192,31 @@ E altere o **Publishing status** da consent screen de **Testing** para **In prod
 
 ## Integração com Google Agenda (Owner)
 
-> ⚠️ **Status: planejado — ainda não implementado no código.** Esta seção documenta a configuração e o desenho da integração. Os passos de Google Cloud abaixo já podem ser feitos; a parte de código (serviço de sincronização) precisa ser construída antes de funcionar.
+> ✅ **Status: implementado.** A owner conecta a própria agenda pelo painel admin
+> (Dashboard → **Conectar Google Agenda**), e a sincronização passa a funcionar automaticamente.
 
-**Objetivo:** quando uma reserva é **confirmada** (pagamento aprovado), criar automaticamente um evento na **Google Agenda da owner** na **data e horário** do turno alugado, com o nome da dentista e a sala. Cancelamentos removem o evento correspondente.
+**Objetivo:** quando uma reserva é **confirmada** (pagamento aprovado **ou** quitada por crédito),
+criar automaticamente **um evento por turno** na **Google Agenda da owner**, com o nome da dentista
+e a sala. Cancelamentos removem o evento correspondente.
+
+### Como está implementado
+- **Conexão (uma vez):** `Admin::GoogleCalendarController` faz o OAuth offline e guarda o
+  `refresh_token` em `users.google_refresh_token` (só a owner).
+- **Sincronização:** `GoogleCalendar::EventSyncer` + `GoogleCalendarSyncJob` (assíncrono, com retry).
+- **Hooks:** `BookingGroup` (confirma → cria eventos) e `Booking` (cancela → remove evento).
+  Cada evento criado guarda seu id em `bookings.google_event_id`.
+- **Seguro:** enquanto a owner não conecta a agenda, tudo é no-op (não afeta reservas).
+
+### O que configurar no Google Cloud (uma vez)
+1. **Ativar a Google Calendar API** no projeto (APIs & Services → Library → Enable).
+2. **Adicionar o escopo** `https://www.googleapis.com/auth/calendar.events` na tela de consentimento.
+3. **Adicionar a redirect URI:** `https://www.videiraclinic.com.br/admin/google_calendar/callback`.
+4. Como `calendar.events` é escopo **sensível**, adicione a owner como **Test user** (evita
+   verificação do app para um único usuário interno).
+
+Variável opcional: `GOOGLE_CALENDAR_ID` (padrão `primary` — a agenda principal da owner).
+
+<details><summary>Desenho original (referência)</summary>
 
 ### Como vai funcionar
 
@@ -251,6 +273,8 @@ GOOGLE_CALENDAR_ID=primary
 - Service `GoogleCalendar::EventCreator` / `EventRemover` (gem `google-apis-calendar_v3`)
 - Hook em `PaymentConfirmer` (criar evento) e `BookingCanceller` (remover evento)
 
+</details>
+
 ---
 
 ## Configurando o InfinitePay
@@ -301,19 +325,17 @@ Defina `APP_HOST` com o domínio real (ex: `videiradental.com.br`). Nenhuma conf
 
 ---
 
-## E-mails transacionais (SMTP)
+## E-mails transacionais
 
-`BookingMailer` envia confirmação, cancelamento e emissão de crédito. Em produção (`config/environments/production.rb`), o SMTP é configurado por ENV:
+`BookingMailer` (confirmação, cancelamento, crédito) e os e-mails do Devise (confirmação de
+conta, reset de senha) são enviados em produção.
 
-```bash
-MAILER_FROM=no-reply@videiradental.com.br   # remetente (tem default)
-SMTP_HOST=smtp.postmarkapp.com
-SMTP_PORT=587
-SMTP_USERNAME=...
-SMTP_PASSWORD=...
-```
+> ✅ **Em produção usamos o [Resend](https://resend.com) (API HTTP)**, porque o Railway **bloqueia
+> portas SMTP de saída**. Config: `delivery_method = :resend`, `RESEND_API_KEY` + `MAILER_FROM`
+> (remetente no domínio verificado `@videiraclinic.com.br`). Ver [`docs/05_setup/DEPLOY_PRODUCAO.md`](docs/05_setup/DEPLOY_PRODUCAO.md).
 
-Provedores recomendados: Postmark, Amazon SES ou SendGrid. Em desenvolvimento, deixe o SMTP em branco — os e-mails não são enviados de verdade.
+O código ainda suporta **SMTP** (`config/environments/production.rb` via `SMTP_*`) como alternativa
+caso a hospedagem não bloqueie as portas. Em desenvolvimento os e-mails não são enviados de verdade.
 
 ---
 
@@ -349,224 +371,97 @@ O CI não precisa de secrets para rodar — usa credenciais mock (`INFINITEPAY_H
 
 ## Deploy em produção
 
-O projeto inclui um `Dockerfile` de produção e os arquivos **`config/deploy.yml`** e **`.kamal/secrets`** já versionados (com placeholders). O método recomendado é o **Kamal 2**.
+> ✅ **Em produção (go-live 2026-06), o sistema roda na [Railway](https://railway.app).**
+> Este README traz uma visão geral; o **guia completo e atual** (hospedagem, domínio
+> `www.videiraclinic.com.br`, e-mail via Resend, todas as variáveis e diagnóstico de erros)
+> está em **[`docs/05_setup/DEPLOY_PRODUCAO.md`](docs/05_setup/DEPLOY_PRODUCAO.md)**.
 
-### Visão geral do plano
+O projeto inclui um `Dockerfile` de produção e o **`railway.toml`** já versionados. O deploy é
+feito na **Railway**, conectada ao repositório no GitHub: cada `push` na branch `main` dispara
+um novo build e deploy automaticamente. PostgreSQL e Redis são **plugins gerenciados** da Railway.
+
+### Visão geral
 
 ```
-┌─ 1. Servidor VPS ──────────────────┐   ┌─ 2. Máquina local ─────────────┐
-│ • Ubuntu 22.04, usuário deploy     │   │ • Docker rodando               │
-│ • Docker instalado                 │   │ • gem install kamal            │
-│ • Firewall 80/443                  │   │ • Conta no Docker Hub          │
-│ • DNS apontando para o IP          │   └────────────────────────────────┘
-└────────────────────────────────────┘
-                 │
-                 ▼
-   3. Editar config/deploy.yml (IP, domínio, usuário Docker Hub)
-   4. Editar .kamal/secrets    (credenciais reais)
-                 │
-                 ▼
-   5. kamal setup   → build + push + sobe tudo + SSL + db:prepare
-   6. kamal deploy  → deploys seguintes (zero downtime)
+┌─ GitHub (branch main) ─┐   push    ┌─ Railway (projeto) ───────────────┐
+│ Dockerfile             │ ───────▶  │ • App  (Puma + Sidekiq)           │
+│ railway.toml           │  deploy   │ • PostgreSQL (plugin)             │
+│ bin/railway-start.sh   │  automát. │ • Redis / Key Value (plugin)      │
+└────────────────────────┘           │ • Domínio + HTTPS automático      │
+                                      └───────────────────────────────────┘
 ```
 
-Os arquivos `config/deploy.yml` e `.kamal/secrets` **já existem** — o deploy é preencher os placeholders, não criá-los do zero.
+### Arquitetura do deploy (serviço único)
 
-### 1. Preparar o servidor VPS
+Para economizar, **web e worker rodam no mesmo container**. O boot é orquestrado por:
 
-Crie uma instância **Ubuntu 22.04 LTS**:
+- **`railway.toml`** — `builder = "DOCKERFILE"` e `startCommand = "bash bin/railway-start.sh"`.
+- **`bin/railway-start.sh`** — executa, na ordem: `db:prepare` → `db:seed` (idempotente) →
+  **Sidekiq** (em background) → **Puma** (processo principal na porta `$PORT` = 3000).
 
-| Provedor | Plano sugerido | Custo aprox. |
-|---|---|---|
-| [Hetzner](https://hetzner.com/cloud) | CX22 (2 vCPU / 4 GB) | ~€4/mês |
-| [DigitalOcean](https://digitalocean.com) | Droplet 2 vCPU / 2 GB | ~$18/mês |
-| [AWS EC2](https://aws.amazon.com/ec2) | t3.small | ~$15/mês |
+Não há passo manual de migração: as migrations pendentes rodam no boot (`db:prepare`).
 
-Na criação, use **autenticação por SSH Key** (adicione sua `~/.ssh/id_rsa.pub`). Depois, conectado como root:
+> Este app **não usa Rails credentials** (é 100% movido a ENV), então **não precisa de
+> `RAILS_MASTER_KEY` nem de `config/master.key`**. `RAILS_ENV=production` já vem do `Dockerfile`.
 
-```bash
-ssh root@SEU_IP
+### 1. Criar o projeto na Railway
 
-# Usuário de deploy dedicado (não use root no Kamal)
-adduser deploy
-usermod -aG sudo deploy
-rsync --archive --chown=deploy:deploy ~/.ssh /home/deploy
+1. Em [railway.app](https://railway.app), **New Project → Deploy from GitHub repo** e selecione o repositório.
+2. A Railway detecta o `Dockerfile`/`railway.toml` e cria o serviço do app.
+3. No projeto, **add plugin → PostgreSQL** e **add plugin → Redis** (Key Value).
 
-# Firewall
-ufw allow OpenSSH && ufw allow 80 && ufw allow 443 && ufw enable
+### 2. Variáveis de ambiente
 
-# Docker
-curl -fsSL https://get.docker.com | sh
-usermod -aG docker deploy
-```
+Defina as variáveis **no serviço do app** (não em "Shared Variables"). As de banco/redis usam
+referências da Railway:
 
-**DNS:** no seu registrador, crie um registro **A** apontando `@` (ou subdomínio) para o IP do servidor. Verifique:
-
-```bash
-dig seudominio.com.br +short   # deve retornar o IP
-```
-
-Teste o acesso com o usuário de deploy:
-
-```bash
-ssh deploy@SEU_IP   # deve conectar sem pedir senha
-```
-
-### 2. Preparar a máquina local
-
-```bash
-gem install kamal
-docker info   # confirme que o Docker está rodando
-```
-
-Tenha uma conta no [Docker Hub](https://hub.docker.com) (a imagem será publicada lá).
-
-### 3. Preencher `config/deploy.yml`
-
-Edite o arquivo existente e substitua os placeholders:
-
-| Placeholder | Substituir por |
+| Variável | Valor / origem |
 |---|---|
-| `SEU_USUARIO_DOCKERHUB` | seu usuário do Docker Hub (em `image:` e `registry.username`) |
-| `SEU_IP_DO_SERVIDOR` | o IP da VPS (em `servers.web`, `servers.job` e nos `accessories`) |
-| `SEU_DOMINIO.com.br` | seu domínio (em `proxy.host`) |
+| `DATABASE_URL` | `${{Postgres.DATABASE_URL}}` |
+| `REDIS_URL` | `${{Redis.REDIS_URL}}` |
+| `SECRET_KEY_BASE` | gere com `bin/rails secret` |
+| `PORT` | `3000` |
+| `APP_HOST` | `www.videiraclinic.com.br` |
+| `RESEND_API_KEY` | chave `re_...` do Resend |
+| `MAILER_FROM` | `Videira Clinic <nao-responda@videiraclinic.com.br>` |
+| `INFINITEPAY_HANDLE` | seu handle (sem o `$`) |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | credenciais OAuth do Google Cloud |
+| `OWNER_EMAIL` / `OWNER_PASSWORD` | admin criado pelo seed |
+| `CANCELLATION_LEAD_HOURS` | `48` (opcional) |
+| `PAYMENT_EXPIRY_MINUTES` | `30` (opcional) |
 
-O arquivo já está estruturado com:
-- **web** (Rails) + **job** (Sidekiq) no mesmo host
-- **accessories**: PostgreSQL 16 e Redis 7
-- variáveis `clear` (RAILS_ENV, REDIS_URL, regras de negócio) e `secret` (credenciais)
-- `proxy.ssl: true` + `proxy.app_port: 3000` (Let's Encrypt automático, roteando para a porta do Rails)
-- **`volumes:`** — volume persistente `videira_dental_storage:/rails/storage` para os uploads do Active Storage (avatares e logo). Sem ele, as imagens seriam perdidas a cada deploy.
+> ⚠️ As referências `${{Postgres.DATABASE_URL}}` e `${{Redis.REDIS_URL}}` **só resolvem se
+> estiverem no serviço**. Em "Shared Variables" do projeto elas ficam vazias → `Database URL cannot be empty`.
 
-> Este app **não usa Rails credentials** (é 100% movido a ENV), então **não precisa de `RAILS_MASTER_KEY` nem de `config/master.key`**.
+**E-mail:** a Railway **bloqueia portas SMTP de saída** (587/465/25), então usamos a **API HTTP
+do Resend** (porta 443) em vez de SMTP. Detalhes em `DEPLOY_PRODUCAO.md`.
 
-### 4. Preencher `.kamal/secrets`
+### 3. Domínio e HTTPS
 
-Edite o arquivo existente (já no `.gitignore` — nunca é commitado) com os valores reais:
+No serviço → **Settings → Networking → Custom Domain**, adicione `www.videiraclinic.com.br` e
+crie no DNS (registro.br) o **CNAME** apontando para o alvo informado pela Railway. O **HTTPS é
+automático** (a Railway emite o certificado). O domínio pelado depende de CNAME na raiz (não
+suportado pelo registro.br) — por isso usamos só o `www`.
 
-```bash
-KAMAL_REGISTRY_PASSWORD=sua-senha-dockerhub
-SECRET_KEY_BASE=...                 # gere com: bin/rails secret
-DATABASE_URL=postgresql://postgres:SENHA@videira-dental-db:5432/videira_dental_production
-POSTGRES_PASSWORD=SENHA
-GOOGLE_CLIENT_ID=...
-GOOGLE_CLIENT_SECRET=...
-INFINITEPAY_HANDLE=seu-handle-sem-cifrao
-OWNER_PASSWORD=SenhaForteOwner!
-APP_HOST=seudominio.com.br
-SMTP_HOST=smtp.postmarkapp.com
-SMTP_PORT=587
-SMTP_USERNAME=...
-SMTP_PASSWORD=...
-```
-
-### 5. Primeiro deploy
+### 4. Deploys seguintes e operação
 
 ```bash
-kamal setup
+git push origin main   # dispara build + deploy automático na Railway
 ```
 
-Esse comando faz tudo de uma vez: build da imagem → push para o Docker Hub → sobe os containers (Rails + Sidekiq + PostgreSQL + Redis) → obtém SSL via Let's Encrypt → roda `db:prepare` (cria e migra o banco; o `bin/docker-entrypoint` cuida disso).
+- **Logs / console:** painel da Railway → serviço → **Deployments / Logs**.
+- **Redeploy manual:** aba **Deployments** → ⋮ no último → **Redeploy**.
+- **Health check:** `curl https://www.videiraclinic.com.br/up`.
+- **Migrations:** rodam sozinhas no boot (`db:prepare`); para algo pontual, use o
+  terminal/Shell do serviço na Railway (`bin/rails ...`).
 
-Ao final, a aplicação estará em `https://seudominio.com.br`. Rode o seed uma vez:
+### Backups
 
-```bash
-kamal app exec 'bin/rails db:seed'
-```
+O **PostgreSQL é gerenciado pela Railway**. Antes de operar com dados reais de clientes:
 
-### 6. Deploys seguintes e operação
-
-```bash
-git push origin main   # envia o código
-kamal deploy           # build + push + swap com zero downtime
-```
-
-Comandos úteis no dia a dia:
-
-```bash
-kamal logs                              # logs em tempo real
-kamal console                           # Rails console no servidor
-kamal app exec 'bin/rails db:migrate'   # rodar migrations
-kamal redeploy                          # redeploy sem rebuild (mais rápido)
-kamal rollback                          # volta para a versão anterior
-kamal app details                       # status dos containers
-curl https://seudominio.com.br/up       # health check do Rails
-```
-
-**Deploy automático no CI (opcional):** adicione os secrets em **Settings → Secrets and variables → Actions** (`KAMAL_REGISTRY_PASSWORD`, `DATABASE_URL`, `SECRET_KEY_BASE`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `INFINITEPAY_HANDLE`, `OWNER_PASSWORD`, SMTP_*) e crie um job `deploy` que rode `kamal deploy` após o job `test` passar.
-
-### Backups (importante)
-
-Nesta configuração, **PostgreSQL e os uploads ficam em volumes no próprio servidor**. Se o servidor falhar, os dados são perdidos sem backup. Configure ao menos:
-
-```bash
-# Dump do banco (rode via cron na VPS, ex.: diário)
-kamal accessory exec db 'pg_dump -U postgres videira_dental_production' > backup_$(date +%F).sql
-
-# Uploads do Active Storage (volume videira_dental_storage)
-# copie periodicamente para fora do servidor (ex.: rsync para outro host ou S3)
-```
-
----
-
-### Alternativa: Deploy manual com Docker + Nginx
-
-Se preferir não usar o Kamal, suba diretamente no servidor:
-
-**1. Build e run da imagem:**
-
-```bash
-docker build -t videira-dental .
-
-# Container Web (Rails)
-docker run -d \
-  -p 3000:3000 \
-  -e RAILS_MASTER_KEY=$(cat config/master.key) \
-  -e DATABASE_URL=postgresql://usuario:senha@localhost:5432/videira_dental_production \
-  -e REDIS_URL=redis://localhost:6379/0 \
-  -e SECRET_KEY_BASE=$(bin/rails secret) \
-  -e GOOGLE_CLIENT_ID=... \
-  -e GOOGLE_CLIENT_SECRET=... \
-  -e INFINITEPAY_CLIENT_ID=... \
-  -e INFINITEPAY_CLIENT_SECRET=... \
-  --name videira-dental \
-  videira-dental
-
-# Container Worker (Sidekiq) — OBRIGATÓRIO para expiração de pagamentos
-docker run -d \
-  -e RAILS_MASTER_KEY=$(cat config/master.key) \
-  -e DATABASE_URL=postgresql://usuario:senha@localhost:5432/videira_dental_production \
-  -e REDIS_URL=redis://localhost:6379/0 \
-  -e SECRET_KEY_BASE=$(bin/rails secret) \
-  --name videira-dental-worker \
-  videira-dental \
-  bundle exec sidekiq
-```
-
-> **Atenção:** o container Worker é obrigatório. Sem ele o `ExpirePaymentsJob` (cron a cada 5 min) nunca roda e as reservas ficam presas em "aguardando pagamento" indefinidamente, sem liberar os horários para novas reservas.
-
-**2. Configurar Nginx como proxy reverso:**
-
-```nginx
-server {
-    server_name seudominio.com.br;
-
-    location / {
-        proxy_pass http://localhost:3000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-}
-```
-
-**3. Obter SSL com Certbot:**
-
-```bash
-sudo apt install certbot python3-certbot-nginx -y
-sudo certbot --nginx -d seudominio.com.br
-```
+- Confirme que o plano do banco **não expira** (migre para um plano pago se necessário).
+- Configure **backups** do Postgres (snapshots da Railway ou `pg_dump` periódico).
+- Os uploads do Active Storage (avatares/logo) ficam no volume do serviço — inclua-os na rotina de backup.
 
 ---
 
@@ -657,19 +552,15 @@ O Sidekiq (worker) não está rodando. O `ExpirePaymentsJob` é responsável por
 
 **Em desenvolvimento:** suba sempre com `bin/dev` (não `bin/rails server`). O `Procfile.dev` inclui `worker: bundle exec sidekiq`.
 
-**Em produção (Kamal):** o `config/deploy.yml` deve ter o role `job` com `cmd: bundle exec sidekiq` (já incluído no exemplo desta documentação). Verifique se o container do worker está rodando:
+**Em produção (Railway):** web e Sidekiq sobem no mesmo container via `bin/railway-start.sh`
+(o Sidekiq é iniciado em background antes do Puma). Confira nos **Deploy Logs** do serviço se há
+a linha de boot do Sidekiq; se faltar, verifique se `REDIS_URL` está configurado **no serviço**
+(`${{Redis.REDIS_URL}}`).
+
+Para processar manualmente os pagamentos acumulados, use o terminal/Shell do serviço na Railway:
 
 ```bash
-kamal app details          # deve listar containers web e job
-kamal logs -r job          # logs do Sidekiq
-```
-
-**Em produção (Docker manual):** certifique-se de que o container `videira-dental-worker` está ativo (veja a seção de deploy manual acima).
-
-Para processar manualmente os pagamentos acumulados:
-
-```bash
-kamal app exec 'bin/rails runner "ExpirePaymentsJob.perform_now"'
+bin/rails runner "ExpirePaymentsJob.perform_now"
 # ou, localmente:
 bundle exec rails runner "ExpirePaymentsJob.perform_now"
 ```

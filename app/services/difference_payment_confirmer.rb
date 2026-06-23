@@ -7,11 +7,25 @@ class DifferencePaymentConfirmer < ApplicationService
     return success(:not_found)         unless @payment
     return success(:already_processed) if @payment.paid?
 
-    @payment.update!(status: "paid", paid_at: Time.current)
+    ActiveRecord::Base.transaction do
+      @payment.update!(status: "paid", paid_at: Time.current)
+      attach_extras_to_group! if @payment.extras.present?
+    end
     success(@payment)
   rescue ActiveRecord::RecordInvalid => e
     log_error("payment=#{@payment&.id} error=#{e.message}")
     failure(e.message)
+  end
+
+  # Anexa os insumos pagos à reserva e atualiza os totais do grupo.
+  def attach_extras_to_group!
+    group = @payment.booking_group
+    added = Array(@payment.extras).sum { |e| e["price_cents"].to_i * e["quantity"].to_i }
+    group.update!(
+      extras:         Array(group.extras) + Array(@payment.extras),
+      subtotal_cents: group.subtotal_cents.to_i + added,
+      total_cents:    group.total_cents.to_i + added
+    )
   end
 
   # Confirma a partir do payload do webhook/retorno (order_nsu = payment.id).

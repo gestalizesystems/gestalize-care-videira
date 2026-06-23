@@ -41,19 +41,26 @@
               <%= l(b.availability.date, format: "%-d de %B") %> –
               <%= b.availability.starts_at.strftime("%Hh%M") %> às <%= b.availability.ends_at.strftime("%Hh%M") %>
             </p>
+            <% if b == group.bookings.first %>
+              <% Array(group.extras).each do |ins| %>
+                <p class="text-[11px] mt-0.5" style="color: #8D6E63">
+                  + <%= ins["name"] %><%= " ×#{ins["quantity"]}" if ins["quantity"].to_i > 1 %> (insumo) — R$ <%= money(ins["price_cents"].to_i * ins["quantity"].to_i) %>
+                </p>
+              <% end %>
+            <% end %>
             <p class="text-sm font-medium mt-0.5" style="color: #5D4037">
               R$ <%= money(b.price_cents) %>
             </p>
           </div>
-          <%= link_to reserva_path(group),
-                class: "shrink-0 ml-3 p-2 rounded-lg",
-                style: "color: #8D6E63" do %>
+          <button type="button" onclick="<%= open_modal("edit-booking-#{group.id}") %>"
+                class="shrink-0 ml-3 p-2 rounded-lg cursor-pointer"
+                style="color: #8D6E63" aria-label="Alterar reserva">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24"
                  stroke="currentColor" stroke-width="1.5">
               <path stroke-linecap="round" stroke-linejoin="round"
                     d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
             </svg>
-          <% end %>
+          </button>
         </div>
 
 
@@ -62,4 +69,81 @@
   </div>
 
   <%== pagy_nav(@pagy) if @pagy.pages > 1 %>
+
+  <%# ── Modais: Alterar reserva (cliente) ──────────────────────────────────── %>
+  <% @booking_groups.each do |group| %>
+    <%= render layout: "shared/modal", locals: { id: "edit-booking-#{group.id}", title: "Alterar reserva", closable: true } do %>
+      <% if group.confirmed? || group.pending? %>
+        <% if group.bookings.size == 1 %>
+          <% current = group.bookings.first.availability %>
+          <% changeable = current.cancellable? %>
+
+          <p class="label">Turno atual</p>
+          <div class="rounded-2xl p-3 border mb-4 flex items-center justify-between gap-2" style="border-color:#E0E0E0">
+            <div>
+              <p class="text-sm font-medium" style="color:#3E2723"><%= current.label %></p>
+              <p class="text-xs mt-0.5" style="color:#8D6E63">
+                <%= l(current.date, format: "%d/%m") %> · <%= current.starts_at.strftime("%H:%M") %>–<%= current.ends_at.strftime("%H:%M") %>
+              </p>
+            </div>
+            <span class="text-sm font-medium shrink-0" style="color:#5D4037">R$ <%= money(current.price_cents) %></span>
+          </div>
+
+          <% if changeable %>
+            <p class="text-xs mb-4" style="color:#8D6E63">
+              Diferença a menos vira crédito na sua carteira; a mais é abatida do seu crédito (recarregável via Pix).
+            </p>
+
+            <p class="label">Alterar para um turno disponível</p>
+            <% slots = @available_slots.reject { |s| s.id == current.id } %>
+            <% if slots.empty? %>
+              <p class="text-sm mb-4" style="color:#8D6E63">Nenhum turno disponível no momento.</p>
+            <% else %>
+              <div class="flex flex-col gap-2 max-h-60 overflow-y-auto mb-4">
+                <% slots.each do |slot| %>
+                  <%= button_to alterar_reserva_path(group), method: :patch,
+                        params: { availability_id: slot.id }, data: { turbo: false },
+                        form: { class: "w-full" },
+                        class: "w-full rounded-2xl p-3 border hover:bg-[#fef8e1] cursor-pointer transition-colors flex items-center justify-between gap-2",
+                        style: "border-color:#E0E0E0" do %>
+                    <span class="text-left">
+                      <span class="block text-sm font-medium" style="color:#3E2723"><%= slot.label %></span>
+                      <span class="block text-xs" style="color:#8D6E63"><%= l(slot.date, format: "%d/%m") %> · <%= slot.starts_at.strftime("%H:%M") %>–<%= slot.ends_at.strftime("%H:%M") %></span>
+                    </span>
+                    <span class="text-sm font-medium shrink-0" style="color:#5D4037">R$ <%= money(slot.price_cents) %></span>
+                  <% end %>
+                <% end %>
+              </div>
+            <% end %>
+
+            <button type="button" onclick="this.closest('dialog').close(); document.getElementById('cancel-booking-<%= group.id %>').showModal()"
+                    class="w-full py-3 rounded-full text-sm font-medium cursor-pointer border"
+                    style="border-color: #d4183d; color: #d4183d; background: transparent">
+              Cancelar reserva
+            </button>
+          <% else %>
+            <p class="text-sm" style="color:#8D6E63">
+              Alterações e cancelamentos só são permitidos com <%= ENV.fetch("CANCELLATION_LEAD_HOURS", 24).to_i %>h de antecedência.
+            </p>
+          <% end %>
+        <% else %>
+          <p class="text-sm" style="color:#8D6E63">
+            Reservas com múltiplos turnos não podem ser trocadas individualmente — cancele e crie novamente, se necessário.
+          </p>
+        <% end %>
+      <% else %>
+        <p class="text-sm text-center" style="color: #8D6E63">
+          Esta reserva já foi <%= t("booking_group.status.#{group.status}") %> e não pode ser alterada.
+        </p>
+      <% end %>
+    <% end %>
+
+    <% if (group.confirmed? || group.pending?) && group.bookings.size == 1 && group.bookings.first.availability.cancellable? %>
+      <%= render "shared/confirm_modal", id: "cancel-booking-#{group.id}",
+            message: "Cancelar reserva?",
+            detail: "O valor de R$ #{money(group.total_cents)} será retornado como crédito na sua carteira.",
+            confirm_path: cancelar_reserva_path(group.bookings.first), confirm_method: :patch,
+            confirm_label: "Cancelar reserva", danger: true %>
+    <% end %>
+  <% end %>
 <% end %>

@@ -1,17 +1,53 @@
 <% content_for :title, "Carrinho" %>
 
-<div class="flex items-center justify-between mb-6">
-  <h1 class="text-xl font-medium uppercase tracking-wide" style="color: #5D4037">Meu Carrinho</h1>
-  <%= link_to root_path,
-        class: "w-8 h-8 flex items-center justify-center rounded-full bg-white shadow-sm",
-        style: "color: #8D6E63" do %>
-    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
-         stroke="currentColor" stroke-width="2">
-      <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+<div class="relative flex items-center mb-6 h-10">
+  <%= link_to root_path, class: "relative z-10 p-2 -ml-2 hover:bg-white/50 rounded-full inline-block" do %>
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" style="color: #5D4037"
+         fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
     </svg>
   <% end %>
+  <h1 class="absolute inset-x-0 text-center text-base font-medium uppercase tracking-wide" style="color: #5D4037">Meu Carrinho</h1>
 </div>
 
 <div id="cart-items">
   <%= render "items", cart_availabilities: @cart_availabilities %>
 </div>
+
+<%# Modal de extras — fora de #cart-items para permanecer aberto ao adicionar %>
+<%= render "extras_modal" %>
+
+<%# Modal: vincular insumos a uma reserva (quando o carrinho tem só insumos) %>
+<%= render layout: "shared/modal", locals: { id: "link-reservation-modal", title: "Vincular a uma reserva", closable: true } do %>
+  <% if !user_signed_in? %>
+    <p class="text-sm mb-4" style="color:#8D6E63">
+      Faça login para comprar insumos.
+    </p>
+    <%= link_to "Entrar", new_user_session_path, class: "btn-primary w-full text-center block" %>
+  <% elsif @linkable_groups.blank? %>
+    <p class="text-sm mb-4" style="color:#8D6E63">
+      É preciso ter um turno reservado (com data futura) para comprar insumos.
+      Reserve um turno e depois adicione seus insumos.
+    </p>
+    <%= link_to "Ver horários disponíveis", root_path, class: "btn-primary w-full text-center block" %>
+  <% else %>
+    <p class="text-sm mb-4" style="color:#8D6E63">
+      Escolha a reserva à qual estes insumos serão vinculados:
+    </p>
+    <div class="flex flex-col gap-2 max-h-72 overflow-y-auto">
+      <% @linkable_groups.each do |group| %>
+        <% b = group.bookings.detect { |bk| bk.availability && bk.availability.date >= Date.current && !bk.availability.past? } || group.bookings.first %>
+        <%= button_to purchase_extras_carrinho_path(booking_group_id: group.id),
+              method: :post, data: { turbo: false },
+              form: { class: "w-full" },
+              class: "w-full rounded-2xl p-3 border hover:bg-[#fef8e1] cursor-pointer transition-colors text-left",
+              style: "border-color:#E0E0E0" do %>
+          <span class="block text-sm font-medium" style="color:#3E2723"><%= b.availability.label %></span>
+          <span class="block text-xs" style="color:#8D6E63">
+            <%= l(b.availability.date, format: "%d/%m") %> · <%= b.availability.starts_at.strftime("%H:%M") %>–<%= b.availability.ends_at.strftime("%H:%M") %>
+          </span>
+        <% end %>
+      <% end %>
+    </div>
+  <% end %>
+<% end %>

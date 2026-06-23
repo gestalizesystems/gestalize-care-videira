@@ -1,4 +1,5 @@
-<% if cart_availabilities.empty? %>
+<% cart_extras = Extra.from_session(session[:cart_extras]) %>
+<% if cart_availabilities.empty? && cart_extras.empty? %>
   <div class="empty-state">
     <p class="mb-4">Seu carrinho está vazio.</p>
     <%= link_to "Ver horários disponíveis", root_path, class: "btn-cta" %>
@@ -32,22 +33,85 @@
         </div>
       </div>
     <% end %>
+
+    <%# Insumos adicionados %>
+    <% cart_extras.each do |extra, qty| %>
+      <div class="bg-white rounded-2xl shadow-sm p-4 flex items-center justify-between">
+        <div class="flex-1 min-w-0">
+          <p class="font-medium text-sm" style="color: #3E2723">
+            <%= extra.name %><%= " ×#{qty}" if qty > 1 %>
+          </p>
+          <p class="text-xs mt-0.5" style="color: #8D6E63">Insumo</p>
+        </div>
+        <div class="flex items-center gap-3 shrink-0">
+          <span class="text-sm font-medium" style="color: #5D4037">
+            R$ <%= money(extra.price_cents * qty) %>
+          </span>
+          <%= button_to remove_extra_from_carrinho_path(extra_key: extra.id),
+                method: :delete, data: { turbo_stream: true },
+                class: "p-1.5 rounded-full cursor-pointer",
+                style: "background: transparent; color: #8D6E63" do %>
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
+                 stroke="currentColor" stroke-width="2" style="color: #8D6E63">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+            </svg>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
   </div>
 
-  <% subtotal_cents = cart_availabilities.sum(&:price_cents) %>
+  <%# Botão: adicionar insumos %>
+  <button type="button" onclick="<%= open_modal('extras-modal') %>"
+          class="w-full mb-6 py-3 rounded-full text-sm font-medium cursor-pointer border flex items-center justify-center gap-1"
+          style="border-color: #5D4037; color: #5D4037; background: transparent">
+    + Adicionar insumos
+  </button>
+
+  <% if cart_availabilities.any? %>
+    <% clinic = cart_availabilities.first&.clinic %>
+    <% pricing = DiscountCalculator.call(availability_ids: cart_availabilities.map(&:id), clinic: clinic, dentist: current_user).value %>
+  <% else %>
+    <% pricing = { subtotal_cents: 0, discount_cents: 0, total_cents: 0 } %>
+  <% end %>
+  <% extras_total = cart_extras.sum { |extra, qty| extra.price_cents * qty } %>
+  <% total_cents = pricing[:total_cents] + extras_total %>
   <div class="rounded-2xl p-4 mb-6" style="background-color: #fef8e1">
-    <div class="flex justify-between text-sm mb-2" style="color: #8D6E63">
-      <span>Subtotal</span>
-      <span>R$ <%= money(subtotal_cents) %></span>
-    </div>
+    <% if cart_availabilities.any? %>
+      <div class="flex justify-between text-sm mb-2" style="color: #8D6E63">
+        <span>Subtotal</span>
+        <span>R$ <%= money(pricing[:subtotal_cents]) %></span>
+      </div>
+    <% end %>
+    <% if pricing[:discount_cents] > 0 %>
+      <div class="flex justify-between text-sm mb-2" style="color: #388E3C">
+        <span>Desconto</span>
+        <span>− R$ <%= money(pricing[:discount_cents]) %></span>
+      </div>
+    <% end %>
+    <% if extras_total > 0 %>
+      <div class="flex justify-between text-sm mb-2" style="color: #8D6E63">
+        <span>Insumos</span>
+        <span>R$ <%= money(extras_total) %></span>
+      </div>
+    <% end %>
     <div class="flex justify-between font-medium border-t pt-3" style="border-color: #E0D5C0">
       <span style="color: #3E2723">TOTAL</span>
       <span class="text-lg font-medium" style="color: #5D4037">
-        R$ <%= money(subtotal_cents) %>
+        R$ <%= money(total_cents) %>
       </span>
     </div>
   </div>
 
-  <%= link_to "FINALIZAR PEDIDO", confirmar_reservas_path,
-        class: "btn-primary w-full text-center block py-4 text-sm uppercase tracking-wide" %>
+  <% if cart_availabilities.any? %>
+    <%= link_to "FINALIZAR PEDIDO", confirmar_reservas_path,
+          class: "btn-primary w-full text-center block py-4 text-sm uppercase tracking-wide" %>
+  <% else %>
+    <%# Só insumos: precisa vincular a uma reserva confirmada %>
+    <button type="button" onclick="<%= open_modal('link-reservation-modal') %>"
+            class="btn-primary w-full text-center block py-4 text-sm uppercase tracking-wide cursor-pointer">
+      FINALIZAR PEDIDO
+    </button>
+  <% end %>
 <% end %>

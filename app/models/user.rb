@@ -1,15 +1,19 @@
 class User < ApplicationRecord
+  include MoneyConvertible
+  money_field :discount_per_slot
+
   devise :database_authenticatable, :registerable,
          :recoverable, :rememberable, :validatable, :confirmable,
          :omniauthable, omniauth_providers: [:google_oauth2]
 
   has_paper_trail
 
+  validates :discount_per_slot_cents, numericality: { greater_than_or_equal_to: 0 }
+
   belongs_to :clinic, optional: true
   has_many :availabilities, foreign_key: :dentist_id, dependent: :nullify
   has_many :booking_groups, foreign_key: :dentist_id
   has_many :bookings,       foreign_key: :dentist_id
-  has_one_attached :avatar
 
   enum :role, { owner: "owner", dentist: "dentist" }, default: "dentist"
 
@@ -31,6 +35,13 @@ class User < ApplicationRecord
 
   scope :dentists, -> { where(role: "dentist") }
 
+  # Cadastro completo: dentistas precisam de CPF, CRO e telefone preenchidos.
+  # (Cadastro via Google não coleta esses dados, então exigimos depois.)
+  def profile_complete?
+    return true unless dentist?
+    cpf.present? && cro.present? && phone.present?
+  end
+
   def self.from_omniauth(auth)
     return nil if auth.info.email.blank?
 
@@ -38,12 +49,8 @@ class User < ApplicationRecord
       u.email    = auth.info.email
       u.name     = auth.info.name.presence || auth.info.email.split("@").first
       u.password = Devise.friendly_token[0, 20]
+      u.clinic ||= Clinic.first # sem clínica, o usuário some da listagem admin
       u.skip_confirmation! # e-mail já é verificado pela Google
     end.tap(&:save)
-  end
-
-  def avatar_url
-    return nil unless avatar.attached? && avatar.blob&.persisted?
-    Rails.application.routes.url_helpers.rails_blob_path(avatar, only_path: true)
   end
 end

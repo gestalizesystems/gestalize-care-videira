@@ -4,19 +4,19 @@
 <% if count > 0 %>
   <div class="fixed bottom-0 left-0 right-0 z-30 px-4 pb-4 pt-2"
        style="background: linear-gradient(to top, #fef8e1 80%, transparent)">
-    <div class="max-w-md mx-auto bg-white rounded-2xl shadow-lg px-4 py-3 flex items-center gap-3">
-      <span class="text-xs font-medium shrink-0" style="color: #8D6E63">
+    <div class="max-w-md mx-auto bg-white rounded-2xl shadow-lg px-3 py-3 flex items-center gap-2">
+      <span class="text-xs font-medium min-w-0 leading-tight" style="color: #8D6E63">
         <%= count %> <%= count == 1 ? "turno selecionado" : "turnos selecionados" %>
       </span>
-      <div class="flex items-stretch gap-2 ml-auto">
+      <div class="flex items-stretch gap-2 ml-auto shrink-0">
         <%= button_to carrinho_path, method: :delete,
-              class: "btn-sm-outline inline-flex items-center justify-center text-center text-xs!",
+              class: "btn-sm-outline inline-flex items-center justify-center text-center text-xs! whitespace-nowrap px-3!",
               form: { class: "contents" },
               data: { turbo: false } do %>
-          Limpar seleção
+          Limpar
         <% end %>
         <%= link_to carrinho_path,
-              class: "btn-sm-primary inline-flex items-center justify-center text-center text-xs!",
+              class: "btn-sm-primary inline-flex items-center justify-center text-center text-xs! whitespace-nowrap px-3!",
               data: { turbo_frame: "_top" } do %>
           Adicionar ao carrinho
         <% end %>

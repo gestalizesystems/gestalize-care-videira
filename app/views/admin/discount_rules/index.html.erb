@@ -9,7 +9,7 @@
 </div>
 
 <p class="text-sm mb-5" style="color: #8D6E63">
-  Quanto mais horários reservados de uma vez, maior o desconto aplicado automaticamente.
+  Quanto mais turnos reservados de uma vez, maior o desconto por turno aplicado automaticamente.
 </p>
 
 <% if @rules.empty? %>
@@ -20,10 +20,10 @@
       <div class="bg-white rounded-2xl shadow-sm p-4 flex items-center justify-between <%= 'opacity-50' unless rule.active? %>">
         <div>
           <p class="font-medium text-sm" style="color: #3E2723">
-            <%= rule.min_slots %> ou mais horários
+            <%= rule.min_slots %> ou mais turnos
           </p>
           <p class="text-xl font-medium mt-1" style="color: #388E3C">
-            <%= rule.discount_percent %>% de desconto
+            R$ <%= money(rule.discount_cents) %> por turno
           </p>
         </div>
         <div class="flex items-center gap-2">
@@ -50,15 +50,18 @@
 <%= render layout: "shared/modal", locals: { id: "new-rule-modal", title: "Nova regra de desconto" } do %>
   <%= form_with url: admin_discount_rules_path, method: :post, data: { turbo: false }, class: "flex flex-col gap-4" do %>
     <div>
-      <label class="label">Mínimo de horários</label>
+      <label class="label">Mínimo de turnos</label>
       <input type="number" name="discount_rule[min_slots]" min="2" required
              placeholder="2" class="input-field">
-      <p class="text-xs mt-1" style="color:#8D6E63">A partir de quantos horários o desconto é aplicado.</p>
+      <p class="text-xs mt-1" style="color:#8D6E63">A partir de quantos turnos o desconto é aplicado.</p>
     </div>
     <div>
-      <label class="label">Desconto (%)</label>
-      <input type="number" name="discount_rule[discount_percent]" min="1" max="100" required
-             placeholder="10" class="input-field">
+      <label class="label">Desconto por turno</label>
+      <input type="text" inputmode="numeric" name="discount_rule[discount]" required
+             placeholder="R$ 0,00"
+             data-controller="input-mask" data-input-mask-pattern-value="money"
+             class="input-field">
+      <p class="text-xs mt-1" style="color:#8D6E63">Valor descontado de cada turno da reserva.</p>
     </div>
     <%= render "shared/modal_actions", label: "Criar regra" %>
   <% end %>
@@ -69,15 +72,18 @@
   <%= render layout: "shared/modal", locals: { id: "edit-rule-#{rule.id}", title: "Editar regra de desconto" } do %>
     <%= form_with url: admin_discount_rule_path(rule), method: :patch, data: { turbo: false }, class: "flex flex-col gap-4" do %>
       <div>
-        <label class="label">Mínimo de horários</label>
+        <label class="label">Mínimo de turnos</label>
         <input type="number" name="discount_rule[min_slots]" min="2" required
                value="<%= rule.min_slots %>" class="input-field">
-        <p class="text-xs mt-1" style="color:#8D6E63">A partir de quantos horários o desconto é aplicado.</p>
+        <p class="text-xs mt-1" style="color:#8D6E63">A partir de quantos turnos o desconto é aplicado.</p>
       </div>
       <div>
-        <label class="label">Desconto (%)</label>
-        <input type="number" name="discount_rule[discount_percent]" min="1" max="100" required
-               value="<%= rule.discount_percent %>" class="input-field">
+        <label class="label">Desconto por turno</label>
+        <input type="text" inputmode="numeric" name="discount_rule[discount]" required
+               value="<%= number_with_precision(rule.discount, precision: 2, separator: ',', delimiter: '.') %>"
+               data-controller="input-mask" data-input-mask-pattern-value="money"
+               class="input-field">
+        <p class="text-xs mt-1" style="color:#8D6E63">Valor descontado de cada turno da reserva.</p>
       </div>
       <%= render "shared/modal_actions", label: "Salvar alterações" %>
     <% end %>
@@ -86,7 +92,7 @@
   <% if rule.active? %>
     <%= render "shared/confirm_modal", id: "delete-rule-#{rule.id}",
           message: "Excluir desconto?",
-          detail: "#{rule.min_slots} horários → #{rule.discount_percent}% de desconto",
+          detail: "#{rule.min_slots} turnos → R$ #{money(rule.discount_cents)} por turno",
           confirm_path: admin_discount_rule_path(rule), confirm_method: :delete,
           confirm_label: "Excluir", danger: true %>
   <% end %>
