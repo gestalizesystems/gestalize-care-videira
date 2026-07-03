@@ -1,6 +1,37 @@
-# Videira Clinic
+<div align="center">
 
-A SaaS platform for shift-based rental of dental practice rooms, with integrated scheduling, online payments, and financial management.
+# Gestalize Care
+
+### Enterprise SaaS for Healthcare Workspace Booking & Practice Management
+
+A multi-tenant platform that enables healthcare providers to manage room reservations, scheduling, online payments and clinic operations through a unified system.
+
+<br>
+
+![Ruby](https://img.shields.io/badge/Ruby-3.4-CC342D?style=flat-square&logo=ruby&logoColor=white)
+![Rails](https://img.shields.io/badge/Rails-8-CC0000?style=flat-square&logo=rubyonrails&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?style=flat-square&logo=postgresql&logoColor=white)
+![Hotwire](https://img.shields.io/badge/Hotwire-Turbo-FF5F1F?style=flat-square)
+![Tailwind CSS](https://img.shields.io/badge/TailwindCSS-4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)
+![Redis](https://img.shields.io/badge/Redis-DD0031?style=flat-square&logo=redis&logoColor=white)
+![Sidekiq](https://img.shields.io/badge/Sidekiq-Background%20Jobs-76B900?style=flat-square)
+![RSpec](https://img.shields.io/badge/RSpec-Tested-success?style=flat-square)
+
+</div>
+
+---
+
+<p align="center">
+
+<a href="#overview">Overview</a> •
+<a href="#features">Features</a> •
+<a href="#architecture">Architecture</a> •
+<a href="#technology-stack">Technology Stack</a> •
+<a href="#roadmap">Roadmap</a>
+
+</p>
+
+---
 
 ## Overview
 
