@@ -25,11 +25,13 @@ Developed by **Gestalize Systems**
 
 ## Overview
 
-Gestalize Care is a multi-tenant SaaS platform that enables healthcare organizations to manage consultation rooms, workspace reservations and operational workflows through a unified system.
+Gestalize Care is a multi-tenant SaaS systems that enables healthcare organizations to manage consultation rooms, workspace reservations and operational workflows through a unified system.
 
-Designed for clinics and independent healthcare professionals, the platform combines scheduling, online payments, financial management and administrative tools into a seamless booking experience.
+Designed for clinics and independent healthcare professionals, the application combines scheduling, online payments, financial management and administrative tools into a seamless booking experience.
 
-## Business Model
+By combining workspace reservations, financial operations and administrative workflows into a single platform, Gestalize Care helps clinics increase room utilization while providing healthcare professionals with a modern self-service experience.
+
+## Domain Model
 
 | Entity | Description |
 |----------|-------------|
@@ -55,6 +57,8 @@ Professionals browse available consultation rooms, select one or more shifts, co
 
 Meanwhile, clinics manage availability, pricing, professionals, reservations and financial operations from a centralized administrative portal, reducing manual work and improving workspace utilization.
 
+Reservations, payments and operational workflows are tightly integrated, ensuring a consistent booking lifecycle while reducing administrative overhead for clinics.
+
 ## Key Features
 
 ### Reservations
@@ -64,14 +68,6 @@ Meanwhile, clinics manage availability, pricing, professionals, reservations and
 - Recurring availability
 - Booking cart
 - Automatic conflict prevention
-
-### Operations
-
-- Professional management
-- Pricing rules
-- Resource catalog
-- Calendar synchronization
-- Administrative dashboard
 
 ### Payments
 
@@ -89,9 +85,17 @@ Meanwhile, clinics manage availability, pricing, professionals, reservations and
 - Audit trail
 - Secure authentication
 
+### Operations
+
+- Professional management
+- Pricing rules
+- Resource catalog
+- Calendar synchronization
+- Administrative dashboard
+
 ## Architecture
 
-The application follows a server-rendered architecture with real-time interface updates, avoiding the complexity of a separate frontend framework while preserving a responsive user experience.
+The application follows a server-rendered architecture with real-time interface updates. The application follows a modular server-rendered architecture focused on reliability, maintainability and real-time user interactions.
 
 - **Transactional booking.** Reservations and payments are created atomically with row-level locking to guarantee that a room cannot be booked twice under concurrent load.
 - **Asynchronous processing.** Scheduled and background tasks handle payment expiration, recurring availability generation, and calendar synchronization independently of the request cycle.
@@ -100,27 +104,25 @@ The application follows a server-rendered architecture with real-time interface 
 - **Authorization and auditing.** Access is enforced per role, and changes to core records are versioned for traceability.
 
 ```text
-                        Healthcare Professional
-                                  │
-                                  ▼
-                     Ruby on Rails Application
-                                  │
-        ┌─────────────┬───────────┴─────────────┬─────────────┐
-        │             │                         │             │
-        ▼             ▼                         ▼             ▼
-   Reservations    Payments              Administration   Scheduling
-        │             │                         │
-        └─────────────┴───────────┬─────────────┘
-                                  ▼
-                            PostgreSQL Database
-                                  │
-                 ┌────────────────┴────────────────┐
-                 ▼                                 ▼
-         Redis / Sidekiq                  External Services
-                                                   │
-                         ┌─────────────────────────┴─────────────────────────┐
-                         ▼                                                   ▼
-                  Payment Gateway                                   Calendar APIs
+Healthcare Professional
+          │
+          ▼
+ Ruby on Rails Application
+          │
+ ┌────────┼─────────┐
+ ▼        ▼         ▼
+Reservations Payments Admin
+          │
+          ▼
+ PostgreSQL Database
+          │
+ ┌────────┴────────┐
+ ▼                 ▼
+Redis/Sidekiq  External Services
+                     │
+          ┌──────────┴──────────┐
+          ▼                     ▼
+ Payment Gateway       Calendar APIs
 ```
 
 ## Technology Stack
@@ -130,7 +132,7 @@ The application follows a server-rendered architecture with real-time interface 
 | Backend | Ruby on Rails |
 | Database | PostgreSQL |
 | Frontend | Hotwire (Turbo and Stimulus), Tailwind CSS |
-| Background processing | Sidekiq, Redis |
+| Background Jobs | Sidekiq, Redis |
 | Authentication | Devise, OmniAuth (Google) |
 | Authorization | Pundit |
 | Auditing | PaperTrail |
@@ -165,7 +167,7 @@ spec/
 - Financial dashboard
 - Calendar synchronization
 
-### Plannd
+### Planned
 
 - Multi-tenant workspaces
 - Notifications center
