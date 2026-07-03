@@ -179,4 +179,4 @@ _Screenshots to be added._
 
 ## License
 
-Proprietary. All rights reserved.
+Gestalize Care is proprietary software developed and maintained by Gestalize Systems. All rights reserved.
