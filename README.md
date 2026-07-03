@@ -25,20 +25,31 @@ Developed by **Gestalize Systems**
 
 ## Overview
 
-Videira Clinic is a booking and management platform that enables dental professionals to rent fully equipped clinic rooms by shift. It covers the complete workflow: browsing availability, building a booking, paying online, and receiving automatic confirmation.
+Gestalize Care is a multi-tenant platform designed to help healthcare providers manage shared workspaces, appointments and operational workflows.
 
-Clinic administrators manage schedules, pricing, clients, add-on items, and finances through a dedicated administrative area. The platform is designed for reliability under concurrent access, ensuring that a room is never booked twice and that a reservation is only confirmed once payment is settled.
+The platform enables clinics to monetize underutilized consultation rooms while allowing independent professionals to reserve fully equipped spaces on demand through a seamless self-service experience.
 
-## Business Problem
+From scheduling and payments to financial management and operational control, Gestalize Care centralizes the entire reservation lifecycle into a single platform.
 
-Independent dental professionals frequently need occasional access to a fully equipped office without committing to a long-term lease. At the same time, clinics have idle capacity during shifts that are not fully booked.
+## Core Concepts
 
-Traditional coordination relies on messaging apps and manual agendas, which introduces recurring problems:
+| Entity | Description |
+|----------|-------------|
+| Clinic | Healthcare organization offering consultation rooms |
+| Professional | Independent healthcare provider |
+| Workspace | Consultation room available for reservation |
+| Shift | Time slot available for booking |
+| Reservation | Booking made by a professional |
+| Wallet | Internal balance used for credits and refunds |
+| Payment | Transaction associated with a reservation |
 
-- Double bookings and scheduling conflicts.
-- No guarantee of payment before the appointment.
-- No structured record of reservations, cancellations, or refunds.
-- Time-consuming manual management of availability and pricing.
+## Why Gestalize Care?
+
+Healthcare professionals increasingly prefer flexible workspaces instead of long-term office leases, while clinics often struggle with idle room capacity and fragmented scheduling processes.
+
+Traditional workflows based on spreadsheets, messaging applications and phone calls frequently lead to booking conflicts, inconsistent payment tracking and unnecessary administrative overhead.
+
+Gestalize Care addresses these challenges by providing an integrated platform for reservations, scheduling, online payments and clinic operations.
 
 ## Solution
 
@@ -50,20 +61,37 @@ Confirmation is handled in real time: once a payment is approved, the reservatio
 
 ## Key Features
 
-- **Shift-based scheduling.** Availability organized by shift, with recurring templates that generate future availability automatically.
-- **Cart and single-transaction checkout.** Multiple shifts booked and paid in one operation.
-- **Online payments via Pix.** Automatic, webhook-driven confirmation.
-- **Automatic slot release.** Unpaid reservations expire and free the room without manual action.
-- **Credit wallet.** Cancellations and adjustments are settled as account credit, applied automatically to future bookings.
-- **Add-on catalog.** Optional items and consumables that can be attached to a reservation.
-- **Flexible discounts.** Volume-based rules and individual per-client discounts.
-- **Booking changes and cancellations.** Rule-based windows, with automatic credit or additional charge for price differences.
-- **Calendar integration.** Confirmed reservations are synced to the clinic calendar and shared with the client.
-- **Financial dashboard.** Monthly view of revenue by category and outstanding credit.
-- **Administrative area.** Management of clinics, schedules, clients, pricing, add-ons, reservations, and payments.
-- **Audit trail.** Full history of changes across core records.
-- **Authentication.** Email and social sign-in, with mandatory email verification.
-- **Security controls.** Rate limiting, request protection, and enforced transport security.
+### Workspace Booking
+
+- Room reservation management
+- Shift-based scheduling
+- Recurring availability
+- Booking cart
+- Automatic conflict prevention
+
+### Payments
+
+- Pix payment integration
+- Webhook-based confirmation
+- Automatic payment expiration
+- Credit wallet
+- Refund management
+
+### Practice Management
+
+- Professional management
+- Pricing rules
+- Resource catalog
+- Calendar synchronization
+- Administrative dashboard
+
+### Platform
+
+- Multi-tenant architecture
+- Background processing
+- Role-based authorization
+- Audit trail
+- Secure authentication
 
 ## Architecture Overview
 
@@ -74,6 +102,24 @@ The application follows a server-rendered architecture with real-time interface 
 - **Event-driven confirmation.** Payment status is confirmed through provider callbacks, keeping reservation state consistent with the payment gateway.
 - **Domain-oriented services.** Business rules for booking, cancellation, pricing, and credit are encapsulated in dedicated service objects, keeping controllers thin and behavior testable.
 - **Authorization and auditing.** Access is enforced per role, and changes to core records are versioned for traceability.
+
+```text
+                     Browser
+                        │
+              Ruby on Rails Application
+                        │
+        ┌───────────────┼───────────────┐
+        │               │               │
+ Booking Service   Payment Service   Admin Portal
+        │               │               │
+        └───────────────┼───────────────┘
+                        │
+                   PostgreSQL
+                        │
+             Redis + Sidekiq Workers
+                        │
+      Payment Gateway • Calendar APIs
+```
 
 ## Technology Stack
 
@@ -91,27 +137,45 @@ The application follows a server-rendered architecture with real-time interface 
 
 ## Project Structure
 
-High-level organization of the application:
-
-```
+```text
 app/
-  controllers/    Request handling for public, client, and administrative areas
-  models/         Domain entities and validations
-  services/       Business logic (booking, pricing, cancellation, credit, payments)
-  jobs/           Background and scheduled tasks
-  views/          Server-rendered interface with real-time components
+├── controllers/
+├── models/
+├── services/
+├── policies/
+├── jobs/
+├── mailers/
+├── views/
+├── javascript/
+
+config/
+
+db/
+
+spec/
 ```
 
 ## Screenshots
 
 _Screenshots to be added._
 
-## Future Improvements
+## Roadmap
 
-- Multi-clinic support with isolated administration per tenant.
-- Reporting and export tools for financial reconciliation.
-- Configurable notification channels.
-- Public API for third-party integrations.
+### Current
+
+- Room reservations
+- Online payments
+- Credit wallet
+- Financial dashboard
+- Calendar synchronization
+
+### Next
+
+- Multi-tenant workspaces
+- Notifications center
+- Reporting module
+- Public API
+- Mobile application
 
 ## License
 
