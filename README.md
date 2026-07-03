@@ -25,13 +25,11 @@ Developed by **Gestalize Systems**
 
 ## Overview
 
-Gestalize Care is a multi-tenant platform designed to help healthcare providers manage shared workspaces, appointments and operational workflows.
+Gestalize Care is a multi-tenant SaaS platform that enables healthcare organizations to manage consultation rooms, workspace reservations and operational workflows through a unified system.
 
-The platform enables clinics to monetize underutilized consultation rooms while allowing independent professionals to reserve fully equipped spaces on demand through a seamless self-service experience.
+Designed for clinics and independent healthcare professionals, the platform combines scheduling, online payments, financial management and administrative tools into a seamless booking experience.
 
-From scheduling and payments to financial management and operational control, Gestalize Care centralizes the entire reservation lifecycle into a single platform.
-
-## Core Concepts
+## Business Model
 
 | Entity | Description |
 |----------|-------------|
@@ -45,29 +43,35 @@ From scheduling and payments to financial management and operational control, Ge
 
 ## Why Gestalize Care?
 
-Healthcare professionals increasingly prefer flexible workspaces instead of long-term office leases, while clinics often struggle with idle room capacity and fragmented scheduling processes.
+Gestalize Care was designed around a simple idea: consultation rooms should be as easy to reserve as meeting rooms.
 
-Traditional workflows based on spreadsheets, messaging applications and phone calls frequently lead to booking conflicts, inconsistent payment tracking and unnecessary administrative overhead.
+Instead of relying on spreadsheets, messaging applications and manual coordination, clinics can automate room availability, payments, reservations and operational workflows while maximizing workspace utilization.
 
-Gestalize Care addresses these challenges by providing an integrated platform for reservations, scheduling, online payments and clinic operations.
+Healthcare professionals benefit from a modern self-service booking experience, allowing them to reserve fully equipped consultation rooms whenever they need them.
 
 ## Solution
 
-The platform centralizes availability, booking, and payment in a single flow.
+Professionals browse available consultation rooms, select one or more shifts, complete the reservation through an integrated payment flow and receive confirmation automatically.
 
-Professionals browse available shifts, add one or more to a cart, and complete the reservation with an online payment. A reservation and its payment are created in a single atomic transaction, which prevents concurrent double booking. If payment is not completed within the allowed window, the slot is automatically released and becomes available again.
-
-Confirmation is handled in real time: once a payment is approved, the reservation is confirmed, the professional is notified, and the corresponding record is updated without manual intervention. Cancellations and changes are governed by clear rules, with balances handled through an internal credit wallet.
+Meanwhile, clinics manage availability, pricing, professionals, reservations and financial operations from a centralized administrative portal, reducing manual work and improving workspace utilization.
 
 ## Key Features
 
-### Workspace Booking
+### Reservations
 
 - Room reservation management
 - Shift-based scheduling
 - Recurring availability
 - Booking cart
 - Automatic conflict prevention
+
+### Operations
+
+- Professional management
+- Pricing rules
+- Resource catalog
+- Calendar synchronization
+- Administrative dashboard
 
 ### Payments
 
@@ -77,14 +81,6 @@ Confirmation is handled in real time: once a payment is approved, the reservatio
 - Credit wallet
 - Refund management
 
-### Practice Management
-
-- Professional management
-- Pricing rules
-- Resource catalog
-- Calendar synchronization
-- Administrative dashboard
-
 ### Platform
 
 - Multi-tenant architecture
@@ -93,7 +89,7 @@ Confirmation is handled in real time: once a payment is approved, the reservatio
 - Audit trail
 - Secure authentication
 
-## Architecture Overview
+## Architecture
 
 The application follows a server-rendered architecture with real-time interface updates, avoiding the complexity of a separate frontend framework while preserving a responsive user experience.
 
@@ -104,21 +100,17 @@ The application follows a server-rendered architecture with real-time interface 
 - **Authorization and auditing.** Access is enforced per role, and changes to core records are versioned for traceability.
 
 ```text
-                     Browser
-                        │
-              Ruby on Rails Application
-                        │
-        ┌───────────────┼───────────────┐
-        │               │               │
- Booking Service   Payment Service   Admin Portal
-        │               │               │
-        └───────────────┼───────────────┘
-                        │
-                   PostgreSQL
-                        │
-             Redis + Sidekiq Workers
-                        │
-      Payment Gateway • Calendar APIs
+     Healthcare Professional
+            │
+      Ruby on Rails
+            │
+ Booking │ Payments │ Admin
+            │
+      PostgreSQL
+            │
+ Redis / Sidekiq
+            │
+Payment Gateway • Calendar APIs
 ```
 
 ## Technology Stack
