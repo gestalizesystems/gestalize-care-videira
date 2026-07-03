@@ -39,3 +39,7 @@
 
 /app/assets/builds/*
 !/app/assets/builds/.keep
+
+# Documentação interna — não publicar no repositório público
+/docs/
+/CLAUDE.md
