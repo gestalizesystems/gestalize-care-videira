@@ -155,10 +155,6 @@ db/
 spec/
 ```
 
-## Screenshots
-
-_Screenshots to be added._
-
 ## Roadmap
 
 ### Completed
