@@ -6,15 +6,15 @@
 
 ### Healthcare Workspace Booking & Practice Management Platform
 
-Manage healthcare spaces, professionals, reservations, payments and clinic operations through a unified multi-tenant platform.
+A unified platform for managing room reservations, scheduling, online payments and operational workflows for clinics and independent healthcare professionals.
 
 <br>
 
-![Ruby](https://img.shields.io/badge/Ruby-3.4-CC342D?style=for-the-badge&logo=ruby&logoColor=white)
-![Rails](https://img.shields.io/badge/Rails-8-CC0000?style=for-the-badge&logo=rubyonrails&logoColor=white)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?style=for-the-badge&logo=postgresql&logoColor=white)
-![Hotwire](https://img.shields.io/badge/Hotwire-Turbo-FF5F1F?style=for-the-badge)
-![Tailwind CSS](https://img.shields.io/badge/TailwindCSS-4-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)
+![Ruby](https://img.shields.io/badge/RUBY-CC342D?style=for-the-badge&logo=ruby&logoColor=white)
+![Ruby on Rails](https://img.shields.io/badge/RAILS-CC0000?style=for-the-badge&logo=rubyonrails&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/POSTGRESQL-336791?style=for-the-badge&logo=postgresql&logoColor=white)
+![Hotwire](https://img.shields.io/badge/HOTWIRE-FF5F1F?style=for-the-badge)
+![Tailwind CSS](https://img.shields.io/badge/TAILWIND_CSS-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)
 
 <br><br>
 
