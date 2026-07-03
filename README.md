@@ -100,26 +100,36 @@ The application follows a server-rendered architecture with real-time interface 
 - **Authorization and auditing.** Access is enforced per role, and changes to core records are versioned for traceability.
 
 ```text
-     Healthcare Professional
-            │
-      Ruby on Rails
-            │
- Booking │ Payments │ Admin
-            │
-      PostgreSQL
-            │
- Redis / Sidekiq
-            │
-Payment Gateway • Calendar APIs
+                        Healthcare Professional
+                                  │
+                                  ▼
+                     Ruby on Rails Application
+                                  │
+        ┌─────────────┬───────────┴─────────────┬─────────────┐
+        │             │                         │             │
+        ▼             ▼                         ▼             ▼
+   Reservations    Payments              Administration   Scheduling
+        │             │                         │
+        └─────────────┴───────────┬─────────────┘
+                                  ▼
+                            PostgreSQL Database
+                                  │
+                 ┌────────────────┴────────────────┐
+                 ▼                                 ▼
+         Redis / Sidekiq                  External Services
+                                                   │
+                         ┌─────────────────────────┴─────────────────────────┐
+                         ▼                                                   ▼
+                  Payment Gateway                                   Calendar APIs
 ```
 
 ## Technology Stack
 
 | Layer | Technology |
 |---|---|
-| Application framework | Ruby on Rails |
+| Backend | Ruby on Rails |
 | Database | PostgreSQL |
-| Interface | Hotwire (Turbo and Stimulus), Tailwind CSS |
+| Frontend | Hotwire (Turbo and Stimulus), Tailwind CSS |
 | Background processing | Sidekiq, Redis |
 | Authentication | Devise, OmniAuth (Google) |
 | Authorization | Pundit |
@@ -138,12 +148,10 @@ app/
 ├── jobs/
 ├── mailers/
 ├── views/
-├── javascript/
+└── javascript/
 
 config/
-
 db/
-
 spec/
 ```
 
@@ -153,7 +161,7 @@ _Screenshots to be added._
 
 ## Roadmap
 
-### Current
+### Completed
 
 - Room reservations
 - Online payments
@@ -161,7 +169,7 @@ _Screenshots to be added._
 - Financial dashboard
 - Calendar synchronization
 
-### Next
+### Plannd
 
 - Multi-tenant workspaces
 - Notifications center
