@@ -9,6 +9,8 @@ gem "turbo-rails"
 gem "stimulus-rails"
 gem "tailwindcss-rails"
 gem "redis", ">= 4.0.1"
+# Rate limiting / bloqueio de abuso (força bruta, scanners automatizados)
+gem "rack-attack"
 gem "tzinfo-data", platforms: %i[windows jruby]
 gem "bootsnap", require: false
 
