@@ -24,18 +24,6 @@ Developed by **Gestalize Systems**
 
 ---
 
-<p align="center">
-
-<a href="#overview">Overview</a> •
-<a href="#features">Features</a> •
-<a href="#architecture">Architecture</a> •
-<a href="#technology-stack">Technology Stack</a> •
-<a href="#roadmap">Roadmap</a>
-
-</p>
-
----
-
 ## Overview
 
 Videira Clinic is a booking and management platform that enables dental professionals to rent fully equipped clinic rooms by shift. It covers the complete workflow: browsing availability, building a booking, paying online, and receiving automatic confirmation.
