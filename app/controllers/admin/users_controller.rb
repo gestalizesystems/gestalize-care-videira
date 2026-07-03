@@ -147,7 +147,7 @@ class Admin::UsersController < Admin::BaseController
   end
 
   def admin_user_params
-    p = params.require(:user).permit(:name, :phone, :birth_date, :cpf, :cro, :specialty, :role, :discount_per_slot)
+    p = params.require(:user).permit(:name, :phone, :birth_date, :cpf, :cro, :specialty, :discount_per_slot)
     if p.key?(:discount_per_slot)
       p[:discount_per_slot_cents] = price_to_cents(p.delete(:discount_per_slot)).to_i
     end
