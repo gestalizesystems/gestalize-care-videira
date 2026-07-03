@@ -2,7 +2,6 @@
 
 # Gestalize Care
 
----
 
 ### Healthcare Workspace Booking & Practice Management Platform
 
