@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="./banner2.png" alt="Gestalize Care Banner" width="100%">
+</p>
+
 <div align="center">
 
 # Gestalize Care
