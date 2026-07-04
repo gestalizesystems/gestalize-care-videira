@@ -9,8 +9,10 @@ end
 puts "  Clínica: #{clinic.name}"
 
 # ── Users ───────────────────────────────────────────────────────────────────
-senha       = ENV.fetch("OWNER_PASSWORD", "Owner@Videira2024!")
-owner_email = ENV.fetch("OWNER_EMAIL", "owner@videiradental.com.br")
+# Em produção, defina OWNER_PASSWORD via variável de ambiente. Sem ela, gera uma
+# senha aleatória (evita credencial padrão no código público).
+senha       = ENV.fetch("OWNER_PASSWORD") { SecureRandom.base58(20) }
+owner_email = ENV.fetch("OWNER_EMAIL", "owner@example.com")
 
 owner = User.find_or_create_by!(email: owner_email) do |u|
   u.name     = "Proprietário Videira"
@@ -82,5 +84,5 @@ rescue => e
 end
 
 puts "\nSeed concluído!"
-puts "  owner:   #{owner_email} | #{senha}"
-puts "  dentist: dentista@videiradental.com.br | #{senha}"
+puts "  owner: #{owner_email}"
+puts "  (senha do owner: definida via OWNER_PASSWORD; não exibida)" unless ENV["OWNER_PASSWORD"]
