@@ -60,4 +60,4 @@ end
 
 gem "resend", "~> 1.3"
 
-gem "google-apis-calendar_v3", "~> 0.54.0"
+gem "google-apis-calendar_v3", ">= 0.54", "< 1.0"
