@@ -1,0 +1,32 @@
+<h2>Nova reserva confirmada</h2>
+
+<p><strong>Profissional:</strong> <%= @dentist.name %> (<%= @dentist.email %>)</p>
+
+<p><strong>Turnos reservados:</strong></p>
+<ul>
+  <% @group.bookings.includes(:availability).each do |b| %>
+    <li>
+      <%= b.availability.label %> —
+      <%= l(b.availability.date, format: :default) %>,
+      <%= b.availability.starts_at.strftime("%H:%M") %>–<%= b.availability.ends_at.strftime("%H:%M") %>
+    </li>
+  <% end %>
+</ul>
+
+<p><strong>Total:</strong> R$ <%= "%.2f" % (@group.total_cents / 100.0) %></p>
+
+<p>
+  <strong>Forma de pagamento:</strong>
+  <% gateway = @group.payments.first&.gateway %>
+  <%= case gateway
+      when "infinitepay" then "Pix"
+      when "credit"      then "Crédito do cliente"
+      when "admin"       then "Manual (admin)"
+      else gateway.to_s.humanize
+      end %>
+</p>
+
+<p>
+  <strong>Videira Clinic</strong><br>
+  Equipe Videira Clinic
+</p>
