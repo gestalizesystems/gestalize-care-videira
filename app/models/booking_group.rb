@@ -21,7 +21,11 @@ class BookingGroup < ApplicationRecord
   }
 
   # Ao confirmar, cria os eventos na Google Agenda da owner (assíncrono).
-  after_update_commit :sync_google_calendar_on_confirm
+  # Cobre os dois caminhos de confirmação:
+  #  - Pix: grupo criado "pending" e confirmado depois (update, via webhook).
+  #  - Crédito / reserva manual do admin: grupo já nasce/vira "confirmed" na
+  #    mesma transação (o Rails trata como commit de criação).
+  after_commit :sync_google_calendar_on_confirm, on: [:create, :update]
 
   # Valor total dos insumos (Videira Shop) deste pedido, em centavos.
   def extras_total_cents
@@ -41,7 +45,13 @@ class BookingGroup < ApplicationRecord
   private
 
   def sync_google_calendar_on_confirm
-    GoogleCalendarSyncJob.perform_later("create", id) if saved_change_to_status? && confirmed?
+    return unless confirmed?
+    # Dispara quando a reserva acaba de ser criada já confirmada (crédito/admin)
+    # ou quando o status muda para confirmada (Pix). Evita re-sincronizar a cada
+    # atualização de um grupo que já estava confirmado.
+    return unless id_previously_changed? || saved_change_to_status?
+
+    GoogleCalendarSyncJob.perform_later("create", id)
   end
 
   def release_bookings!(final_status:)
