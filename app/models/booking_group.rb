@@ -39,7 +39,9 @@ class BookingGroup < ApplicationRecord
 
   def cancel!
     return if cancelled?
+    booking_ids = bookings.pluck(:id)
     release_bookings!(final_status: "cancelled")
+    booking_ids.each { |id| GoogleCalendarSyncJob.perform_later("remove", id) }
   end
 
   private

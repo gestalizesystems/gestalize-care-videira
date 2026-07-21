@@ -68,6 +68,7 @@ class AdminBookingSlotChanger < ApplicationService
       group.update!(subtotal_cents: total, total_cents: total - group.discount_cents.to_i)
     end
 
+    GoogleCalendarSyncJob.perform_later("update_slot", @booking.id)
     success({ group: group, charge_created: difference_attrs.present? })
   rescue ActiveRecord::RecordInvalid => e
     log_error(e.message)

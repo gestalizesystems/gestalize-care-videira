@@ -16,6 +16,12 @@ module GoogleCalendar
       new.remove_event(booking)
     end
 
+    # Remove o evento do turno antigo e cria um novo com o horário atualizado.
+    # Chamado após alteração de turno (AdminBookingSlotChanger).
+    def self.update_slot(booking)
+      new.update_slot(booking)
+    end
+
     # Ressincroniza as reservas confirmadas futuras ainda sem evento.
     # Chamado ao conectar a agenda (backfill do que já estava confirmado).
     def self.backfill
@@ -52,6 +58,13 @@ module GoogleCalendar
         future = group.bookings.joins(:availability).where("availabilities.date >= ?", Date.current).exists?
         create_events(group) if future
       end
+    end
+
+    # Remove o evento antigo e cria um novo após alteração de turno.
+    def update_slot(booking)
+      return unless connected?
+      remove_event(booking)                   # remove o evento antigo e limpa google_event_id
+      create_events(booking.booking_group)    # cria evento com o novo horário
     end
 
     # Remove o evento de um turno cancelado.
