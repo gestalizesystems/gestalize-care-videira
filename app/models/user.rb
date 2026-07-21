@@ -20,6 +20,8 @@ class User < ApplicationRecord
   validates :name, presence: true
   validates :cpf,  uniqueness: true, allow_nil: true,
     format: { with: /\A\d{11}\z/, message: "deve conter 11 dígitos" }
+  validates :phone, allow_nil: true,
+    format: { with: /\A\d{10,11}\z/, message: "deve conter DDD + número (10 ou 11 dígitos)" }
 
   # Aceite dos termos obrigatório no cadastro por e-mail (nil = não validado:
   # logins via Google e atualizações de perfil não passam por aqui).

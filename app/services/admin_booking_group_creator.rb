@@ -59,6 +59,7 @@ class AdminBookingGroupCreator < ApplicationService
         status:        "paid"
       )
 
+      BookingMailer.admin_notification(group).deliver_later
       success(group)
     end
   rescue => e

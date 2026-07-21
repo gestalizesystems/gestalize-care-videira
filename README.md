@@ -19,6 +19,11 @@ A unified platform for managing room reservations, scheduling, online payments a
 ![Hotwire](https://img.shields.io/badge/HOTWIRE-FF5F1F?style=for-the-badge)
 ![Tailwind CSS](https://img.shields.io/badge/TAILWIND_CSS-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)
 
+<p align="center">
+  <a href="https://care.gestalizesystems.com.br/">Website</a> •
+  <a href="https://instagram.com/gestalizesystems">Instagram</a>
+</p>
+
 <br>
 
 Developed by **Gestalize Systems**

@@ -76,6 +76,7 @@ class BookingGroupCreator < ApplicationService
       end
     end
 
+    BookingMailer.admin_notification(group).deliver_later if group&.confirmed?
     success(group.reload)
   rescue SlotUnavailableError, PaymentError => e
     failure(e.message)

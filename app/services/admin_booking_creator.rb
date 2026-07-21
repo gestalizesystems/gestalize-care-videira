@@ -39,6 +39,7 @@ class AdminBookingCreator < ApplicationService
 
       @availability.update!(status: "booked")
 
+      BookingMailer.admin_notification(group).deliver_later
       success(group)
     end
   rescue => e

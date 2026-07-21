@@ -24,6 +24,7 @@ class BookingCanceller < ApplicationService
       end
     end
 
+    GoogleCalendarSyncJob.perform_later("remove", @booking.id)
     issue_credit_if_eligible(group, group_was_confirmed)
 
     success(@booking)

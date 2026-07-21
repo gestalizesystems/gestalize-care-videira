@@ -21,6 +21,7 @@ class PaymentConfirmer < ApplicationService
 
     broadcast_confirmed(group.payment.reload)
     BookingMailer.confirmation(group).deliver_later
+    BookingMailer.admin_notification(group).deliver_later
     success(group)
   rescue ActiveRecord::RecordInvalid => e
     log_error("ref=#{@external_reference} error=#{e.message}")
