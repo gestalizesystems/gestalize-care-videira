@@ -21,5 +21,4 @@ class Credit < ApplicationRecord
   def available?
     used_at.nil?
   end
-
 end

@@ -13,6 +13,6 @@ class CreateCredits < ActiveRecord::Migration[7.2]
     end
 
     add_check_constraint :credits, "amount_cents > 0", name: "credits_amount_positive"
-    add_index :credits, [:user_id, :clinic_id, :used_at]
+    add_index :credits, [ :user_id, :clinic_id, :used_at ]
   end
 end

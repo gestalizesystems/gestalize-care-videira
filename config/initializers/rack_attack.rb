@@ -51,7 +51,7 @@ if defined?(Rack::Attack)
       [
         429,
         { "Content-Type" => "text/plain", "Retry-After" => retry_after.to_s },
-        ["Muitas requisições. Tente novamente em instantes.\n"]
+        [ "Muitas requisições. Tente novamente em instantes.\n" ]
       ]
     end
   end

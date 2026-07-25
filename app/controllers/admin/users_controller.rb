@@ -1,5 +1,5 @@
 class Admin::UsersController < Admin::BaseController
-  before_action :set_user, only: [:show, :edit, :update, :destroy, :add_credit, :remove_credit]
+  before_action :set_user, only: [ :show, :edit, :update, :destroy, :add_credit, :remove_credit ]
 
   def index
     scope = policy_scope(User).where.not(role: "owner").order(:name)
@@ -32,7 +32,7 @@ class Admin::UsersController < Admin::BaseController
   def show
     # Histórico mostra só transações reais (confirmadas/canceladas) — sem expiradas/pendentes
     @booking_groups = @user.booking_groups
-      .where(status: ["confirmed", "cancelled"])
+      .where(status: [ "confirmed", "cancelled" ])
       .includes(:payments, bookings: :availability)
       .order(created_at: :desc)
       .limit(10)

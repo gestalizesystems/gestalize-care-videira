@@ -22,7 +22,7 @@ class DiscountCalculator < ApplicationService
       rule           = DiscountRule.best_for(@clinic.id, discountable.size)
       discount_cents = rule ? rule.discount_cents * discountable.size : 0
     end
-    discount_cents = [discount_cents, subtotal_cents].min
+    discount_cents = [ discount_cents, subtotal_cents ].min
     total_cents    = subtotal_cents - discount_cents
 
     success({

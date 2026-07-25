@@ -1,5 +1,5 @@
 class Admin::ExtrasController < Admin::BaseController
-  before_action :set_extra, only: [:destroy]
+  before_action :set_extra, only: [ :destroy ]
 
   def index
     @extras = current_clinic.extras.active.ordered

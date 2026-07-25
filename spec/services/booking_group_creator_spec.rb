@@ -33,7 +33,7 @@ RSpec.describe BookingGroupCreator, type: :service do
 
     context "with valid available slots" do
       it "creates a booking group, bookings, and payment" do
-        result = BookingGroupCreator.call(user: patient, availability_ids: [av1.id, av2.id])
+        result = BookingGroupCreator.call(user: patient, availability_ids: [ av1.id, av2.id ])
 
         expect(result.success?).to be true
         group = result.value
@@ -44,12 +44,12 @@ RSpec.describe BookingGroupCreator, type: :service do
       end
 
       it "marks availabilities as booked" do
-        BookingGroupCreator.call(user: patient, availability_ids: [av1.id])
+        BookingGroupCreator.call(user: patient, availability_ids: [ av1.id ])
         expect(av1.reload.status).to eq("booked")
       end
 
       it "calls InfinitePay::CheckoutCreator" do
-        BookingGroupCreator.call(user: patient, availability_ids: [av1.id])
+        BookingGroupCreator.call(user: patient, availability_ids: [ av1.id ])
         expect(InfinitePay::CheckoutCreator).to have_received(:call)
       end
     end
@@ -59,7 +59,7 @@ RSpec.describe BookingGroupCreator, type: :service do
 
       it "returns failure and rolls back" do
         expect {
-          result = BookingGroupCreator.call(user: patient, availability_ids: [av1.id])
+          result = BookingGroupCreator.call(user: patient, availability_ids: [ av1.id ])
           expect(result.success?).to be false
           expect(result.error).to include("disponíveis")
         }.not_to change(BookingGroup, :count)
@@ -73,7 +73,7 @@ RSpec.describe BookingGroupCreator, type: :service do
 
       it "returns failure and rolls back the transaction" do
         expect {
-          result = BookingGroupCreator.call(user: patient, availability_ids: [av1.id])
+          result = BookingGroupCreator.call(user: patient, availability_ids: [ av1.id ])
           expect(result.success?).to be false
         }.not_to change(Payment, :count)
 
@@ -82,10 +82,10 @@ RSpec.describe BookingGroupCreator, type: :service do
     end
 
     context "with a discount rule applicable" do
-      before { create(:discount_rule, clinic: clinic, min_slots: 2, discount_percent: 10) }
+      before { create(:discount_rule, clinic: clinic, min_slots: 2, discount_cents: 1_500) }
 
       it "applies discount to total" do
-        result = BookingGroupCreator.call(user: patient, availability_ids: [av1.id, av2.id])
+        result = BookingGroupCreator.call(user: patient, availability_ids: [ av1.id, av2.id ])
         group = result.value
         expect(group.discount_cents).to eq(3_000)
         expect(group.total_cents).to eq(27_000)

@@ -21,7 +21,7 @@ class Extra < ApplicationRecord
     hash.filter_map do |id, qty|
       qty = qty.to_i
       extra = found[id]
-      [extra, qty] if extra && qty.positive?
+      [ extra, qty ] if extra && qty.positive?
     end
   end
 end

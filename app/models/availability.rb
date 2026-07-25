@@ -2,7 +2,7 @@ class Availability < ApplicationRecord
   include MoneyConvertible
   money_field :price
 
-  has_paper_trail skip: [:status]
+  has_paper_trail skip: [ :status ]
 
   belongs_to :clinic
   belongs_to :service, optional: true
@@ -66,7 +66,7 @@ class Availability < ApplicationRecord
     s = starts_at.hour * 60 + starts_at.min
     e = ends_at.hour * 60 + ends_at.min
     e += 1440 if e <= s
-    [s, e]
+    [ s, e ]
   end
 
   def time_range

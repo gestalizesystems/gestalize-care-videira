@@ -3,8 +3,12 @@ FactoryBot.define do
     association :clinic
     sequence(:name)  { |n| "Usuário #{n}" }
     sequence(:email) { |n| "user#{n}@example.com" }
-    password { "Senha@1234!" }
-    role { "dentist" }
+    sequence(:cpf)   { |n| format("%011d", n) }
+    password     { "Senha@1234!" }
+    role         { "dentist" }
+    cro          { "CRO-CE 12345" }
+    phone        { "85999000001" }
+    confirmed_at { Time.current }
 
     trait :owner do
       role { "owner" }

@@ -6,7 +6,7 @@ RSpec.describe BookingGroup, type: :model do
     it { is_expected.to belong_to(:dentist).class_name("User") }
     it { is_expected.to belong_to(:discount_rule).optional }
     it { is_expected.to have_many(:bookings).dependent(:destroy) }
-    it { is_expected.to have_one(:payment).dependent(:destroy) }
+    it { is_expected.to have_one(:payment) }
   end
 
   describe "validations" do

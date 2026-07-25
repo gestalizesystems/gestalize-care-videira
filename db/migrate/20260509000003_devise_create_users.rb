@@ -26,7 +26,7 @@ class DeviseCreateUsers < ActiveRecord::Migration[7.2]
     add_index :users, :email,                unique: true
     add_index :users, :reset_password_token, unique: true
     add_index :users, :cpf,                  unique: true, where: "cpf IS NOT NULL"
-    add_index :users, [:provider, :uid],     unique: true, where: "provider IS NOT NULL"
+    add_index :users, [ :provider, :uid ],     unique: true, where: "provider IS NOT NULL"
 
     add_check_constraint :users,
       "role IN ('owner', 'dentist', 'patient')",

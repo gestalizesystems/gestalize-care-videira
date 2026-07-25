@@ -1,5 +1,5 @@
 class Admin::BookingsController < Admin::BaseController
-  before_action :set_booking_group, only: [:show, :cancel, :change_slot]
+  before_action :set_booking_group, only: [ :show, :cancel, :change_slot ]
 
   def index
     scope = policy_scope(BookingGroup)
@@ -37,7 +37,7 @@ class Admin::BookingsController < Admin::BaseController
     @available_months = current_clinic.availabilities
       .joins(:booking).distinct.pluck(:date)
       .map(&:beginning_of_month).uniq.sort.reverse
-    @available_months = [Date.current.beginning_of_month] if @available_months.empty?
+    @available_months = [ Date.current.beginning_of_month ] if @available_months.empty?
 
     # Turnos livres (e ainda não passados) para alteração manual de reserva
     @available_slots = current_clinic.availabilities.available

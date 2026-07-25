@@ -1,5 +1,5 @@
 class Admin::ServicesController < Admin::BaseController
-  before_action :set_service, only: [:edit, :update, :destroy]
+  before_action :set_service, only: [ :edit, :update, :destroy ]
 
   def index
     @services = current_user.clinic.services.order(:name)

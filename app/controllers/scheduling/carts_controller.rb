@@ -122,6 +122,6 @@ class Scheduling::CartsController < ApplicationController
     return [] if cart_ids.empty?
     Availability.where(id: cart_ids).includes(:service, :dentist)
       .to_a
-      .sort_by { |a| [a.date, a.starts_at.strftime("%H:%M")] }
+      .sort_by { |a| [ a.date, a.starts_at.strftime("%H:%M") ] }
   end
 end

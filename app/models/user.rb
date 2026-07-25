@@ -4,9 +4,10 @@ class User < ApplicationRecord
 
   devise :database_authenticatable, :registerable,
          :recoverable, :rememberable, :validatable, :confirmable,
-         :omniauthable, omniauth_providers: [:google_oauth2]
+         :omniauthable, omniauth_providers: [ :google_oauth2 ]
 
   has_paper_trail
+  has_one_attached :avatar
 
   validates :discount_per_slot_cents, numericality: { greater_than_or_equal_to: 0 }
 

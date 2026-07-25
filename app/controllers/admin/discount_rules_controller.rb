@@ -1,5 +1,5 @@
 class Admin::DiscountRulesController < Admin::BaseController
-  before_action :set_rule, only: [:edit, :update, :destroy]
+  before_action :set_rule, only: [ :edit, :update, :destroy ]
 
   def index
     @rules = current_user.clinic.discount_rules.active.order(:min_slots)

@@ -1,5 +1,5 @@
 class Admin::CreditsController < Admin::BaseController
-  before_action :set_user, only: [:create, :destroy]
+  before_action :set_user, only: [ :create, :destroy ]
 
   def index
     scope = Credit

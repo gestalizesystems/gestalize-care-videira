@@ -11,7 +11,7 @@ module InfinitePay
     end
 
     def call
-      return failure("Parâmetros insuficientes.") if [@order_nsu, @transaction_nsu, @slug].any?(&:blank?)
+      return failure("Parâmetros insuficientes.") if [ @order_nsu, @transaction_nsu, @slug ].any?(&:blank?)
 
       response = post_to_infinitepay
       body     = JSON.parse(response.body)

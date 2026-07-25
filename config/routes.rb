@@ -21,20 +21,20 @@ Rails.application.routes.draw do
   get "videira-shop", to: "shop#index", as: :videira_shop
 
   # ---- Perfil do usuário ------------------------------------
-  resource :perfil, only: [:edit, :update], controller: "users/profiles",
+  resource :perfil, only: [ :edit, :update ], controller: "users/profiles",
     path_names: { edit: "editar" }
 
   # Completar cadastro (ex.: após login com Google)
-  resource :completar_cadastro, only: [:show, :update],
+  resource :completar_cadastro, only: [ :show, :update ],
     controller: "users/profile_completions", path: "completar-cadastro",
     as: :profile_completion
 
-  resource :carteira, only: [:show], controller: "users/wallets"
-  resources :recargas, only: [:create], controller: "users/credit_purchases"
+  resource :carteira, only: [ :show ], controller: "users/wallets"
+  resources :recargas, only: [ :create ], controller: "users/credit_purchases"
 
   # ---- Agendamento ------------------------------------------
   scope module: "scheduling" do
-    resource :carrinho, only: [:show, :destroy], path: "carrinho",
+    resource :carrinho, only: [ :show, :destroy ], path: "carrinho",
       controller: "carts" do
       post   "adicionar/:availability_id", to: "carts#add",    as: :add_to
       delete "remover/:availability_id",   to: "carts#remove", as: :remove_from
@@ -43,7 +43,7 @@ Rails.application.routes.draw do
       post   "insumos/finalizar",          to: "carts#purchase_extras", as: :purchase_extras
     end
 
-    resources :reservas, only: [:index, :show], controller: "bookings" do
+    resources :reservas, only: [ :index, :show ], controller: "bookings" do
       collection do
         get  "confirmar", to: "bookings#new"
         post "confirmar", to: "bookings#create"
@@ -57,7 +57,7 @@ Rails.application.routes.draw do
 
   # ---- Pagamentos -------------------------------------------
   scope module: "payments" do
-    resources :pagamentos, only: [:show], path: "pagamento",
+    resources :pagamentos, only: [ :show ], path: "pagamento",
       controller: "payments" do
       member do
         get  "aguardando", to: "payments#pending"
@@ -81,30 +81,30 @@ Rails.application.routes.draw do
     get    "google_calendar/callback", to: "google_calendar#callback",   as: :callback_google_calendar
     delete "google_calendar",          to: "google_calendar#disconnect", as: :google_calendar
 
-    resources :clinics,        only: [:show, :update]
-    resources :users, only: [:index, :show, :new, :create, :edit, :update, :destroy] do
+    resources :clinics,        only: [ :show, :update ]
+    resources :users, only: [ :index, :show, :new, :create, :edit, :update, :destroy ] do
       member do
         post   :add_credit
         delete :remove_credit
       end
     end
-    resources :services,       except: [:show]
-    resources :availabilities, except: [:show] do
+    resources :services,       except: [ :show ]
+    resources :availabilities, except: [ :show ] do
       member { patch :toggle }
     end
-    resources :shift_templates, only: [:index, :create, :destroy], path: "turnos-padrao" do
+    resources :shift_templates, only: [ :index, :create, :destroy ], path: "turnos-padrao" do
       member { patch :toggle }
     end
-    resources :extras, only: [:index, :create, :destroy], path: "servicos-extra"
-    resources :discount_rules, except: [:show]
-    resources :bookings,       only: [:index, :show, :create] do
+    resources :extras, only: [ :index, :create, :destroy ], path: "servicos-extra"
+    resources :discount_rules, except: [ :show ]
+    resources :bookings,       only: [ :index, :show, :create ] do
       member do
         patch "cancelar",      action: :cancel
         patch "alterar-turno", action: :change_slot, as: :change_slot
       end
     end
-    resources :payments, only: [:index, :show]
-    resources :credits,  only: [:index]
+    resources :payments, only: [ :index, :show ]
+    resources :credits,  only: [ :index ]
 
     authenticate :user, ->(u) { u.owner? } do
       mount Sidekiq::Web => "/sidekiq"

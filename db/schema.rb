@@ -60,7 +60,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_06_23_010000) do
     t.index ["dentist_id"], name: "index_availabilities_on_dentist_id"
     t.index ["eclipsed_by_id"], name: "index_availabilities_on_eclipsed_by_id"
     t.index ["service_id"], name: "index_availabilities_on_service_id"
-    t.check_constraint "status::text = ANY (ARRAY['available'::character varying, 'booked'::character varying, 'cancelled'::character varying, 'blocked'::character varying]::text[])", name: "availabilities_status_check"
+    t.check_constraint "status::text = ANY (ARRAY['available'::character varying::text, 'booked'::character varying::text, 'cancelled'::character varying::text, 'blocked'::character varying::text])", name: "availabilities_status_check"
   end
 
   create_table "booking_groups", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -78,7 +78,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_06_23_010000) do
     t.index ["dentist_id"], name: "index_booking_groups_on_dentist_id"
     t.index ["discount_rule_id"], name: "index_booking_groups_on_discount_rule_id"
     t.check_constraint "discount_cents >= 0", name: "booking_groups_discount_non_negative"
-    t.check_constraint "status::text = ANY (ARRAY['pending'::character varying, 'confirmed'::character varying, 'cancelled'::character varying, 'expired'::character varying]::text[])", name: "booking_groups_status_check"
+    t.check_constraint "status::text = ANY (ARRAY['pending'::character varying::text, 'confirmed'::character varying::text, 'cancelled'::character varying::text, 'expired'::character varying::text])", name: "booking_groups_status_check"
     t.check_constraint "total_cents > 0", name: "booking_groups_total_positive"
   end
 
@@ -98,7 +98,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_06_23_010000) do
     t.index ["clinic_id"], name: "index_bookings_on_clinic_id"
     t.index ["dentist_id"], name: "index_bookings_on_dentist_id"
     t.check_constraint "price_cents >= 0", name: "bookings_price_non_negative"
-    t.check_constraint "status::text = ANY (ARRAY['pending'::character varying, 'confirmed'::character varying, 'cancelled'::character varying]::text[])", name: "bookings_status_check"
+    t.check_constraint "status::text = ANY (ARRAY['pending'::character varying::text, 'confirmed'::character varying::text, 'cancelled'::character varying::text])", name: "bookings_status_check"
   end
 
   create_table "clinics", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -193,7 +193,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_06_23_010000) do
     t.index ["clinic_id"], name: "index_payments_on_clinic_id"
     t.index ["gateway_id"], name: "index_payments_on_gateway_id", unique: true, where: "(gateway_id IS NOT NULL)"
     t.check_constraint "amount_cents > 0", name: "payments_amount_positive"
-    t.check_constraint "status::text = ANY (ARRAY['pending'::character varying, 'paid'::character varying, 'failed'::character varying, 'cancelled'::character varying, 'expired'::character varying]::text[])", name: "payments_status_check"
+    t.check_constraint "status::text = ANY (ARRAY['pending'::character varying::text, 'paid'::character varying::text, 'failed'::character varying::text, 'cancelled'::character varying::text, 'expired'::character varying::text])", name: "payments_status_check"
   end
 
   create_table "services", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|

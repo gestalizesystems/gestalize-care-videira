@@ -45,7 +45,7 @@ module ApplicationHelper
   def format_cpf(value)
     digits = value.to_s.gsub(/\D/, "")
     return value if digits.length != 11
-    "#{digits[0,3]}.#{digits[3,3]}.#{digits[6,3]}-#{digits[9,2]}"
+    "#{digits[0, 3]}.#{digits[3, 3]}.#{digits[6, 3]}-#{digits[9, 2]}"
   end
 
   def format_cro(value)
@@ -61,8 +61,8 @@ module ApplicationHelper
   def format_phone(value)
     digits = value.to_s.gsub(/\D/, "")
     case digits.length
-    when 11 then "(#{digits[0,2]}) #{digits[2,5]}-#{digits[7,4]}"
-    when 10 then "(#{digits[0,2]}) #{digits[2,4]}-#{digits[6,4]}"
+    when 11 then "(#{digits[0, 2]}) #{digits[2, 5]}-#{digits[7, 4]}"
+    when 10 then "(#{digits[0, 2]}) #{digits[2, 4]}-#{digits[6, 4]}"
     else value
     end
   end

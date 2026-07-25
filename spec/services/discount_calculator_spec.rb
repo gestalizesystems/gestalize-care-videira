@@ -21,7 +21,7 @@ RSpec.describe DiscountCalculator, type: :service do
   context "with 1 slot and no applicable discount rule" do
     it "returns full price with no discount" do
       av = make_availability
-      result = DiscountCalculator.call(availability_ids: [av.id], clinic: clinic)
+      result = DiscountCalculator.call(availability_ids: [ av.id ], clinic: clinic)
 
       expect(result.success?).to be true
       expect(result.value[:subtotal_cents]).to eq(15_000)
@@ -31,33 +31,33 @@ RSpec.describe DiscountCalculator, type: :service do
     end
   end
 
-  context "with 2 slots and a matching discount rule (10%)" do
-    before { create(:discount_rule, clinic: clinic, min_slots: 2, discount_percent: 10) }
+  context "with 2 slots and a matching discount rule (R$ 15,00 por turno)" do
+    before { create(:discount_rule, clinic: clinic, min_slots: 2, discount_cents: 1_500) }
 
     it "applies discount correctly" do
       av1 = make_availability
       av2 = make_availability
-      result = DiscountCalculator.call(availability_ids: [av1.id, av2.id], clinic: clinic)
+      result = DiscountCalculator.call(availability_ids: [ av1.id, av2.id ], clinic: clinic)
 
       expect(result.success?).to be true
       expect(result.value[:subtotal_cents]).to eq(30_000)
-      expect(result.value[:discount_cents]).to eq(3_000)
+      expect(result.value[:discount_cents]).to eq(3_000)  # 1_500 × 2 turnos
       expect(result.value[:total_cents]).to eq(27_000)
     end
   end
 
   context "with 3 slots and tiered rules" do
     before do
-      create(:discount_rule, clinic: clinic, min_slots: 2, discount_percent: 5)
-      create(:discount_rule, clinic: clinic, min_slots: 3, discount_percent: 15)
+      create(:discount_rule, clinic: clinic, min_slots: 2, discount_cents: 500)
+      create(:discount_rule, clinic: clinic, min_slots: 3, discount_cents: 1_500)
     end
 
     it "uses the highest qualifying rule" do
       avs = 3.times.map { make_availability }
       result = DiscountCalculator.call(availability_ids: avs.map(&:id), clinic: clinic)
 
-      expect(result.value[:discount_percent]).to eq(15)
-      expect(result.value[:discount_cents]).to eq(6_750) # 45_000 * 0.15 = 6750
+      expect(result.value[:discount_cents]).to eq(4_500)  # 1_500 × 3 turnos
+      expect(result.value[:total_cents]).to eq(40_500)    # 45_000 − 4_500
     end
   end
 
@@ -66,7 +66,7 @@ RSpec.describe DiscountCalculator, type: :service do
     other_av = create(:availability, clinic: other_clinic)
     own_av   = make_availability
 
-    result = DiscountCalculator.call(availability_ids: [own_av.id, other_av.id], clinic: clinic)
+    result = DiscountCalculator.call(availability_ids: [ own_av.id, other_av.id ], clinic: clinic)
     expect(result.value[:availabilities].size).to eq(1)
   end
 end

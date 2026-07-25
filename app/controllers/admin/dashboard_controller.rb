@@ -18,7 +18,7 @@ class Admin::DashboardController < Admin::BaseController
     @revenue_by_month = revenue_by_month(clinic)
     @credits_by_month = credits_by_month(clinic)
 
-    @monthly_turnos, @monthly_insumos = @revenue_by_month.fetch(@month, [0, 0])
+    @monthly_turnos, @monthly_insumos = @revenue_by_month.fetch(@month, [ 0, 0 ])
     @monthly_credits = @credits_by_month.fetch(@month, 0)
     @monthly_revenue = @monthly_turnos + @monthly_insumos + @monthly_credits
 
@@ -57,23 +57,23 @@ class Admin::DashboardController < Admin::BaseController
     used_credits = real_credits(clinic).where.not(used_on_booking_group_id: nil)
                                        .group_by(&:used_on_booking_group_id)
 
-    acc = Hash.new { |h, k| h[k] = [0, 0] }
+    acc = Hash.new { |h, k| h[k] = [ 0, 0 ] }
     groups.each do |g|
       insumos   = extras_cents(g.extras)
-      countable = [g.total_cents.to_i - off[g.id].to_i, 0].max
+      countable = [ g.total_cents.to_i - off[g.id].to_i, 0 ].max
       next if countable <= 0
-      turnos_part = countable - [insumos, countable].min
+      turnos_part = countable - [ insumos, countable ].min
 
       sources = []
       g.payments.each do |p|
-        sources << [p.paid_at, p.amount_cents.to_i] if p.paid? && %w[infinitepay admin].include?(p.gateway)
+        sources << [ p.paid_at, p.amount_cents.to_i ] if p.paid? && %w[infinitepay admin].include?(p.gateway)
       end
-      (used_credits[g.id] || []).each { |cr| sources << [cr.created_at, cr.amount_cents.to_i] }
+      (used_credits[g.id] || []).each { |cr| sources << [ cr.created_at, cr.amount_cents.to_i ] }
       sources.sort_by! { |date, _| date || Time.at(0) }
 
       remaining = countable
       sources.each do |date, amount|
-        take = [amount, remaining].min
+        take = [ amount, remaining ].min
         break if take <= 0
         remaining -= take
         month = (date || g.created_at).to_date.beginning_of_month
@@ -100,14 +100,14 @@ class Admin::DashboardController < Admin::BaseController
   end
 
   def months_with_history(clinic)
-    months = (@revenue_by_month.keys + @credits_by_month.keys + [Date.current.beginning_of_month])
+    months = (@revenue_by_month.keys + @credits_by_month.keys + [ Date.current.beginning_of_month ])
     months.uniq.sort.reverse
   end
 
   def build_monthly_series(clinic, months:)
     today = Date.current
     (0...months).map { |i| (today << i).beginning_of_month }.reverse.map do |start|
-      t, i = @revenue_by_month.fetch(start, [0, 0])
+      t, i = @revenue_by_month.fetch(start, [ 0, 0 ])
       cr   = @credits_by_month.fetch(start, 0)
       { month: start, turnos: t, insumos: i, credito: cr, total: t + i + cr }
     end

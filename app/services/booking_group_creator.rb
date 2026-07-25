@@ -96,7 +96,7 @@ class BookingGroupCreator < ApplicationService
 
   def apply_available_credits(group, total_cents)
     target = @requested_credit_cents.nil? ? total_cents : @requested_credit_cents
-    target = [[target, total_cents].min, 0].max
+    target = [ [ target, total_cents ].min, 0 ].max
     return 0 if target.zero?
 
     credits = Credit.available

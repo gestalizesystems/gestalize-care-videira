@@ -14,7 +14,7 @@ module InfinitePay
       response = post_to_infinitepay(payload)
       body     = JSON.parse(response.body)
 
-      if response.code.to_i.in?([200, 201])
+      if response.code.to_i.in?([ 200, 201 ])
         # NOTA: confirmar o campo exato com suporte InfinitePay se retornar nil
         # Candidatos documentados: "url", "checkout_url", "link", "payment_link"
         url = body["url"] || body["checkout_url"] || body["link"] || body["payment_link"]
@@ -58,7 +58,7 @@ module InfinitePay
       # a pagar — senão o Pix cobraria o total cheio.
       items_sum = items.sum { |i| i[:price].to_i * i[:quantity].to_i }
       if @amount_cents != items_sum
-        items = [{ quantity: 1, price: @amount_cents, description: "Reserva — Videira Clinic" }]
+        items = [ { quantity: 1, price: @amount_cents, description: "Reserva — Videira Clinic" } ]
       end
 
       payload = {

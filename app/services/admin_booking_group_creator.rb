@@ -27,7 +27,7 @@ class AdminBookingGroupCreator < ApplicationService
       subtotal = availabilities.sum(&:price_cents)
       # Desconto pessoal do dentista por turno elegível (não conta avulsa/diária).
       eligible = availabilities.reject { |a| a.avulsa? || a.diaria? }.size
-      discount = [@dentist.discount_per_slot_cents.to_i * eligible, subtotal].min
+      discount = [ @dentist.discount_per_slot_cents.to_i * eligible, subtotal ].min
       total    = subtotal - discount
 
       group = BookingGroup.create!(

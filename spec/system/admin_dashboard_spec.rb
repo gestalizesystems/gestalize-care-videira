@@ -9,9 +9,8 @@ RSpec.describe "Admin dashboard", type: :system do
   it "shows the dashboard metrics" do
     visit admin_root_path
     expect(page).to have_content("Dashboard")
-    expect(page).to have_content("Agendamentos hoje")
-    expect(page).to have_content("Pag. pendentes")
-    expect(page).to have_content("Receita do mês")
+    expect(page).to have_content("Créditos totais")
+    expect(page).to have_content("Receita de turnos do mês")
   end
 
   it "navigates to Turnos" do

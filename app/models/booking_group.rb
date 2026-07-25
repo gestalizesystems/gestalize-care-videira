@@ -25,7 +25,7 @@ class BookingGroup < ApplicationRecord
   #  - Pix: grupo criado "pending" e confirmado depois (update, via webhook).
   #  - Crédito / reserva manual do admin: grupo já nasce/vira "confirmed" na
   #    mesma transação (o Rails trata como commit de criação).
-  after_commit :sync_google_calendar_on_confirm, on: [:create, :update]
+  after_commit :sync_google_calendar_on_confirm, on: [ :create, :update ]
 
   # Valor total dos insumos (Videira Shop) deste pedido, em centavos.
   def extras_total_cents

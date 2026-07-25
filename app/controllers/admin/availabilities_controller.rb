@@ -1,5 +1,5 @@
 class Admin::AvailabilitiesController < Admin::BaseController
-  before_action :set_availability, only: [:edit, :update, :destroy, :toggle]
+  before_action :set_availability, only: [ :edit, :update, :destroy, :toggle ]
 
   def index
     @date = params[:date].present? ? Date.parse(params[:date]) : Date.current
@@ -8,7 +8,7 @@ class Admin::AvailabilitiesController < Admin::BaseController
       .where(eclipsed_by_id: nil) # esconde turnos desativados por colisão de reserva
       .to_a
       # Diárias primeiro, depois os demais — cada grupo ordenado por horário local.
-      .sort_by { |a| [a.diaria? ? 0 : 1, a.starts_at.strftime("%H:%M")] }
+      .sort_by { |a| [ a.diaria? ? 0 : 1, a.starts_at.strftime("%H:%M") ] }
     @dentists = User.dentists.where(clinic: current_clinic).order(:name)
   rescue Date::Error
     redirect_to admin_availabilities_path, alert: "Data inválida."

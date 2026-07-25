@@ -10,9 +10,9 @@ RSpec.describe DiscountRule, type: :model do
     subject { build(:discount_rule) }
 
     it { is_expected.to validate_presence_of(:min_slots) }
-    it { is_expected.to validate_presence_of(:discount_percent) }
+    it { is_expected.to validate_presence_of(:discount_cents) }
     it { is_expected.to validate_numericality_of(:min_slots).is_greater_than(0) }
-    it { is_expected.to validate_numericality_of(:discount_percent).is_in(1..100) }
+    it { is_expected.to validate_numericality_of(:discount_cents).is_greater_than(0) }
 
     it "enforces uniqueness of min_slots per clinic among active rules" do
       rule = create(:discount_rule, min_slots: 2)
@@ -37,8 +37,9 @@ RSpec.describe DiscountRule, type: :model do
   describe ".best_for" do
     let(:clinic) { create(:clinic) }
 
-    let!(:two_slot_rule)   { create(:discount_rule, clinic: clinic, min_slots: 2, discount_percent: 5) }
-    let!(:three_slot_rule) { create(:discount_rule, :large, clinic: clinic) } # min_slots:3, discount_percent:15
+    # R$ 5,00 por turno para 2+ turnos; R$ 22,50 por turno para 3+ (trait :large)
+    let!(:two_slot_rule)   { create(:discount_rule, clinic: clinic, min_slots: 2, discount_cents: 500) }
+    let!(:three_slot_rule) { create(:discount_rule, :large, clinic: clinic) }
 
     it "returns nil when slot count is below minimum" do
       expect(DiscountRule.best_for(clinic.id, 1)).to be_nil
@@ -46,12 +47,12 @@ RSpec.describe DiscountRule, type: :model do
 
     it "returns the best matching rule for 2 slots" do
       rule = DiscountRule.best_for(clinic.id, 2)
-      expect(rule.discount_percent).to eq(5)
+      expect(rule.discount_cents).to eq(500)
     end
 
     it "returns the highest matching rule for 3+ slots" do
       rule = DiscountRule.best_for(clinic.id, 3)
-      expect(rule.discount_percent).to eq(15)
+      expect(rule.discount_cents).to eq(2_250)
     end
   end
 

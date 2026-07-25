@@ -8,7 +8,7 @@ class CreateDiscountRules < ActiveRecord::Migration[7.2]
       t.timestamps
     end
 
-    add_index :discount_rules, [:clinic_id, :min_slots], unique: true,
+    add_index :discount_rules, [ :clinic_id, :min_slots ], unique: true,
       where: "active = true", name: "idx_discount_rules_unique_active"
 
     add_check_constraint :discount_rules,

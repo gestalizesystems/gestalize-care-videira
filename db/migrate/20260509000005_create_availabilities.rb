@@ -12,7 +12,7 @@ class CreateAvailabilities < ActiveRecord::Migration[7.2]
       t.timestamps
     end
 
-    add_index :availabilities, [:dentist_id, :date, :starts_at], unique: true,
+    add_index :availabilities, [ :dentist_id, :date, :starts_at ], unique: true,
       name: "idx_availabilities_no_double_booking"
 
     add_check_constraint :availabilities,

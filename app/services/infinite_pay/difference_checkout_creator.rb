@@ -17,7 +17,7 @@ module InfinitePay
       response = post_to_infinitepay(build_payload)
       body     = JSON.parse(response.body)
 
-      if response.code.to_i.in?([200, 201])
+      if response.code.to_i.in?([ 200, 201 ])
         url = body["url"] || body["checkout_url"] || body["link"] || body["payment_link"]
         if url.present?
           success({ checkout_url: url, expires_at: expires_at })
@@ -40,7 +40,7 @@ module InfinitePay
       user = @group.dentist
       payload = {
         handle:       ENV.fetch("INFINITEPAY_HANDLE"),
-        items:        [{ quantity: 1, price: @amount_cents, description: @description }],
+        items:        [ { quantity: 1, price: @amount_cents, description: @description } ],
         order_nsu:    @order_nsu,
         redirect_url: "#{app_base_url}/pagamento/retorno",
         webhook_url:  "#{app_base_url}/webhooks/infinitepay"

@@ -6,6 +6,7 @@ RSpec.describe "Booking flow", type: :system do
   let!(:av) do
     create(:availability,
       clinic: clinic,
+      dentist: dentist,
       date: Date.tomorrow,
       starts_at: "08:00",
       ends_at: "12:00",
@@ -13,16 +14,15 @@ RSpec.describe "Booking flow", type: :system do
   end
 
   it "shows the home page with availabilities" do
-    visit root_path
+    visit root_path(date: Date.tomorrow.to_s)
     expect(page).to have_content(av.label)
     expect(page).to have_content("R$ 170,00")
   end
 
   it "adds an availability to the cart" do
-    visit root_path
-    expect {
-      click_button "R$ 170,00", match: :first
-    }.to change { page.has_content?("Toque para remover") }.from(false).to(true)
+    visit root_path(date: Date.tomorrow.to_s)
+    click_button "R$ 170,00", match: :first
+    expect(page).to have_content("Toque para remover")
   end
 
   context "as a signed in dentist" do
@@ -37,7 +37,7 @@ RSpec.describe "Booking flow", type: :system do
         )
       )
 
-      visit root_path
+      visit root_path(date: Date.tomorrow.to_s)
       click_button "R$ 170,00", match: :first
 
       click_link "Adicionar ao carrinho", match: :first

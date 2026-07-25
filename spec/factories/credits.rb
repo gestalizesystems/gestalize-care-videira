@@ -1,7 +1,7 @@
 FactoryBot.define do
   factory :credit do
     association :clinic
-    association :user, factory: [:user, :dentist]
+    association :user, factory: [ :user, :dentist ]
 
     amount_cents { 10_000 }
     reason       { "Cancelamento de reserva" }

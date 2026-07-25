@@ -17,11 +17,11 @@ module RecurringShifts
       # não é confundida com a Manhã (07–12), que tem o mesmo horário de início.
       existing = clinic.availabilities.where(date: Date.current..target_end)
                        .pluck(:date, :starts_at, :ends_at)
-                       .map { |d, s, e| [d, s.strftime("%H:%M"), e.strftime("%H:%M")] }.to_set
+                       .map { |d, s, e| [ d, s.strftime("%H:%M"), e.strftime("%H:%M") ] }.to_set
 
       (Date.current..target_end).each do |date|
         templates.each do |t|
-          next if existing.include?([date, t.starts_at.strftime("%H:%M"), t.ends_at.strftime("%H:%M")])
+          next if existing.include?([ date, t.starts_at.strftime("%H:%M"), t.ends_at.strftime("%H:%M") ])
           create_availability(clinic, t, date)
         end
       end
@@ -33,7 +33,7 @@ module RecurringShifts
     # sem mexer nos outros turnos (não reaparecem os que o admin excluiu).
     def self.fill_template(template)
       clinic     = template.clinic
-      target_end = [clinic.shifts_generated_until || Date.current, Date.current + HORIZON_DAYS].max
+      target_end = [ clinic.shifts_generated_until || Date.current, Date.current + HORIZON_DAYS ].max
       (Date.current..target_end).each { |date| create_availability(clinic, template, date) }
     end
 

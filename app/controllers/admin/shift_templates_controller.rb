@@ -1,10 +1,10 @@
 class Admin::ShiftTemplatesController < Admin::BaseController
-  before_action :set_template, only: [:destroy, :toggle]
+  before_action :set_template, only: [ :destroy, :toggle ]
 
   def index
     @templates = current_clinic.shift_templates.to_a
       # Diárias primeiro, depois os demais — cada grupo ordenado por horário local.
-      .sort_by { |t| [t.diaria? ? 0 : 1, t.starts_at.strftime("%H:%M")] }
+      .sort_by { |t| [ t.diaria? ? 0 : 1, t.starts_at.strftime("%H:%M") ] }
   end
 
   def create

@@ -1,7 +1,7 @@
 FactoryBot.define do
   factory :booking_group do
     association :clinic
-    association :dentist, factory: [:user, :dentist]
+    association :dentist, factory: [ :user, :dentist ]
 
     subtotal_cents { 30_000 }
     discount_cents { 0 }

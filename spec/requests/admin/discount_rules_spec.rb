@@ -16,7 +16,7 @@ RSpec.describe "Admin::DiscountRules", type: :request do
   describe "POST /admin/discount_rules" do
     it "creates a rule" do
       expect {
-        post admin_discount_rules_path, params: { discount_rule: { min_slots: 2, discount_percent: 10 } }
+        post admin_discount_rules_path, params: { discount_rule: { min_slots: 2, discount: "15.00" } }
       }.to change(DiscountRule, :count).by(1)
     end
   end

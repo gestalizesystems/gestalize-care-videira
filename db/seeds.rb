@@ -35,7 +35,7 @@ puts "  Dentist: dentista@videiradental.com.br"
 # ── Discount rules ───────────────────────────────────────────────────────────
 [
   { min_slots: 2, discount_cents: 500  },
-  { min_slots: 3, discount_cents: 1000 },
+  { min_slots: 3, discount_cents: 1000 }
 ].each do |attrs|
   DiscountRule.find_or_create_by!(clinic: clinic, min_slots: attrs[:min_slots]) do |d|
     d.discount_cents = attrs[:discount_cents]
@@ -72,7 +72,7 @@ begin
     [
       { starts: "07:00", ends: "12:00", price_cents: 17000 },
       { starts: "13:00", ends: "18:00", price_cents: 17000 },
-      { starts: "19:00", ends: "22:00", price_cents: 12000 },
+      { starts: "19:00", ends: "22:00", price_cents: 12000 }
     ].each do |t|
       clinic.shift_templates.create!(starts_at: t[:starts], ends_at: t[:ends], price_cents: t[:price_cents])
     end

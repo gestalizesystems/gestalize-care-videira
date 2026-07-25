@@ -24,7 +24,7 @@ class Scheduling::BookingsController < ApplicationController
       .where("date >= ?", Date.current)
       .to_a
       .reject(&:past?)
-      .sort_by { |a| [a.date, a.starts_at.strftime("%H:%M")] }
+      .sort_by { |a| [ a.date, a.starts_at.strftime("%H:%M") ] }
   end
 
   def show

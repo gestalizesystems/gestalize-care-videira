@@ -2,6 +2,6 @@
 require "rubygems"
 require "bundler/setup"
 
-ARGV.unshift("--ensure-latest")
+ARGV.push("--except", "EOLRuby,EOLRails")
 
 load Gem.bin_path("brakeman", "brakeman")

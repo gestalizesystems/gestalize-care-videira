@@ -10,5 +10,4 @@ class Service < ApplicationRecord
   validates :price_cents,      presence: true, numericality: { greater_than_or_equal_to: 0 }
 
   scope :active, -> { where(active: true) }
-
 end

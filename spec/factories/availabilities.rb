@@ -1,14 +1,14 @@
 FactoryBot.define do
-  sequence(:av_start_hour) { |n| format("%02d", 6 + (n % 12)) }
+  sequence(:av_start_hour) { |n| format("%02d", 6 + (n % 8) * 2) }
 
   factory :availability do
     association :clinic
     association :service
-    association :dentist, factory: [:user, :dentist]
+    association :dentist, factory: [ :user, :dentist ]
 
     date        { Date.current + 3.days }
     starts_at   { "#{generate(:av_start_hour)}:00" }
-    ends_at     { format("%02d:00", starts_at.split(":").first.to_i + 1) }
+    ends_at     { format("%02d:00", starts_at.split(":").first.to_i + 2) }
     status      { "available" }
     price_cents { 15_000 }
 
@@ -18,6 +18,7 @@ FactoryBot.define do
 
     trait :past do
       date { Date.current - 1.day }
+      to_create { |instance| instance.save(validate: false) }
     end
 
     trait :within_lead_time do

@@ -1,7 +1,7 @@
 class Payments::PaymentsController < ApplicationController
   def show
     @payment = policy_scope(Payment)
-      .includes(booking_group: [:bookings, :dentist])
+      .includes(booking_group: [ :bookings, :dentist ])
       .find(params[:id])
     authorize @payment
   end
