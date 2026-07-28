@@ -14,7 +14,6 @@ class BookingCanceller < ApplicationService
 
     group               = @booking.booking_group
     group_was_confirmed = group.confirmed?
-    booking_price       = @booking.price_cents
 
     ActiveRecord::Base.transaction do
       @booking.update!(status: "cancelled")
@@ -31,7 +30,7 @@ class BookingCanceller < ApplicationService
     end
 
     GoogleCalendarSyncJob.perform_later("remove", @booking.id)
-    issue_credit_if_eligible(group, group_was_confirmed, booking_price)
+    issue_credit_if_eligible(group, group_was_confirmed)
 
     success(@booking)
   rescue ActiveRecord::RecordInvalid => e
@@ -40,22 +39,11 @@ class BookingCanceller < ApplicationService
 
   private
 
-  def issue_credit_if_eligible(group, group_was_confirmed, booking_price)
-    return unless group_was_confirmed
+  def issue_credit_if_eligible(group, group_was_confirmed)
+    return unless group_was_confirmed && group.reload.cancelled?
 
-    if group.reload.cancelled?
-      BookingMailer.cancellation(group).deliver_later
-      result = CreditIssuer.call(booking_group: group, reason: @reason)
-      BookingMailer.credit_issued(group.dentist, result.value).deliver_later if result.success? && result.value
-    else
-      # Cancelamento parcial: crédito proporcional ao turno cancelado
-      Credit.create!(
-        user:                 group.dentist,
-        clinic:               group.clinic,
-        source_booking_group: group,
-        amount_cents:         booking_price,
-        reason:               @reason || "Cancelamento parcial de reserva"
-      )
-    end
+    BookingMailer.cancellation(group).deliver_later
+    result = CreditIssuer.call(booking_group: group, reason: @reason)
+    BookingMailer.credit_issued(group.dentist, result.value).deliver_later if result.success? && result.value
   end
 end

@@ -89,6 +89,7 @@
             <span class="text-sm font-medium shrink-0" style="color:#5D4037">R$ <%= money(current.price_cents) %></span>
           </div>
 
+          <% is_last_slot = active_bookings.count == 1 %>
           <% if changeable %>
             <p class="text-xs mb-4" style="color:#8D6E63">
               Diferença a menos vira crédito na sua carteira; a mais é abatida do seu crédito (recarregável via Pix).
@@ -116,11 +117,13 @@
               </div>
             <% end %>
 
-            <button type="button" onclick="this.closest('dialog').close(); document.getElementById('cancel-booking-<%= b.id %>').showModal()"
-                    class="w-full py-3 rounded-full text-sm font-medium cursor-pointer border"
-                    style="border-color: #d4183d; color: #d4183d; background: transparent">
-              Cancelar este turno
-            </button>
+            <% if is_last_slot %>
+              <button type="button" onclick="this.closest('dialog').close(); document.getElementById('cancel-booking-<%= b.id %>').showModal()"
+                      class="w-full py-3 rounded-full text-sm font-medium cursor-pointer border"
+                      style="border-color: #d4183d; color: #d4183d; background: transparent">
+                Cancelar reserva
+              </button>
+            <% end %>
           <% else %>
             <p class="text-sm" style="color:#8D6E63">
               Alterações e cancelamentos só são permitidos com <%= ENV.fetch("CANCELLATION_LEAD_HOURS", 24).to_i %>h de antecedência.
@@ -133,14 +136,12 @@
         <% end %>
       <% end %>
 
-      <% if (group.confirmed? || group.pending?) && b.availability.cancellable? %>
-        <% is_last    = active_bookings.count == 1 %>
-        <% credit_val = is_last ? group.total_cents : b.price_cents %>
+      <% if (group.confirmed? || group.pending?) && b.availability.cancellable? && active_bookings.count == 1 %>
         <%= render "shared/confirm_modal", id: "cancel-booking-#{b.id}",
-              message: "Cancelar este turno?",
-              detail: "O valor de R$ #{money(credit_val)} será retornado como crédito na sua carteira.",
+              message: "Cancelar reserva?",
+              detail: "O valor de R$ #{money(group.total_cents)} será retornado como crédito na sua carteira.",
               confirm_path: cancelar_reserva_path(b), confirm_method: :patch,
-              confirm_label: "Cancelar turno", danger: true %>
+              confirm_label: "Cancelar reserva", danger: true %>
       <% end %>
     <% end %>
   <% end %>
