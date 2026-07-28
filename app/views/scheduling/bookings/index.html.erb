@@ -32,8 +32,9 @@
 <% else %>
   <div class="bg-white rounded-2xl shadow-sm overflow-hidden mb-4">
     <% @booking_groups.each_with_index do |group, i| %>
-      <% group.bookings.each do |b| %>
-        <div class="flex items-center justify-between px-4 py-4 <%= i.positive? || b != group.bookings.first ? 'border-t' : '' %>"
+      <% active_bookings = group.bookings.where.not(status: "cancelled") %>
+      <% active_bookings.each do |b| %>
+        <div class="flex items-center justify-between px-4 py-4 <%= i.positive? || b != active_bookings.first ? 'border-t' : '' %>"
              style="border-color: #F5F5F5">
           <div class="flex-1 min-w-0">
             <p class="font-medium text-sm" style="color: #3E2723"><%= b.availability.label %></p>
@@ -41,7 +42,7 @@
               <%= l(b.availability.date, format: "%-d de %B") %> –
               <%= b.availability.starts_at.strftime("%Hh%M") %> às <%= b.availability.ends_at.strftime("%Hh%M") %>
             </p>
-            <% if b == group.bookings.first %>
+            <% if b == active_bookings.first %>
               <% Array(group.extras).each do |ins| %>
                 <p class="text-[11px] mt-0.5" style="color: #8D6E63">
                   + <%= ins["name"] %><%= " ×#{ins["quantity"]}" if ins["quantity"].to_i > 1 %> (insumo) — R$ <%= money(ins["price_cents"].to_i * ins["quantity"].to_i) %>
@@ -52,9 +53,9 @@
               R$ <%= money(b.price_cents) %>
             </p>
           </div>
-          <button type="button" onclick="<%= open_modal("edit-booking-#{group.id}") %>"
+          <button type="button" onclick="<%= open_modal("edit-booking-#{b.id}") %>"
                 class="shrink-0 ml-3 p-2 rounded-lg cursor-pointer"
-                style="color: #8D6E63" aria-label="Alterar reserva">
+                style="color: #8D6E63" aria-label="Alterar turno">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24"
                  stroke="currentColor" stroke-width="1.5">
               <path stroke-linecap="round" stroke-linejoin="round"
@@ -62,20 +63,19 @@
             </svg>
           </button>
         </div>
-
-
       <% end %>
     <% end %>
   </div>
 
   <%== pagy_nav(@pagy) if @pagy.pages > 1 %>
 
-  <%# ── Modais: Alterar reserva (cliente) ──────────────────────────────────── %>
+  <%# ── Modais: um por turno ──────────────────────────────────────────────── %>
   <% @booking_groups.each do |group| %>
-    <%= render layout: "shared/modal", locals: { id: "edit-booking-#{group.id}", title: "Alterar reserva", closable: true } do %>
-      <% if group.confirmed? || group.pending? %>
-        <% if group.bookings.size == 1 %>
-          <% current = group.bookings.first.availability %>
+    <% active_bookings = group.bookings.where.not(status: "cancelled") %>
+    <% active_bookings.each do |b| %>
+      <%= render layout: "shared/modal", locals: { id: "edit-booking-#{b.id}", title: "Alterar turno", closable: true } do %>
+        <% if group.confirmed? || group.pending? %>
+          <% current    = b.availability %>
           <% changeable = current.cancellable? %>
 
           <p class="label">Turno atual</p>
@@ -101,7 +101,7 @@
             <% else %>
               <div class="flex flex-col gap-2 max-h-60 overflow-y-auto mb-4">
                 <% slots.each do |slot| %>
-                  <%= button_to alterar_reserva_path(group), method: :patch,
+                  <%= button_to alterar_reserva_path(b), method: :patch,
                         params: { availability_id: slot.id }, data: { turbo: false },
                         form: { class: "w-full" },
                         class: "w-full rounded-2xl p-3 border hover:bg-[#fef8e1] cursor-pointer transition-colors flex items-center justify-between gap-2",
@@ -116,10 +116,10 @@
               </div>
             <% end %>
 
-            <button type="button" onclick="this.closest('dialog').close(); document.getElementById('cancel-booking-<%= group.id %>').showModal()"
+            <button type="button" onclick="this.closest('dialog').close(); document.getElementById('cancel-booking-<%= b.id %>').showModal()"
                     class="w-full py-3 rounded-full text-sm font-medium cursor-pointer border"
                     style="border-color: #d4183d; color: #d4183d; background: transparent">
-              Cancelar reserva
+              Cancelar este turno
             </button>
           <% else %>
             <p class="text-sm" style="color:#8D6E63">
@@ -127,23 +127,21 @@
             </p>
           <% end %>
         <% else %>
-          <p class="text-sm" style="color:#8D6E63">
-            Reservas com múltiplos turnos não podem ser trocadas individualmente — cancele e crie novamente, se necessário.
+          <p class="text-sm text-center" style="color: #8D6E63">
+            Esta reserva já foi <%= t("booking_group.status.#{group.status}") %> e não pode ser alterada.
           </p>
         <% end %>
-      <% else %>
-        <p class="text-sm text-center" style="color: #8D6E63">
-          Esta reserva já foi <%= t("booking_group.status.#{group.status}") %> e não pode ser alterada.
-        </p>
       <% end %>
-    <% end %>
 
-    <% if (group.confirmed? || group.pending?) && group.bookings.size == 1 && group.bookings.first.availability.cancellable? %>
-      <%= render "shared/confirm_modal", id: "cancel-booking-#{group.id}",
-            message: "Cancelar reserva?",
-            detail: "O valor de R$ #{money(group.total_cents)} será retornado como crédito na sua carteira.",
-            confirm_path: cancelar_reserva_path(group.bookings.first), confirm_method: :patch,
-            confirm_label: "Cancelar reserva", danger: true %>
+      <% if (group.confirmed? || group.pending?) && b.availability.cancellable? %>
+        <% is_last    = active_bookings.count == 1 %>
+        <% credit_val = is_last ? group.total_cents : b.price_cents %>
+        <%= render "shared/confirm_modal", id: "cancel-booking-#{b.id}",
+              message: "Cancelar este turno?",
+              detail: "O valor de R$ #{money(credit_val)} será retornado como crédito na sua carteira.",
+              confirm_path: cancelar_reserva_path(b), confirm_method: :patch,
+              confirm_label: "Cancelar turno", danger: true %>
+      <% end %>
     <% end %>
   <% end %>
 <% end %>

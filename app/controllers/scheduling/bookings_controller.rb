@@ -113,14 +113,11 @@ class Scheduling::BookingsController < ApplicationController
   end
 
   def change_slot
-    group   = policy_scope(BookingGroup).find(params[:id])
-    booking = group.bookings.first
+    booking = current_user.bookings.find(params[:id])
+    group   = booking.booking_group
 
     unless group.confirmed? || group.pending?
       return redirect_to reservas_path, alert: "Esta reserva não pode ser alterada."
-    end
-    if group.bookings.size > 1
-      return redirect_to reservas_path, alert: "Reservas com múltiplos turnos não podem ser trocadas. Cancele e crie novamente."
     end
 
     lead = ENV.fetch("CANCELLATION_LEAD_HOURS", 24).to_i
