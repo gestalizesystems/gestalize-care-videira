@@ -82,6 +82,7 @@ Rails.application.routes.draw do
     delete "google_calendar",          to: "google_calendar#disconnect", as: :google_calendar
 
     resources :clinics,        only: [ :show, :update ]
+    resources :manual_revenue_entries, only: [ :create ], path: "receita-manual"
     resources :users, only: [ :index, :show, :new, :create, :edit, :update, :destroy ] do
       member do
         post   :add_credit

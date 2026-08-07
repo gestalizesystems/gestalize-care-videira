@@ -38,6 +38,10 @@ class Admin::UsersController < Admin::BaseController
       .limit(10)
     @group_credits = Credit.where(source_booking_group_id: @booking_groups.map(&:id))
       .group(:source_booking_group_id).sum(:amount_cents)
+    @manual_revenue_entries = @user.manual_revenue_entries.order(created_at: :desc).limit(10)
+    # Linha do tempo única: reservas + lançamentos manuais de receita, por data.
+    @history_items = (@booking_groups.to_a + @manual_revenue_entries.to_a)
+      .sort_by { |item| item.created_at }.reverse
     @versions = @user.versions.order(created_at: :desc).limit(20)
   end
 
@@ -139,7 +143,8 @@ class Admin::UsersController < Admin::BaseController
   # Créditos (demo/usados) e reservas pendentes/expiradas/canceladas NÃO contam.
   def client_has_paid_history?(user)
     Payment.joins(:booking_group)
-           .where(booking_groups: { dentist_id: user.id }, status: "paid").exists?
+           .where(booking_groups: { dentist_id: user.id }, status: "paid").exists? ||
+      ManualRevenueEntry.where(client: user).exists?
   end
 
   def set_user

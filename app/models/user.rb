@@ -15,6 +15,7 @@ class User < ApplicationRecord
   has_many :availabilities, foreign_key: :dentist_id, dependent: :nullify
   has_many :booking_groups, foreign_key: :dentist_id
   has_many :bookings,       foreign_key: :dentist_id
+  has_many :manual_revenue_entries, class_name: "ManualRevenueEntry", foreign_key: :client_id
 
   enum :role, { owner: "owner", dentist: "dentist" }, default: "dentist"
 

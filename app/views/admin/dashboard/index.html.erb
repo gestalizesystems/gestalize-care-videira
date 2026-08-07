@@ -136,15 +136,17 @@
     <p class="text-sm text-center py-6" style="color:#8D6E63">Nenhum insumo vendido neste mês.</p>
   <% else %>
     <div class="flex flex-col gap-2 max-h-96 overflow-y-auto">
-      <% @monthly_extras_purchases.each do |p| %>
+      <% @monthly_extras_purchases.each do |row| %>
         <div class="rounded-2xl p-3 border" style="border-color:#E0E0E0">
           <div class="flex items-center justify-between mb-1">
-            <span class="text-sm font-medium" style="color:#3E2723"><%= p.booking_group.dentist&.name || "Cliente removido" %></span>
-            <span class="text-sm font-medium" style="color:#5D4037">R$ <%= money(Array(p.extras).sum { |e| e["price_cents"].to_i * e["quantity"].to_i }) %></span>
+            <span class="text-sm font-medium" style="color:#3E2723">
+              <%= row[:name] %><%= " (lançamento manual)" if row[:manual] %>
+            </span>
+            <span class="text-sm font-medium" style="color:#5D4037">R$ <%= money(row[:amount_cents]) %></span>
           </div>
-          <p class="text-xs" style="color:#8D6E63">
-            <%= Array(p.extras).map { |e| "#{e['name']} (#{e['quantity']}x)" }.join(", ") %>
-          </p>
+          <% row[:items].each do |item| %>
+            <p class="text-xs" style="color:#8D6E63"><%= item %></p>
+          <% end %>
         </div>
       <% end %>
     </div>
@@ -160,15 +162,14 @@
       <% @monthly_turnos_by_client.each do |row| %>
         <div class="rounded-2xl p-3 border" style="border-color:#E0E0E0">
           <div class="flex items-center justify-between mb-1">
-            <span class="text-sm font-medium" style="color:#3E2723"><%= row[:dentist]&.name || "Cliente removido" %></span>
+            <span class="text-sm font-medium" style="color:#3E2723">
+              <%= row[:name] %><%= " (lançamento manual)" if row[:manual] %>
+            </span>
             <span class="text-sm font-medium" style="color:#5D4037">R$ <%= money(row[:turnos_cents]) %></span>
           </div>
-          <p class="text-xs" style="color:#8D6E63">
-            <% row[:group].bookings.each do |b| %>
-              <% next unless b.availability %>
-              <%= b.availability.label %> — <%= l(b.availability.date, format: "%d/%m") %><br>
-            <% end %>
-          </p>
+          <% row[:turnos].each do |t| %>
+            <p class="text-xs" style="color:#8D6E63"><%= t %></p>
+          <% end %>
         </div>
       <% end %>
     </div>
@@ -177,6 +178,57 @@
 
 <%# ── Modal: Receita total do mês — resumo por cliente ────────────────────── %>
 <%= render layout: "shared/modal", locals: { id: "monthly-summary-modal", title: "Consumo do mês — #{l(@month, format: '%B de %Y').capitalize}", closable: true } do %>
+  <button type="button" onclick="document.getElementById('manual-revenue-form').classList.toggle('hidden')"
+          class="btn-outline w-full mb-4 cursor-pointer">
+    Adicionar receita
+  </button>
+
+  <div id="manual-revenue-form" class="hidden mb-4">
+    <%= form_with url: admin_manual_revenue_entries_path, method: :post, data: { turbo: false }, class: "flex flex-col gap-3" do %>
+      <%= hidden_field_tag :month, @month.strftime("%Y-%m") %>
+
+      <div data-controller="client-autocomplete"
+           data-client-autocomplete-clients-value="<%= @clients_for_autocomplete.map { |id, name| { id: id, name: name } }.to_json %>">
+        <label class="label">Nome do cliente</label>
+        <div class="relative">
+          <div class="bg-[#fef8e1] rounded-2xl px-4 py-1">
+            <input type="text" placeholder="Comece a digitar…" autocomplete="off" required
+                   data-client-autocomplete-target="input"
+                   data-action="input->client-autocomplete#search focus->client-autocomplete#search"
+                   class="w-full bg-transparent border-none outline-none py-3 text-sm" style="color:#3E2723">
+          </div>
+          <input type="hidden" name="client_id" data-client-autocomplete-target="hidden">
+          <div data-client-autocomplete-target="list"
+               class="hidden absolute z-10 left-0 right-0 mt-1 bg-white rounded-2xl shadow-lg border max-h-48 overflow-y-auto"
+               style="border-color:#E0E0E0"></div>
+        </div>
+      </div>
+
+      <div>
+        <label class="label">Valor</label>
+        <div class="bg-[#fef8e1] rounded-2xl px-4 py-1">
+          <input type="text" inputmode="numeric" name="amount" placeholder="R$ 0,00" required
+                 data-controller="input-mask" data-input-mask-pattern-value="money"
+                 class="w-full bg-transparent border-none outline-none py-3 text-sm" style="color:#3E2723">
+        </div>
+      </div>
+
+      <div>
+        <label class="label">Motivo da receita</label>
+        <div class="bg-[#fef8e1] rounded-2xl px-4 py-1">
+          <select name="category" required
+                  class="w-full bg-transparent border-none outline-none py-3 text-sm cursor-pointer" style="color:#3E2723">
+            <option value="">Selecione…</option>
+            <option value="turno">Turno</option>
+            <option value="insumo">Insumos</option>
+          </select>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-primary w-full cursor-pointer">Salvar</button>
+    <% end %>
+  </div>
+
   <% if @monthly_summary_by_client.empty? %>
     <p class="text-sm text-center py-6" style="color:#8D6E63">Nenhuma receita registrada neste mês.</p>
   <% else %>
@@ -184,7 +236,7 @@
       <% @monthly_summary_by_client.each do |row| %>
         <div class="rounded-2xl p-3 border" style="border-color:#E0E0E0">
           <div class="flex items-center justify-between mb-1">
-            <span class="text-sm font-medium" style="color:#3E2723"><%= row[:user]&.name || "Cliente removido" %></span>
+            <span class="text-sm font-medium" style="color:#3E2723"><%= row[:name] || "Cliente removido" %></span>
             <span class="text-sm font-medium" style="color:#5D4037">R$ <%= money(row[:total_cents]) %></span>
           </div>
           <% if row[:turnos].present? %>
