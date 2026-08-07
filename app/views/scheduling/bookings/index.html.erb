@@ -78,6 +78,10 @@
           <% current    = b.availability %>
           <% changeable = current.cancellable? %>
 
+          <%# Desconto proporcional por turno elegível (avulsa/diária não entram no desconto) %>
+          <% eligible_count    = group.bookings.count { |bk| !bk.availability.avulsa? && !bk.availability.diaria? } %>
+          <% discount_per_slot = eligible_count > 0 ? group.discount_cents.to_i / eligible_count : 0 %>
+
           <p class="label">Turno atual</p>
           <div class="rounded-2xl p-3 border mb-4 flex items-center justify-between gap-2" style="border-color:#E0E0E0">
             <div>
@@ -86,11 +90,17 @@
                 <%= l(current.date, format: "%d/%m") %> · <%= current.starts_at.strftime("%H:%M") %>–<%= current.ends_at.strftime("%H:%M") %>
               </p>
             </div>
-            <span class="text-sm font-medium shrink-0" style="color:#5D4037">R$ <%= money(current.price_cents) %></span>
+            <% effective_current = current.avulsa? || current.diaria? ? current.price_cents : [ current.price_cents - discount_per_slot, 0 ].max %>
+            <span class="text-sm font-medium shrink-0" style="color:#5D4037">R$ <%= money(effective_current) %></span>
           </div>
 
-          <% is_last_slot = active_bookings.count == 1 %>
+          <% is_single_booking = group.bookings.count == 1 %>
           <% if changeable %>
+            <% if discount_per_slot > 0 %>
+              <p class="text-xs mb-1" style="color:#8D6E63">
+                Preços já com desconto de grupo (–R$ <%= money(discount_per_slot) %>/turno).
+              </p>
+            <% end %>
             <p class="text-xs mb-4" style="color:#8D6E63">
               Diferença a menos vira crédito na sua carteira; a mais é abatida do seu crédito (recarregável via Pix).
             </p>
@@ -102,6 +112,7 @@
             <% else %>
               <div class="flex flex-col gap-2 max-h-60 overflow-y-auto mb-4">
                 <% slots.each do |slot| %>
+                  <% effective_slot = slot.avulsa? || slot.diaria? ? slot.price_cents : [ slot.price_cents - discount_per_slot, 0 ].max %>
                   <%= button_to alterar_reserva_path(b), method: :patch,
                         params: { availability_id: slot.id }, data: { turbo: false },
                         form: { class: "w-full" },
@@ -111,13 +122,13 @@
                       <span class="block text-sm font-medium" style="color:#3E2723"><%= slot.label %></span>
                       <span class="block text-xs" style="color:#8D6E63"><%= l(slot.date, format: "%d/%m") %> · <%= slot.starts_at.strftime("%H:%M") %>–<%= slot.ends_at.strftime("%H:%M") %></span>
                     </span>
-                    <span class="text-sm font-medium shrink-0" style="color:#5D4037">R$ <%= money(slot.price_cents) %></span>
+                    <span class="text-sm font-medium shrink-0" style="color:#5D4037">R$ <%= money(effective_slot) %></span>
                   <% end %>
                 <% end %>
               </div>
             <% end %>
 
-            <% if is_last_slot %>
+            <% if is_single_booking %>
               <button type="button" onclick="this.closest('dialog').close(); document.getElementById('cancel-booking-<%= b.id %>').showModal()"
                       class="w-full py-3 rounded-full text-sm font-medium cursor-pointer border"
                       style="border-color: #d4183d; color: #d4183d; background: transparent">
@@ -136,7 +147,7 @@
         <% end %>
       <% end %>
 
-      <% if (group.confirmed? || group.pending?) && b.availability.cancellable? && active_bookings.count == 1 %>
+      <% if (group.confirmed? || group.pending?) && b.availability.cancellable? && group.bookings.count == 1 %>
         <%= render "shared/confirm_modal", id: "cancel-booking-#{b.id}",
               message: "Cancelar reserva?",
               detail: "O valor de R$ #{money(group.total_cents)} será retornado como crédito na sua carteira.",

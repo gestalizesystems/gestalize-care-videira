@@ -1,0 +1,30 @@
+<h2>Turno alterado</h2>
+
+<p><strong>Profissional:</strong> <%= @dentist.name %> (<%= @dentist.email %>)</p>
+
+<p>
+  <strong>Turno anterior:</strong><br>
+  <%= @old_av.label %> —
+  <%= l(@old_av.date, format: :default) %>,
+  <%= @old_av.starts_at.strftime("%H:%M") %>–<%= @old_av.ends_at.strftime("%H:%M") %>
+  (R$ <%= "%.2f" % (@old_av.price_cents / 100.0) %>)
+</p>
+
+<p>
+  <strong>Novo turno:</strong><br>
+  <%= @new_av.label %> —
+  <%= l(@new_av.date, format: :default) %>,
+  <%= @new_av.starts_at.strftime("%H:%M") %>–<%= @new_av.ends_at.strftime("%H:%M") %>
+  (R$ <%= "%.2f" % (@new_av.price_cents / 100.0) %>)
+</p>
+
+<% diff = @new_av.price_cents - @old_av.price_cents %>
+<% if diff > 0 %>
+  <p><strong>Diferença cobrada:</strong> R$ <%= "%.2f" % (diff / 100.0) %></p>
+<% elsif diff < 0 %>
+  <p><strong>Crédito devolvido:</strong> R$ <%= "%.2f" % (-diff / 100.0) %></p>
+<% else %>
+  <p><strong>Sem diferença de valor.</strong></p>
+<% end %>
+
+<p><strong>Videira Clinic</strong></p>

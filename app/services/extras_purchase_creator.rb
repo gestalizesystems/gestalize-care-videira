@@ -15,7 +15,7 @@ class ExtrasPurchaseCreator < ApplicationService
     nsu = SecureRandom.uuid
     checkout = InfinitePay::DifferenceCheckoutCreator.call(
       booking_group: @group, amount_cents: @total, order_nsu: nsu,
-      description: "Insumos — Videira Clinic"
+      description: item_names, items: checkout_items
     )
     return failure(checkout.error) unless checkout.success?
 
@@ -36,6 +36,18 @@ class ExtrasPurchaseCreator < ApplicationService
   end
 
   private
+
+  # Item por insumo, para a InfinitePay mostrar nome e quantidade reais no
+  # pedido (em vez de um item genérico "Insumos — Videira Clinic").
+  def checkout_items
+    @extras.map do |extra, qty|
+      { quantity: qty, price: extra.price_cents, description: "Insumo: #{extra.name}" }
+    end
+  end
+
+  def item_names
+    @extras.map { |extra, qty| "#{extra.name} x#{qty}" }.join(", ")
+  end
 
   def serialized_extras
     @extras.map do |extra, qty|

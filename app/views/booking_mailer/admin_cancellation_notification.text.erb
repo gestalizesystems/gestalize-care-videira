@@ -1,0 +1,13 @@
+Reserva cancelada
+
+Profissional: <%= @dentist.name %> (<%= @dentist.email %>)
+
+Turno cancelado:
+<%= @booking.availability.label %> — <%= l(@booking.availability.date, format: :default) %>, <%= @booking.availability.starts_at.strftime("%H:%M") %>–<%= @booking.availability.ends_at.strftime("%H:%M") %>
+
+Status da reserva: <%= @group.cancelled? ? "Reserva totalmente cancelada" : "Cancelamento parcial — outros turnos mantidos" %>
+<% if @group.cancelled? %>
+Crédito devolvido: R$ <%= "%.2f" % (@group.total_cents / 100.0) %>
+<% end %>
+
+Videira Clinic

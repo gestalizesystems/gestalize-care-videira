@@ -1,0 +1,12 @@
+Insumos comprados
+
+Cliente: <%= @dentist.name %> (<%= @dentist.email %>)
+
+Insumos:
+<% Array(@payment.extras).each do |extra| %>
+- <%= extra["name"] %> — <%= extra["quantity"] %>x (R$ <%= "%.2f" % (extra["price_cents"].to_i * extra["quantity"].to_i / 100.0) %>)
+<% end %>
+
+Total pago: R$ <%= "%.2f" % (@payment.amount_cents / 100.0) %>
+
+Videira Clinic

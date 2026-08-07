@@ -4,7 +4,7 @@ class Scheduling::BookingsController < ApplicationController
   def index
     # Só reservas confirmadas (reais). Pendentes/expiradas/canceladas não são
     # mostradas — uma reserva que não foi paga nunca existiu de fato.
-    base = policy_scope(BookingGroup).where(status: "confirmed").includes(:bookings, :payment)
+    base = policy_scope(BookingGroup).where(status: "confirmed").includes(bookings: :availability).includes(:payment)
 
     @months = base.pluck(:created_at).map { |d| d.strftime("%Y-%m") }.uniq.sort.reverse
     @selected_month = params[:month].presence || @months.first

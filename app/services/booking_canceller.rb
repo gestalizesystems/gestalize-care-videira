@@ -7,6 +7,10 @@ class BookingCanceller < ApplicationService
   def call
     return failure("Reserva já cancelada.") if @booking.cancelled?
 
+    if @booking.booking_group.bookings.count > 1
+      return failure("Turnos reservados em grupo só podem ser alterados, não cancelados.")
+    end
+
     unless @booking.availability.cancellable?
       lead = ENV.fetch("CANCELLATION_LEAD_HOURS", 24).to_i
       return failure("Cancelamento deve ser feito com #{lead}h de antecedência.")
@@ -30,6 +34,7 @@ class BookingCanceller < ApplicationService
     end
 
     GoogleCalendarSyncJob.perform_later("remove", @booking.id)
+    BookingMailer.admin_cancellation_notification(@booking, group).deliver_later
     issue_credit_if_eligible(group, group_was_confirmed)
 
     success(@booking)

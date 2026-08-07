@@ -19,7 +19,8 @@
 <p class="text-sm mb-6 text-vdc-secondary"><%= l(@month, format: "%B de %Y").capitalize %></p>
 
 <div class="grid grid-cols-2 gap-3 mb-6">
-  <div class="card-sm">
+  <div class="card-sm cursor-pointer hover:shadow-md transition-all active:scale-[0.98]"
+       onclick="<%= open_modal('credit-balances-modal') %>">
     <p class="text-xs mb-1 text-vdc-secondary">Créditos totais</p>
     <p class="text-2xl font-medium text-vdc-primary">R$ <%= money(@total_credits) %></p>
   </div>
@@ -27,15 +28,18 @@
     <p class="text-xs mb-1 text-vdc-secondary">Créditos do mês</p>
     <p class="text-2xl font-medium text-vdc-success">R$ <%= money(@monthly_credits) %></p>
   </div>
-  <div class="card-sm">
+  <div class="card-sm cursor-pointer hover:shadow-md transition-all active:scale-[0.98]"
+       onclick="<%= open_modal('monthly-turnos-modal') %>">
     <p class="text-xs mb-1 text-vdc-secondary">Receita de turnos do mês</p>
     <p class="text-2xl font-medium text-vdc-success">R$ <%= money(@monthly_turnos) %></p>
   </div>
-  <div class="card-sm">
+  <div class="card-sm cursor-pointer hover:shadow-md transition-all active:scale-[0.98]"
+       onclick="<%= open_modal('monthly-extras-modal') %>">
     <p class="text-xs mb-1 text-vdc-secondary">Receita de insumos do mês</p>
     <p class="text-2xl font-medium text-vdc-success">R$ <%= money(@monthly_insumos) %></p>
   </div>
-  <div class="card-sm col-span-2">
+  <div class="card-sm col-span-2 cursor-pointer hover:shadow-md transition-all active:scale-[0.98]"
+       onclick="<%= open_modal('monthly-summary-modal') %>">
     <p class="text-xs mb-1 text-vdc-secondary">Receita total do mês</p>
     <p class="text-2xl font-medium text-vdc-success">R$ <%= money(@monthly_revenue) %></p>
   </div>
@@ -109,3 +113,91 @@
     <% end %>
   </div>
 </div>
+
+<%# ── Modal: Créditos totais por cliente ──────────────────────────────────── %>
+<%= render layout: "shared/modal", locals: { id: "credit-balances-modal", title: "Créditos totais por cliente", closable: true } do %>
+  <% if @credit_balances_by_client.empty? %>
+    <p class="text-sm text-center py-6" style="color:#8D6E63">Nenhum cliente com crédito disponível.</p>
+  <% else %>
+    <div class="flex flex-col gap-2 max-h-96 overflow-y-auto">
+      <% @credit_balances_by_client.each do |row| %>
+        <div class="flex items-center justify-between rounded-2xl p-3 border" style="border-color:#E0E0E0">
+          <span class="text-sm font-medium" style="color:#3E2723"><%= row[:user]&.name || "Cliente removido" %></span>
+          <span class="text-sm font-medium" style="color:#5D4037">R$ <%= money(row[:amount_cents]) %></span>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+<% end %>
+
+<%# ── Modal: Insumos vendidos no mês ──────────────────────────────────────── %>
+<%= render layout: "shared/modal", locals: { id: "monthly-extras-modal", title: "Insumos vendidos — #{l(@month, format: '%B de %Y').capitalize}", closable: true } do %>
+  <% if @monthly_extras_purchases.empty? %>
+    <p class="text-sm text-center py-6" style="color:#8D6E63">Nenhum insumo vendido neste mês.</p>
+  <% else %>
+    <div class="flex flex-col gap-2 max-h-96 overflow-y-auto">
+      <% @monthly_extras_purchases.each do |p| %>
+        <div class="rounded-2xl p-3 border" style="border-color:#E0E0E0">
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-sm font-medium" style="color:#3E2723"><%= p.booking_group.dentist&.name || "Cliente removido" %></span>
+            <span class="text-sm font-medium" style="color:#5D4037">R$ <%= money(Array(p.extras).sum { |e| e["price_cents"].to_i * e["quantity"].to_i }) %></span>
+          </div>
+          <p class="text-xs" style="color:#8D6E63">
+            <%= Array(p.extras).map { |e| "#{e['name']} (#{e['quantity']}x)" }.join(", ") %>
+          </p>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+<% end %>
+
+<%# ── Modal: Receita de turnos do mês ─────────────────────────────────────── %>
+<%= render layout: "shared/modal", locals: { id: "monthly-turnos-modal", title: "Turnos do mês — #{l(@month, format: '%B de %Y').capitalize}", closable: true } do %>
+  <% if @monthly_turnos_by_client.empty? %>
+    <p class="text-sm text-center py-6" style="color:#8D6E63">Nenhuma receita de turno neste mês.</p>
+  <% else %>
+    <div class="flex flex-col gap-2 max-h-96 overflow-y-auto">
+      <% @monthly_turnos_by_client.each do |row| %>
+        <div class="rounded-2xl p-3 border" style="border-color:#E0E0E0">
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-sm font-medium" style="color:#3E2723"><%= row[:dentist]&.name || "Cliente removido" %></span>
+            <span class="text-sm font-medium" style="color:#5D4037">R$ <%= money(row[:turnos_cents]) %></span>
+          </div>
+          <p class="text-xs" style="color:#8D6E63">
+            <% row[:group].bookings.each do |b| %>
+              <% next unless b.availability %>
+              <%= b.availability.label %> — <%= l(b.availability.date, format: "%d/%m") %><br>
+            <% end %>
+          </p>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+<% end %>
+
+<%# ── Modal: Receita total do mês — resumo por cliente ────────────────────── %>
+<%= render layout: "shared/modal", locals: { id: "monthly-summary-modal", title: "Consumo do mês — #{l(@month, format: '%B de %Y').capitalize}", closable: true } do %>
+  <% if @monthly_summary_by_client.empty? %>
+    <p class="text-sm text-center py-6" style="color:#8D6E63">Nenhuma receita registrada neste mês.</p>
+  <% else %>
+    <div class="flex flex-col gap-2 max-h-96 overflow-y-auto">
+      <% @monthly_summary_by_client.each do |row| %>
+        <div class="rounded-2xl p-3 border" style="border-color:#E0E0E0">
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-sm font-medium" style="color:#3E2723"><%= row[:user]&.name || "Cliente removido" %></span>
+            <span class="text-sm font-medium" style="color:#5D4037">R$ <%= money(row[:total_cents]) %></span>
+          </div>
+          <% if row[:turnos].present? %>
+            <p class="text-xs" style="color:#8D6E63">Turnos: <%= row[:turnos].join(", ") %></p>
+          <% end %>
+          <% if row[:insumos].present? %>
+            <p class="text-xs" style="color:#8D6E63">Insumos: <%= row[:insumos].join(", ") %></p>
+          <% end %>
+          <% if row[:credits_cents].positive? %>
+            <p class="text-xs" style="color:#8D6E63">Crédito comprado: R$ <%= money(row[:credits_cents]) %></p>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+<% end %>

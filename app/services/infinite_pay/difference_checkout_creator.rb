@@ -4,11 +4,12 @@ module InfinitePay
   class DifferenceCheckoutCreator < ApplicationService
     BASE_URL = "https://api.checkout.infinitepay.io".freeze
 
-    def initialize(booking_group:, amount_cents:, order_nsu:, description: "Diferença de alteração de reserva")
+    def initialize(booking_group:, amount_cents:, order_nsu:, description: "Diferença de alteração de reserva", items: nil)
       @group        = booking_group
       @amount_cents = amount_cents
       @order_nsu    = order_nsu
       @description  = description
+      @items        = items
     end
 
     def call
@@ -40,7 +41,7 @@ module InfinitePay
       user = @group.dentist
       payload = {
         handle:       ENV.fetch("INFINITEPAY_HANDLE"),
-        items:        [ { quantity: 1, price: @amount_cents, description: @description } ],
+        items:        @items.presence || [ { quantity: 1, price: @amount_cents, description: @description } ],
         order_nsu:    @order_nsu,
         redirect_url: "#{app_base_url}/pagamento/retorno",
         webhook_url:  "#{app_base_url}/webhooks/infinitepay"

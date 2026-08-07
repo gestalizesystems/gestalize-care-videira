@@ -69,6 +69,7 @@ class AdminBookingSlotChanger < ApplicationService
     end
 
     GoogleCalendarSyncJob.perform_later("update_slot", @booking.id)
+    BookingMailer.admin_slot_change_notification(@booking, old_av).deliver_later
     success({ group: group, charge_created: difference_attrs.present? })
   rescue ActiveRecord::RecordInvalid => e
     log_error(e.message)

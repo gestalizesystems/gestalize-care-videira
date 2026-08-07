@@ -1,0 +1,17 @@
+<h2>Insumos comprados</h2>
+
+<p><strong>Cliente:</strong> <%= @dentist.name %> (<%= @dentist.email %>)</p>
+
+<p><strong>Insumos:</strong></p>
+<ul>
+  <% Array(@payment.extras).each do |extra| %>
+    <li>
+      <%= extra["name"] %> — <%= extra["quantity"] %>x
+      (R$ <%= "%.2f" % (extra["price_cents"].to_i * extra["quantity"].to_i / 100.0) %>)
+    </li>
+  <% end %>
+</ul>
+
+<p><strong>Total pago:</strong> R$ <%= "%.2f" % (@payment.amount_cents / 100.0) %></p>
+
+<p><strong>Videira Clinic</strong></p>

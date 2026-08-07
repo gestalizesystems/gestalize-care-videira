@@ -25,4 +25,36 @@ class BookingMailer < ApplicationMailer
 
     mail(to: owner.email, subject: "Nova reserva confirmada — #{@dentist.name}")
   end
+
+  def admin_cancellation_notification(booking, group)
+    @booking = booking
+    @group   = group
+    @dentist = group.dentist
+    owner    = group.clinic.users.find_by(role: "owner")
+    return if owner.nil?
+
+    mail(to: owner.email, subject: "Reserva cancelada — #{@dentist.name}")
+  end
+
+  def admin_slot_change_notification(booking, old_availability)
+    @booking = booking
+    @old_av  = old_availability
+    @new_av  = booking.availability
+    @group   = booking.booking_group
+    @dentist = @group.dentist
+    owner    = @group.clinic.users.find_by(role: "owner")
+    return if owner.nil?
+
+    mail(to: owner.email, subject: "Turno alterado — #{@dentist.name}")
+  end
+
+  def admin_extras_notification(payment)
+    @payment = payment
+    @group   = payment.booking_group
+    @dentist = @group.dentist
+    owner    = @group.clinic.users.find_by(role: "owner")
+    return if owner.nil?
+
+    mail(to: owner.email, subject: "Insumos comprados — #{@dentist.name}")
+  end
 end

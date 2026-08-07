@@ -11,6 +11,7 @@ class DifferencePaymentConfirmer < ApplicationService
       @payment.update!(status: "paid", paid_at: Time.current)
       attach_extras_to_group! if @payment.extras.present?
     end
+    BookingMailer.admin_extras_notification(@payment).deliver_later if @payment.extras.present?
     success(@payment)
   rescue ActiveRecord::RecordInvalid => e
     log_error("payment=#{@payment&.id} error=#{e.message}")
